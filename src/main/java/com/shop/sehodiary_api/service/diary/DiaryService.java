@@ -1,0 +1,108 @@
+package com.shop.sehodiary_api.service.diary;
+
+import com.shop.sehodiary_api.repository.common.Visibility;
+import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diary.DiaryRepository;
+import com.shop.sehodiary_api.repository.user.User;
+import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.service.exceptions.ConflictException;
+import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
+import com.shop.sehodiary_api.service.exceptions.NotFoundException;
+import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
+import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
+import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
+
+@Service
+@RequiredArgsConstructor
+public class DiaryService {
+    private final UserRepository userRepository;
+    private final DiaryRepository diaryRepository;
+    private final DiaryMapper diaryMapper;
+
+    @Transactional
+    public List<DiaryResponse> getDiariesByUser(Long userId) {
+        return diaryRepository.findByUserId(userId)
+                .stream().map(diaryMapper::toResponse).toList();
+    }
+
+    @Transactional
+    public DiaryResponse getOneDiary(Long userId, Long diaryId) {
+        Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
+                .orElseThrow(()-> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
+
+        return diaryMapper.toResponse(diary);
+    }
+
+    @Transactional
+    public DiaryResponse createDiary(Long userId, DiaryRequest request) {
+        User user = userRepository.findById(userId)
+                        .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+        if(request.getTitle().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 제목란이 비어있습니다", request.getTitle());
+        }
+
+        if(request.getContent().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 내용란이 비어있습니다", request.getContent());
+        }
+
+        if(request.getVisibility().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 공개여부란이 비어있습니다", request.getVisibility());
+        }
+
+        if(request.getWeather().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 날씨란이 비어있습니다", request.getWeather());
+        }
+
+        Diary diary = Diary.builder()
+                .user(user)
+                .title(request.getTitle())
+                .content(request.getContent())
+                .visibility(Visibility.from(request.getVisibility()))
+                .weather(request.getWeather())
+                .build();
+
+        diaryRepository.save(diary);
+
+        return diaryMapper.toResponse(diary);
+    }
+
+    @Transactional
+    public DiaryResponse editDiary(Long userId, Long diaryId, DiaryRequest request) {
+        Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
+                .orElseThrow(()->new NotFoundException("해당 글을 찾을 수 없습니다", diaryId));
+
+        if(!Objects.equals(diary.getTitle(), request.getTitle())) {
+            diary.setTitle(request.getTitle());
+        }
+
+        if(!Objects.equals(diary.getContent(), request.getContent())) {
+            diary.setContent(request.getContent());
+        }
+
+        if(!Objects.equals(diary.getVisibility().toString(), request.getVisibility())) {
+            diary.setVisibility(Visibility.from(request.getVisibility()));
+        }
+
+        if(!Objects.equals(diary.getWeather(), request.getWeather())) {
+            diary.setWeather(request.getWeather());
+        }
+
+        return diaryMapper.toResponse(diary);
+    }
+
+    @Transactional
+    public void deleteDiary(Long userId, Long diaryId) {
+        try {
+            diaryRepository.deleteByUserIdAndId(userId, diaryId);
+        } catch (RuntimeException e) {
+            throw new ConflictException("해당 글을 삭제할 수 업습니다", diaryId);
+        }
+    }
+}

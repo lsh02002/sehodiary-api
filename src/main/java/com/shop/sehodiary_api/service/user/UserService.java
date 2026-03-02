@@ -150,7 +150,7 @@ public class UserService {
 
         SignupResponse signupResponse = SignupResponse.builder()
                 .userId(user.getId())
-                .email(user.getEmail())
+                .nickname(user.getNickname())
                 .build();
 
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
@@ -171,7 +171,7 @@ public class UserService {
     public UserInfoResponse getUserInfo(CustomUserDetails customUserDetails) {
         return UserInfoResponse.builder()
                 .userId(customUserDetails.getId())
-                .email(customUserDetails.getEmail())
+                .nickname(customUserDetails.getNickname())
                 .build();
     }
 
@@ -238,7 +238,7 @@ public class UserService {
 
         SignupResponse signupResponse = SignupResponse.builder()
                 .userId(user.getId())
-                .email(user.getEmail())
+                .nickname(user.getNickname())
                 .build();
 
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
@@ -260,7 +260,7 @@ public class UserService {
         return userRepository.findAll(pageable)
                 .map(user->UserInfoResponse.builder()
                         .userId(user.getId())
-                        .email(user.getEmail())
+                        .nickname(user.getNickname())
                         .build());
     }
 
