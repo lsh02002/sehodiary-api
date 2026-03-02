@@ -177,16 +177,14 @@ public class UserService {
 
     @Transactional
     public UserResponse logout(String email, HttpServletRequest request, HttpServletResponse response){
+        String refreshToken = request.getHeader("refreshToken");
         String accessToken = request.getHeader("accessToken");
 
         if(email == null) {
             throw new BadRequestException("유저 정보가 비어있습니다.", null);
         }
 
-        RefreshToken deletedToken = refreshTokenRepository.findByEmail(email);
-        if(deletedToken != null) {
-            refreshTokenRepository.delete(deletedToken);
-        }
+        refreshTokenRepository.deleteByRefreshToken(refreshToken);
 
         if(jwtTokenProvider.validateToken(accessToken)) {
             redisUtil.setBlackList(accessToken, "accessToken", 30);
