@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: sehodiary_api
+
+  datasource: # DATABASE
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL}
+    username: ${DB_NM}
+    password: ${DB_PW}
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  jpa: # JPA
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    database: mysql
+
+server:
+  port: 8090
+  error:
+    include-exception: true     # ??? exception? ??? ???? ??
+    path: '/error'               # ??? ??? Handler? ??
+    whitelabel:
+      enabled: true             # ?? ?? ??? ????? ??? ?? ??? ?? ??
+  tomcat:
+    use-relative-redirects: true
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${ACCESS_KEY}
+      secret-key: ${SECRET_KEY}
+    s3:
+      bucket: sehoawsbucket2
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false

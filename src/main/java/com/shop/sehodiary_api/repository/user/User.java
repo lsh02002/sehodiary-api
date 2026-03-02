@@ -1,0 +1,69 @@
+package com.shop.sehodiary_api.repository.user;
+
+import com.shop.sehodiary_api.repository.comment.Comment;
+import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diaryLike.DiaryLike;
+import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@EqualsAndHashCode(of = "id")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@EntityListeners(AuditingEntityListener.class)
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "email", unique = true, nullable = false)
+    private String email;
+
+    @Column(name = "password", nullable = false)
+    private String password;
+
+    @Column(name = "nickname", unique = true, nullable = false, length = 50)
+    private String nickname;
+
+    @Column(name = "profile_image", length = 1024)
+    private String profileImage;
+
+    @OneToMany(mappedBy = "user")
+    private Collection<UserRoles> userRoles;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Diary> diaries = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<DiaryLike> likes = new ArrayList<>();
+
+    public User(String email, String password, String nickname, String profileImage) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.profileImage = profileImage;
+    }
+
+    public void addDiary(Diary diary) {
+        diaries.add(diary);
+        diary.setUser(this);
+    }
+
+    public void removeDiary(Diary diary) {
+        diaries.remove(diary);
+        diary.setUser(null);
+    }
+}
