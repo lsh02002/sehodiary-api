@@ -14,4 +14,6 @@ public class DiaryResponse {
     private String content;
     private String visibility;
     private String weather;
+    private Long commentsCount;
+    private String createdAt;
 }

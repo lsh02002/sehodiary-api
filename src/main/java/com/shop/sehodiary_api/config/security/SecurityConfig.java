@@ -48,9 +48,9 @@ public class SecurityConfig {
                 })
                 .authorizeHttpRequests(a->
                         a
-                                .requestMatchers(HttpMethod.GET, "/user/test1/**", "/user/info/**", "/user/hist/**").authenticated()
-                                .requestMatchers(HttpMethod.DELETE, "/user/logout/**").authenticated()
-                                .requestMatchers( "/**").permitAll())
+                                .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/all/**", "/diary/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/admin-login/**").permitAll()
+                                .requestMatchers( "/**").authenticated())
                 .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

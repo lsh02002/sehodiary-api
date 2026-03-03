@@ -37,7 +37,7 @@ public class DiaryController {
         return ResponseEntity.ok(diaryService.createDiary(customUserDetails.getId(), request));
     }
 
-    @PutMapping("/{diaryId}")
+    @PostMapping("/edit/{diaryId}")
     public ResponseEntity<DiaryResponse> editDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long diaryId, @RequestBody DiaryRequest request) {
         return ResponseEntity.ok(diaryService.editDiary(customUserDetails.getId(), diaryId, request));
     }

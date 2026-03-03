@@ -14,6 +14,8 @@ public class DiaryMapper {
                 .content(diary.getContent())
                 .visibility(diary.getVisibility().toString())
                 .weather(diary.getWeather())
+                .commentsCount(diary.getComments() != null ? (long) diary.getComments().size() : null)
+                .createdAt(diary.getCreatedAt().toString())
                 .build();
     }
 }
