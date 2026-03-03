@@ -26,14 +26,20 @@ public class DiaryService {
     private final DiaryMapper diaryMapper;
 
     @Transactional
+    public List<DiaryResponse> getAllDiaries() {
+        return diaryRepository.findAll()
+                .stream().map(diaryMapper::toResponse).toList();
+    }
+
+    @Transactional
     public List<DiaryResponse> getDiariesByUser(Long userId) {
         return diaryRepository.findByUserId(userId)
                 .stream().map(diaryMapper::toResponse).toList();
     }
 
     @Transactional
-    public DiaryResponse getOneDiary(Long userId, Long diaryId) {
-        Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
+    public DiaryResponse getOneDiary(Long diaryId) {
+        Diary diary = diaryRepository.findById(diaryId)
                 .orElseThrow(()-> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
 
         return diaryMapper.toResponse(diary);
@@ -76,7 +82,7 @@ public class DiaryService {
     @Transactional
     public DiaryResponse editDiary(Long userId, Long diaryId, DiaryRequest request) {
         Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
-                .orElseThrow(()->new NotFoundException("해당 글을 찾을 수 없습니다", diaryId));
+                .orElseThrow(()->new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
         if(!Objects.equals(diary.getTitle(), request.getTitle())) {
             diary.setTitle(request.getTitle());
