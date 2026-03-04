@@ -18,6 +18,6 @@ public class RedisUtil {
     }
 
     public boolean hasKeyBlackList(String key) {
-        return Boolean.TRUE.equals(redisBlackListTemplate.hasKey(key));
+        return redisBlackListTemplate.hasKey(key);
     }
 }
