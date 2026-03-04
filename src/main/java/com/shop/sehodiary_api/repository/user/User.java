@@ -2,7 +2,7 @@ package com.shop.sehodiary_api.repository.user;
 
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.diary.Diary;
-import com.shop.sehodiary_api.repository.diaryLike.DiaryLike;
+import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,7 +48,7 @@ public class User {
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<DiaryLike> likes = new ArrayList<>();
+    private List<Like> likes = new ArrayList<>();
 
     public User(String email, String password, String nickname, String profileImage) {
         this.email = email;

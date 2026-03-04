@@ -8,7 +8,7 @@ import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.common.Visibility;
 import com.shop.sehodiary_api.repository.diaryEmotion.DiaryEmotion;
 import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
-import com.shop.sehodiary_api.repository.diaryLike.DiaryLike;
+import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -65,7 +65,7 @@ public class Diary extends BaseTimeEntity {
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<DiaryLike> likes = new ArrayList<>();
+    private List<Like> likes = new ArrayList<>();
 
     public Diary(User user, String title, String content, Visibility visibility, String weather) {
         this.user = user;
@@ -105,12 +105,12 @@ public class Diary extends BaseTimeEntity {
         comment.setDiary(null);
     }
 
-    public void addLike(DiaryLike like) {
+    public void addLike(Like like) {
         likes.add(like);
         like.setDiary(this);
     }
 
-    public void removeLike(DiaryLike like) {
+    public void removeLike(Like like) {
         likes.remove(like);
         like.setDiary(null);
     }
