@@ -26,8 +26,14 @@ public class DiaryService {
     private final DiaryMapper diaryMapper;
 
     @Transactional
-    public List<DiaryResponse> getAllDiaries() {
-        return diaryRepository.findAll()
+    public List<DiaryResponse> getDiariesByPublic() {
+        return diaryRepository.findByVisibilityIn(List.of(Visibility.PUBLIC))
+                .stream().map(diaryMapper::toResponse).toList();
+    }
+
+    @Transactional
+    public List<DiaryResponse> getDiariesByFriends() {
+        return diaryRepository.findByVisibilityIn(List.of(Visibility.PUBLIC, Visibility.FRIENDS))
                 .stream().map(diaryMapper::toResponse).toList();
     }
 

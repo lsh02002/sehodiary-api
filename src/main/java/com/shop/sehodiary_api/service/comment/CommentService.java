@@ -33,6 +33,12 @@ public class CommentService {
     }
 
     @Transactional
+    public List<CommentResponse> getCommentsByUser(Long userId) {
+        return commentRepository.findByUserId(userId)
+                .stream().map(commentMapper::toResponse).toList();
+    }
+
+    @Transactional
     public CommentResponse createComment(Long userId, CommentRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()->new NotFoundException("입력하신 아이디로 회원을 찾을 수 없습니다.", userId));

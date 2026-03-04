@@ -22,12 +22,17 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getCommentsByDiaryId(diaryId));
     }
 
+    @GetMapping("/user")
+    public ResponseEntity<List<CommentResponse>> getCommentsByUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        return ResponseEntity.ok(commentService.getCommentsByUser(customUserDetails.getId()));
+    }
+
     @PostMapping("/create")
     public ResponseEntity<CommentResponse> createComment(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody CommentRequest request) {
         return ResponseEntity.ok(commentService.createComment(customUserDetails.getId(), request));
     }
 
-    @PutMapping("/{commentId}")
+    @PostMapping("/{commentId}")
     public ResponseEntity<CommentResponse> editComment(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long commentId, @RequestBody CommentRequest request) {
         return ResponseEntity.ok(commentService.editComment(customUserDetails.getId(), commentId, request));
     }

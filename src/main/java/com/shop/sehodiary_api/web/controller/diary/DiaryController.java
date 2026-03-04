@@ -17,9 +17,14 @@ import java.util.List;
 public class DiaryController {
     private final DiaryService diaryService;
 
-    @GetMapping("/all")
-    public ResponseEntity<List<DiaryResponse>> getAllDiaries() {
-        return ResponseEntity.ok(diaryService.getAllDiaries());
+    @GetMapping("/public")
+    public ResponseEntity<List<DiaryResponse>> getDiariesByPublic() {
+        return ResponseEntity.ok(diaryService.getDiariesByPublic());
+    }
+
+    @GetMapping("/friends")
+    public ResponseEntity<List<DiaryResponse>> getDiariesByFriends() {
+        return ResponseEntity.ok(diaryService.getDiariesByFriends());
     }
 
     @GetMapping("/user")
