@@ -24,6 +24,13 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final DiaryMapper diaryMapper;
 
+    @Transactional
+    public List<String> getLikingNicknamesByDiary(Long diaryId) {
+        return likeRepository.findByDiaryId(diaryId)
+                .stream().map(like->like.getUser().getNickname()).toList();
+    }
+
+    @Transactional
     public Boolean isLiked(Long userId, Long diaryId){
         return likeRepository.existsByUserIdAndDiaryId(userId, diaryId);
     }

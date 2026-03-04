@@ -16,6 +16,11 @@ import java.util.List;
 public class LikeController {
     private final LikeService likeService;
 
+    @GetMapping("/nicknames/{diaryId}")
+    public ResponseEntity<List<String>> getLikingNicknamesByDiary(@PathVariable Long diaryId) {
+        return ResponseEntity.ok(likeService.getLikingNicknamesByDiary(diaryId));
+    }
+
     @GetMapping("/isLiked/{id}")
     public ResponseEntity<Boolean> isLiked(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable("id") Long diaryId) {
         return ResponseEntity.ok(likeService.isLiked(userDetails.getId(), diaryId));

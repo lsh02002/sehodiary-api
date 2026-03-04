@@ -10,4 +10,5 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
     Optional<Like> findByUserIdAndDiaryId(Long userId, Long diaryId);
     Boolean existsByUserIdAndDiaryId(Long userId, Long diaryId);
     List<Like> findAllByUserId(Long userId);
+    List<Like> findByDiaryId(Long diaryId);
 }
