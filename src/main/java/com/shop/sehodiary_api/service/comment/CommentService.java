@@ -1,6 +1,6 @@
 package com.shop.sehodiary_api.service.comment;
 
-import com.shop.sehodiary_api.config.function.SnapshotFunc;
+import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.comment.Comment;

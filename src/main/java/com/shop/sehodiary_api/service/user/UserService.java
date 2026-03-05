@@ -1,6 +1,6 @@
 package com.shop.sehodiary_api.service.user;
 
-import com.shop.sehodiary_api.config.function.SnapshotFunc;
+import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.config.redis.RedisUtil;
 import com.shop.sehodiary_api.config.security.JwtTokenProvider;
 import com.shop.sehodiary_api.repository.activity.ActivityAction;

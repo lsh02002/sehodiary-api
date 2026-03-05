@@ -1,4 +1,4 @@
-package com.shop.sehodiary_api.config.function;
+package com.shop.sehodiary_api.repository.activity.function;
 
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.diary.Diary;
@@ -117,11 +117,6 @@ public class SnapshotFunc {
             return m;
         }
 
-        // 다른 엔티티 타입이 들어오면 필요한 경우 여기에 추가
-        // if (obj instanceof Sprint s) { ... }
-        // if (obj instanceof Issue i) { ... }
-
-        // 매칭되는 타입이 없으면 null 반환 또는 단순 toString()
         return Map.of("value", String.valueOf(obj));
     }
 }

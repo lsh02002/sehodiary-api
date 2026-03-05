@@ -1,6 +1,6 @@
 package com.shop.sehodiary_api.repository.diaryImage;
 
-import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.activity.logger.Loggable;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import jakarta.persistence.Column;

@@ -1,10 +1,9 @@
 package com.shop.sehodiary_api.repository.diaryEmotion;
 
-import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.activity.logger.Loggable;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.emotion.Emotion;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;

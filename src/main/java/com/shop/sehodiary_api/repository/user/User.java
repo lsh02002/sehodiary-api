@@ -1,6 +1,6 @@
 package com.shop.sehodiary_api.repository.user;
 
-import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.activity.logger.Loggable;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
@@ -8,7 +8,6 @@ import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

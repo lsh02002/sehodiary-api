@@ -3,7 +3,7 @@ package com.shop.sehodiary_api.repository.diary;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.activity.logger.Loggable;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.common.Visibility;

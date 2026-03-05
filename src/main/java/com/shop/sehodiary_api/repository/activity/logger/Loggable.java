@@ -1,4 +1,4 @@
-package com.shop.sehodiary_api.config.logger;
+package com.shop.sehodiary_api.repository.activity.logger;
 
 // Loggable.java
 public interface Loggable {
