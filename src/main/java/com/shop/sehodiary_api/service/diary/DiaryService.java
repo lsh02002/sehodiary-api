@@ -1,10 +1,14 @@
 package com.shop.sehodiary_api.service.diary;
 
+import com.shop.sehodiary_api.config.function.SnapshotFunc;
+import com.shop.sehodiary_api.repository.activity.ActivityAction;
+import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.common.Visibility;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
@@ -24,6 +28,8 @@ public class DiaryService {
     private final UserRepository userRepository;
     private final DiaryRepository diaryRepository;
     private final DiaryMapper diaryMapper;
+    private final ActivityLogService activityLogService;
+    private final SnapshotFunc snapshotFunc;
 
     @Transactional
     public List<DiaryResponse> getDiariesByPublic() {
@@ -82,13 +88,22 @@ public class DiaryService {
 
         diaryRepository.save(diary);
 
+        Object afterDiary = snapshotFunc.snapshot(diary);
+
+        activityLogService.log(ActivityEntityType.DIARY, ActivityAction.CREATE, diary.getId(), diary.logMessage(), user, null, afterDiary);
+
         return diaryMapper.toResponse(diary);
     }
 
     @Transactional
     public DiaryResponse editDiary(Long userId, Long diaryId, DiaryRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
         Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
                 .orElseThrow(()->new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
+
+        Object beforeDiary = snapshotFunc.snapshot(diary);
 
         if(!Objects.equals(diary.getTitle(), request.getTitle())) {
             diary.setTitle(request.getTitle());
@@ -106,12 +121,26 @@ public class DiaryService {
             diary.setWeather(request.getWeather());
         }
 
+        Object afterDiary = snapshotFunc.snapshot(diary);
+
+        activityLogService.log(ActivityEntityType.DIARY, ActivityAction.UPDATE, diary.getId(), diary.logMessage(), user, beforeDiary, afterDiary);
+
         return diaryMapper.toResponse(diary);
     }
 
     @Transactional
     public void deleteDiary(Long userId, Long diaryId) {
         try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+            Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
+                    .orElseThrow(()->new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
+
+            Object beforeDiary = snapshotFunc.snapshot(diary);
+
+            activityLogService.log(ActivityEntityType.DIARY, ActivityAction.DELETE, diary.getId(), diary.logMessage(), user, beforeDiary, null);
+
             diaryRepository.deleteByUserIdAndId(userId, diaryId);
         } catch (RuntimeException e) {
             throw new ConflictException("해당 글을 삭제할 수 업습니다", diaryId);

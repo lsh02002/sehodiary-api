@@ -1,11 +1,15 @@
 package com.shop.sehodiary_api.service.comment;
 
+import com.shop.sehodiary_api.config.function.SnapshotFunc;
+import com.shop.sehodiary_api.repository.activity.ActivityAction;
+import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.comment.CommentRepository;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.BadRequestException;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
@@ -25,6 +29,8 @@ public class CommentService {
     private final DiaryRepository diaryRepository;
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
+    private final ActivityLogService activityLogService;
+    private final SnapshotFunc snapshotFunc;
 
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByDiaryId(Long diaryId){
@@ -58,16 +64,22 @@ public class CommentService {
 
         commentRepository.save(comment);
 
+        Object afterComment = snapshotFunc.snapshot(comment);
+
+        activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.CREATE, comment.getId(), comment.logMessage(), user, null, afterComment);
+
         return commentMapper.toResponse(comment);
     }
 
     @Transactional
     public CommentResponse editComment(Long userId, Long commentId, CommentRequest request) {
-        userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(()->new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
         Comment comment = commentRepository.findByUserIdAndId(userId, commentId)
                 .orElseThrow(()->new NotFoundException("해당 사용자의 댓글이 아닙니다.", commentId));
+
+        Object beforecomment = snapshotFunc.snapshot(comment);
 
         if(request.getContent().trim().isEmpty()) {
             throw new ConflictException("내용란이 비어있습니다.", null);
@@ -75,17 +87,25 @@ public class CommentService {
 
         comment.setContent(request.getContent());
 
+        Object aftercomment = snapshotFunc.snapshot(comment);
+
+        activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.UPDATE, comment.getId(), comment.logMessage(), user, beforecomment, aftercomment);
+
         return commentMapper.toResponse(comment);
     }
 
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
         try {
-            userRepository.findById(userId)
+            User user = userRepository.findById(userId)
                     .orElseThrow(()->new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
             Comment comment = commentRepository.findByUserIdAndId(userId, commentId)
                     .orElseThrow(()->new NotFoundException("해당 사용자의 댓글이 아닙니다.", commentId));
+
+            Object beforecomment = snapshotFunc.snapshot(comment);
+
+            activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.DELETE, comment.getId(), comment.logMessage(), user, beforecomment, null);
 
             commentRepository.delete(comment);
         } catch (Exception e) {

@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.repository.diaryImage;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import jakarta.persistence.Column;
@@ -21,7 +22,7 @@ import lombok.Setter;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "diary_images")
-public class DiaryImage extends BaseTimeEntity {
+public class DiaryImage extends BaseTimeEntity implements Loggable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,5 +38,10 @@ public class DiaryImage extends BaseTimeEntity {
     public DiaryImage(Diary diary, String imageUrl) {
         this.diary = diary;
         this.imageUrl = imageUrl;
+    }
+
+    @Override
+    public String logMessage() {
+        return "name=";
     }
 }

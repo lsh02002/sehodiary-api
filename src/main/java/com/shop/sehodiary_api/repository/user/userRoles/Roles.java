@@ -1,5 +1,7 @@
 package com.shop.sehodiary_api.repository.user.userRoles;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 @AllArgsConstructor
 @RequiredArgsConstructor
 @Builder
-public class Roles {
+public class Roles extends BaseTimeEntity implements Loggable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "roles_id")
@@ -20,4 +22,9 @@ public class Roles {
 
     @Column(name = "name",nullable = false)
     private String name;
+
+    @Override
+    public String logMessage() {
+        return "name=";
+    }
 }

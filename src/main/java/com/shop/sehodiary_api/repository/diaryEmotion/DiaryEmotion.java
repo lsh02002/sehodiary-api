@@ -1,5 +1,7 @@
 package com.shop.sehodiary_api.repository.diaryEmotion;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.emotion.Emotion;
 import jakarta.persistence.Column;
@@ -27,7 +29,7 @@ import lombok.Setter;
         @UniqueConstraint(name = "uk_diary_emotions_diary_emotion", columnNames = {"diary_id", "emotion_id"})
     }
 )
-public class DiaryEmotion {
+public class DiaryEmotion extends BaseTimeEntity implements Loggable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,5 +46,10 @@ public class DiaryEmotion {
     public DiaryEmotion(Diary diary, Emotion emotion) {
         this.diary = diary;
         this.emotion = emotion;
+    }
+
+    @Override
+    public String logMessage() {
+        return "name=";
     }
 }

@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.repository.like;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.user.User;
@@ -26,7 +27,7 @@ import lombok.*;
         @UniqueConstraint(name = "uk_likes_diary_user", columnNames = {"diary_id", "user_id"})
     }
 )
-public class Like extends BaseTimeEntity {
+public class Like extends BaseTimeEntity implements Loggable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,5 +44,10 @@ public class Like extends BaseTimeEntity {
     public Like(Diary diary, User user) {
         this.diary = diary;
         this.user = user;
+    }
+
+    @Override
+    public String logMessage() {
+        return "name=";
     }
 }

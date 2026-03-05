@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.repository.comment;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.user.User;
@@ -21,7 +22,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "comments")
-public class Comment extends BaseTimeEntity {
+public class Comment extends BaseTimeEntity implements Loggable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,5 +43,10 @@ public class Comment extends BaseTimeEntity {
         this.diary = diary;
         this.user = user;
         this.content = content;
+    }
+
+    @Override
+    public String logMessage() {
+        return "name=";
     }
 }

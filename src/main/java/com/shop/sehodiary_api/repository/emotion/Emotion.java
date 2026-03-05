@@ -3,6 +3,8 @@ package com.shop.sehodiary_api.repository.emotion;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
+import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diaryEmotion.DiaryEmotion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,7 +30,7 @@ import lombok.Setter;
         @UniqueConstraint(name = "uk_emotions_name", columnNames = {"emotion_name"})
     }
 )
-public class Emotion {
+public class Emotion extends BaseTimeEntity implements Loggable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,5 +48,10 @@ public class Emotion {
     public Emotion(String name, String emoji) {
         this.name = name;
         this.emoji = emoji;
+    }
+
+    @Override
+    public String logMessage() {
+        return "name=";
     }
 }

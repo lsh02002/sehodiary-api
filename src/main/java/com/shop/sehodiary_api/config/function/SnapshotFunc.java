@@ -1,0 +1,127 @@
+package com.shop.sehodiary_api.config.function;
+
+import com.shop.sehodiary_api.repository.comment.Comment;
+import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diaryEmotion.DiaryEmotion;
+import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
+import com.shop.sehodiary_api.repository.emotion.Emotion;
+import com.shop.sehodiary_api.repository.like.Like;
+import com.shop.sehodiary_api.repository.user.User;
+import com.shop.sehodiary_api.repository.user.userRoles.Roles;
+import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
+import org.springframework.stereotype.Component;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Component
+public class SnapshotFunc {
+    public Map<String, Object> snapshot(Object obj) {
+        if (obj == null) return null;
+
+        // Comment 객체일 경우
+        if (obj instanceof Comment comment) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", comment.getId());
+            m.put("diaryId", comment.getDiary() != null ? comment.getDiary().getId() : null);
+            m.put("userId", comment.getUser() != null ? comment.getUser().getId(): null);
+            m.put("content", comment.getContent());
+            m.put("createdAt", comment.getCreatedAt());
+            m.put("updatedAt", comment.getUpdatedAt());
+            return m;
+        }
+
+        if (obj instanceof Diary diary) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", diary.getId());
+            m.put("userId", diary.getUser() != null ? diary.getUser().getId(): null);
+            m.put("title", diary.getTitle());
+            m.put("content", diary.getContent());
+            m.put("visibility", diary.getVisibility().toString());
+            m.put("weather", diary.getWeather());
+            m.put("createdAt", diary.getCreatedAt());
+            m.put("updatedAt", diary.getUpdatedAt());
+            return m;
+        }
+
+        if(obj instanceof DiaryEmotion diaryEmotion) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", diaryEmotion.getId());
+            m.put("diaryId", diaryEmotion.getDiary() != null ? diaryEmotion.getDiary().getId() : null);
+            m.put("emotionId", diaryEmotion.getEmotion() != null ? diaryEmotion.getEmotion().getId() : null);
+            m.put("createdAt", diaryEmotion.getCreatedAt());
+            m.put("updatedAt", diaryEmotion.getUpdatedAt());
+            return m;
+        }
+
+        if (obj instanceof DiaryImage diaryImage) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", diaryImage.getId());
+            m.put("diaryId", diaryImage.getDiary() != null ? diaryImage.getDiary().getId() : null);
+            m.put("imageUrl", diaryImage.getImageUrl());
+            m.put("createdAt", diaryImage.getCreatedAt());
+            m.put("updatedAt", diaryImage.getUpdatedAt());
+            return m;
+        }
+
+        if (obj instanceof Emotion emotion) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", emotion.getId());
+            m.put("emotion_name", emotion.getName());
+            m.put("emoji", emotion.getEmoji());
+            m.put("createdAt", emotion.getCreatedAt());
+            m.put("updatedAt", emotion.getUpdatedAt());
+            return m;
+        }
+
+        if (obj instanceof Like like) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", like.getId());
+            m.put("diaryId", like.getDiary() != null ? like.getDiary().getId() : null);
+            m.put("userId", like.getUser() != null ? like.getUser().getId(): null);
+            m.put("createdAt", like.getCreatedAt());
+            m.put("updatedAt", like.getUpdatedAt());
+            return m;
+        }
+
+        if (obj instanceof User user) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", user.getId());
+            m.put("email", user.getEmail());
+            m.put("password", user.getPassword());
+            m.put("nickname", user.getNickname());
+            m.put("profileImage", user.getProfileImage());
+            m.put("userStatus", user.getUserStatus());
+            m.put("deletedAt", user.getDeletedAt());
+            m.put("createdAt", user.getCreatedAt());
+            m.put("updatedAt", user.getUpdatedAt());
+            return m;
+        }
+
+        if(obj instanceof Roles roles) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("rolesId", roles.getRolesId());
+            m.put("name", roles.getName());
+            m.put("createdAt", roles.getCreatedAt());
+            m.put("updatedAt", roles.getUpdatedAt());
+            return m;
+        }
+
+        if(obj instanceof UserRoles userRoles) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("userRolesId", userRoles.getUserRolesId());
+            m.put("userId", userRoles.getUser() != null ? userRoles.getUser().getId(): null);
+            m.put("roleId", userRoles.getRoles() != null ? userRoles.getRoles().getRolesId(): null);
+            m.put("createdAt", userRoles.getCreatedAt());
+            m.put("updatedAt", userRoles.getUpdatedAt());
+            return m;
+        }
+
+        // 다른 엔티티 타입이 들어오면 필요한 경우 여기에 추가
+        // if (obj instanceof Sprint s) { ... }
+        // if (obj instanceof Issue i) { ... }
+
+        // 매칭되는 타입이 없으면 null 반환 또는 단순 toString()
+        return Map.of("value", String.valueOf(obj));
+    }
+}

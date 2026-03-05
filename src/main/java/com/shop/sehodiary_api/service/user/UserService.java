@@ -1,7 +1,10 @@
 package com.shop.sehodiary_api.service.user;
 
+import com.shop.sehodiary_api.config.function.SnapshotFunc;
 import com.shop.sehodiary_api.config.redis.RedisUtil;
 import com.shop.sehodiary_api.config.security.JwtTokenProvider;
+import com.shop.sehodiary_api.repository.activity.ActivityAction;
+import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.repository.user.refreshToken.RefreshToken;
@@ -13,6 +16,7 @@ import com.shop.sehodiary_api.repository.user.userRoles.Roles;
 import com.shop.sehodiary_api.repository.user.userRoles.RolesRepository;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRolesRepository;
+import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.BadRequestException;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
@@ -47,24 +51,35 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final ActivityLogService activityLogService;
+    private final SnapshotFunc snapshotFunc;
+
     @PostConstruct
     private void insertRoleUserAndRoleAdminToNewDb(){
         //db를 새로 생성할 때 roles(ROLE_USER)초기값 생성
         Roles roleUser = rolesRepository.findByName("ROLE_USER");
 
         if(roleUser == null){
-            rolesRepository.save(Roles.builder()
+            Roles roles = rolesRepository.save(Roles.builder()
                     .name("ROLE_USER")
                     .build());
+
+            Object afterRole = snapshotFunc.snapshot(roles);
+
+            activityLogService.log(ActivityEntityType.ROLES, ActivityAction.CREATE, roles.getRolesId().longValue(), roles.logMessage(), null, null, afterRole);
         }
 
         //db를 새로 생성할 때 roles(ROLE_ADMIN)초기값 생성
         Roles roleAdmin = rolesRepository.findByName("ROLE_ADMIN");
 
         if(roleAdmin == null){
-            rolesRepository.save(Roles.builder()
+            Roles roles = rolesRepository.save(Roles.builder()
                     .name("ROLE_ADMIN")
                     .build());
+
+            Object afterRole = snapshotFunc.snapshot(roles);
+
+            activityLogService.log(ActivityEntityType.ROLES, ActivityAction.CREATE, roles.getRolesId().longValue(), roles.logMessage(), null, null, afterRole);
         }
     }
 
@@ -104,14 +119,23 @@ public class UserService {
                 .nickname(signupRequest.getNickname())
                 .profileImage(signupRequest.getProfileImage())
                 .password(signupRequest.getPassword())
+                .userStatus("정상")
                 .build();
 
         User savedUser = userRepository.save(user);
 
-        userRolesRepository.save(UserRoles.builder()
+        Object afterUser = snapshotFunc.snapshot(savedUser);
+
+        activityLogService.log(ActivityEntityType.USER, ActivityAction.CREATE, savedUser.getId(), savedUser.logMessage(), savedUser, null, afterUser);
+
+        UserRoles userRoles = userRolesRepository.save(UserRoles.builder()
                 .user(user)
                 .roles(roles)
                 .build());
+
+        Object afterUserRoles = snapshotFunc.snapshot(userRoles);
+
+        activityLogService.log(ActivityEntityType.USER_ROLES, ActivityAction.CREATE, savedUser.getId(), savedUser.logMessage(), savedUser, null, afterUserRoles);
 
         SignupResponse signupResponse = SignupResponse.builder()
                 .userId(savedUser.getId())
@@ -191,6 +215,26 @@ public class UserService {
         }
 
         return new UserResponse(HttpStatus.OK.value(), "로그아웃에 성공 하였습니다.", null);
+    }
+
+    @Transactional
+    public UserResponse withdrawal(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new NotFoundException("계정을 찾을 수 없습니다. 다시 로그인 해주세요.", email));
+
+        Object beforeUser = snapshotFunc.snapshot(user);
+
+        if (user.getUserStatus().equals("탈퇴")) {
+            throw new BadRequestException("이미 탈퇴처리된 회원 입니다.", email);
+        }
+        user.setUserStatus("탈퇴");
+        user.setDeletedAt(LocalDateTime.now());
+
+        Object afterUser = snapshotFunc.snapshot(user);
+
+        activityLogService.log(ActivityEntityType.USER, ActivityAction.DELETE, user.getId(), user.logMessage(), user, beforeUser, afterUser);
+
+        return new UserResponse(200, "회원탈퇴 완료 되었습니다.", user.getNickname());
     }
 
     public Page<UserLoginHistResponse> getUserLoginHist(Long userId, Pageable pageable) {

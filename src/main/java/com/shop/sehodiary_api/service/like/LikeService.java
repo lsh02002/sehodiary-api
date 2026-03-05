@@ -1,11 +1,15 @@
 package com.shop.sehodiary_api.service.like;
 
+import com.shop.sehodiary_api.config.function.SnapshotFunc;
+import com.shop.sehodiary_api.repository.activity.ActivityAction;
+import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.like.LikeRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
@@ -23,6 +27,8 @@ public class LikeService {
     private final DiaryRepository diaryRepository;
     private final LikeRepository likeRepository;
     private final DiaryMapper diaryMapper;
+    private final ActivityLogService activityLogService;
+    private final SnapshotFunc snapshotFunc;
 
     @Transactional
     public List<String> getLikingNicknamesByDiary(Long diaryId) {
@@ -56,13 +62,25 @@ public class LikeService {
 
         likeRepository.save(like);
 
+        Object afterLike = snapshotFunc.snapshot(like);
+
+        activityLogService.log(ActivityEntityType.LIKE, ActivityAction.CREATE, like.getId(), like.logMessage(), user, null, afterLike);
+
         return true;
     }
 
     @Transactional
     public Boolean delete(Long userId, Long diaryId) {
+
+        User user =userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
         Like like = likeRepository.findByUserIdAndDiaryId(userId, diaryId)
                 .orElseThrow(() -> new NotFoundException("좋아요가 되어있지 않았습니다. ", null));
+
+        Object beforeLike = snapshotFunc.snapshot(like);
+
+        activityLogService.log(ActivityEntityType.LIKE, ActivityAction.DELETE, like.getId(), like.logMessage(), user, beforeLike, null);
 
         likeRepository.delete(like);
 

@@ -3,6 +3,7 @@ package com.shop.sehodiary_api.repository.diary;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.shop.sehodiary_api.config.logger.Loggable;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.common.Visibility;
@@ -32,7 +33,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "diaries")
-public class Diary extends BaseTimeEntity {
+public class Diary extends BaseTimeEntity implements Loggable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,6 +74,11 @@ public class Diary extends BaseTimeEntity {
         this.content = content;
         this.visibility = (visibility == null) ? Visibility.PRIVATE : visibility;
         this.weather = weather;
+    }
+
+    @Override
+    public String logMessage() {
+        return "name=";
     }
 
     public void addImage(DiaryImage image) {
