@@ -22,7 +22,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class)
 public class User extends BaseTimeEntity implements Loggable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

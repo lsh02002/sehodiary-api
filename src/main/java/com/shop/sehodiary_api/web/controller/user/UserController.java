@@ -46,6 +46,11 @@ public class UserController {
         return ResponseEntity.ok(userService.logout(customUserDetails.getEmail(), request, response));
     }
 
+    @DeleteMapping("/withdrawal")
+    public ResponseEntity<UserResponse> withdrawal(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        return ResponseEntity.ok(userService.withdrawal(customUserDetails.getEmail()));
+    }
+
     @GetMapping("/info")
     public ResponseEntity<UserInfoResponse> getUserInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         return ResponseEntity.ok(userService.getUserInfo(customUserDetails));
