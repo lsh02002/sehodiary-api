@@ -17,6 +17,7 @@ import com.shop.sehodiary_api.repository.user.userRoles.RolesRepository;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRolesRepository;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
+import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
 import com.shop.sehodiary_api.service.exceptions.BadRequestException;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
@@ -162,6 +163,10 @@ public class UserService {
             throw new BadRequestException("이메일이나 비밀번호가 잘못 입력되었습니다.", null);
         }
 
+        if (user.getUserStatus().equals("탈퇴")) {
+            throw new AccessDeniedException("탈퇴한 계정입니다.", request.getEmail());
+        }
+
         List<String> roles = user.getUserRoles().stream()
                 .map(UserRoles::getRoles).map(Roles::getName).toList();
 
@@ -264,6 +269,10 @@ public class UserService {
 
         if(!passwordEncoder.matches(request.getPassword(), p1)){
             throw new BadRequestException("이메일이나 비밀번호가 잘못 입력되었습니다.", null);
+        }
+
+        if (user.getUserStatus().equals("탈퇴")) {
+            throw new AccessDeniedException("탈퇴한 계정입니다.", request.getEmail());
         }
 
         List<String> roles = user.getUserRoles().stream()
