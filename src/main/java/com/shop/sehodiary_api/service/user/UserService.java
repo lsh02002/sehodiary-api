@@ -136,7 +136,7 @@ public class UserService {
 
         Object afterUserRoles = snapshotFunc.snapshot(userRoles);
 
-        activityLogService.log(ActivityEntityType.USER_ROLES, ActivityAction.CREATE, savedUser.getId(), savedUser.logMessage(), savedUser, null, afterUserRoles);
+        activityLogService.log(ActivityEntityType.USER_ROLES, ActivityAction.CREATE, userRoles.getUserRolesId().longValue(), userRoles.logMessage(), savedUser, null, afterUserRoles);
 
         SignupResponse signupResponse = SignupResponse.builder()
                 .userId(savedUser.getId())
@@ -169,6 +169,10 @@ public class UserService {
 
         List<String> roles = user.getUserRoles().stream()
                 .map(UserRoles::getRoles).map(Roles::getName).toList();
+
+        if(!roles.contains("ROLE_USER")){
+            throw new BadRequestException("사용자 권한이 없습니다.", request.getEmail());
+        }
 
         userLoginHistRepository.save(UserLoginHist.builder()
                 .user(user)

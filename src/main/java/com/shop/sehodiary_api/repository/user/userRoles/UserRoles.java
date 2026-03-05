@@ -28,6 +28,6 @@ public class UserRoles extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "사용자 " + user.getNickname() + "에게 '" + roles.getName() + "'";
     }
 }

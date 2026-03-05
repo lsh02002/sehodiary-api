@@ -78,7 +78,7 @@ public class Diary extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "글 '" + title + "'";
     }
 
     public void addImage(DiaryImage image) {

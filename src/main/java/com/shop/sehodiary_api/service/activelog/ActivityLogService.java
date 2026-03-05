@@ -19,7 +19,11 @@ public class ActivityLogService {
 
     @Transactional
     public void log(ActivityEntityType type, ActivityAction action, Long entityId, String message, User actor, Object beforeJson, Object afterJson) {
-        ActivityLog log = new ActivityLog(type, action, entityId, message, actor, beforeJson, afterJson);
+
+
+        String logMessage = type.toString() + "에서 " + message + " 이(가) " + action.toString() + " 되었습니다.";
+
+        ActivityLog log = new ActivityLog(type, action, entityId, logMessage, actor, beforeJson, afterJson);
 
         if(Objects.equals(beforeJson, afterJson)) {
             throw new NotAcceptableException("변경된 사항이 없습니다.", null);

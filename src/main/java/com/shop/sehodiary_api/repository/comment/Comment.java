@@ -47,6 +47,6 @@ public class Comment extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "글 '" + diary.getTitle() + "'의 '" + content + "' ";
     }
 }

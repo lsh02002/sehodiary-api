@@ -25,6 +25,6 @@ public class Roles extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "권한 인증 유형 '" + name + "'";
     }
 }

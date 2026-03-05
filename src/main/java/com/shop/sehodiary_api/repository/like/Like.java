@@ -48,6 +48,6 @@ public class Like extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return user.getNickname() + "의 글 '" + diary.getTitle() + "'에 좋아요가" ;
     }
 }

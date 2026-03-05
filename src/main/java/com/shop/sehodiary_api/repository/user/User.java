@@ -65,7 +65,7 @@ public class User extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "사용자 '" + nickname + "'";
     }
 
     public void addDiary(Diary diary) {
