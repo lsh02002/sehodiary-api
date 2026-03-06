@@ -37,7 +37,7 @@ public class ActivityLogService {
     }
 
     @Transactional
-    public List<ActivityLogResponse> getActivityLogByUser(Long userId) {
+    public List<ActivityLogResponse> getActivityLogsByUser(Long userId) {
         return activityLogRepository.findByActorIdAndEntityTypeNot(userId, ActivityEntityType.LIKE)
                 .stream().map(activityLogMapper::toResponse).toList();
     }

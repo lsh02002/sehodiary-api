@@ -7,7 +7,6 @@ import com.shop.sehodiary_api.repository.user.userRoles.Roles;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,8 +23,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
+
     @Override
-    @CachePut(key = "#email", value = "auth")
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email).orElseThrow(()->
                 new UsernameNotFoundException("(토큰에러) 해당 이메일을 찾을 수 없습니다."));

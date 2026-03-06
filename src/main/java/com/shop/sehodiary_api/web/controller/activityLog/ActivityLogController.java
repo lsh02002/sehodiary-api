@@ -19,7 +19,7 @@ public class ActivityLogController {
     private final ActivityLogService activityLogService;
 
     @GetMapping("/user")
-    public ResponseEntity<List<ActivityLogResponse>> getActivityLogByUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        return ResponseEntity.ok(activityLogService.getActivityLogByUser(customUserDetails.getId()));
+    public ResponseEntity<List<ActivityLogResponse>> getActivityLogsByUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        return ResponseEntity.ok(activityLogService.getActivityLogsByUser(customUserDetails.getId()));
     }
 }
