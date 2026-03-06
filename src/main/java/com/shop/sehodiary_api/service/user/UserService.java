@@ -203,8 +203,10 @@ public class UserService {
 
     public UserInfoResponse getUserInfo(CustomUserDetails customUserDetails) {
         return UserInfoResponse.builder()
-                .userId(customUserDetails.getId())
+                .id(customUserDetails.getId())
+                .email(customUserDetails.getEmail())
                 .nickname(customUserDetails.getNickname())
+                .profileImage(customUserDetails.getProfileImage())
                 .build();
     }
 
@@ -316,7 +318,7 @@ public class UserService {
     public Page<UserInfoResponse> getAllUsersInfo(Pageable pageable){
         return userRepository.findAll(pageable)
                 .map(user->UserInfoResponse.builder()
-                        .userId(user.getId())
+                        .id(user.getId())
                         .nickname(user.getNickname())
                         .build());
     }

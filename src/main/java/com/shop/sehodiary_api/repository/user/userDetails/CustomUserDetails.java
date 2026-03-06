@@ -21,6 +21,7 @@ public class CustomUserDetails implements UserDetails {
     private String password;
 
     private String nickname;
+    private String profileImage;
 
     private List<String> authorities;
 

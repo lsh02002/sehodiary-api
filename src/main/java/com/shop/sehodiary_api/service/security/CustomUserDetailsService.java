@@ -33,6 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
+                .profileImage(user.getProfileImage())
                 .password(user.getPassword())
                 .authorities(user.getUserRoles()
                         .stream().map(UserRoles::getRoles)
