@@ -12,6 +12,7 @@ import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -37,13 +38,22 @@ public class SnapshotFunc {
             m.put("userId", diary.getUser() != null ? diary.getUser().getId(): null);
             m.put("title", diary.getTitle());
             m.put("content", diary.getContent());
-            m.put("visibility", diary.getVisibility().toString());
+            m.put("visibility", diary.getVisibility() != null ? diary.getVisibility().name() : null);
             m.put("weather", diary.getWeather());
             m.put(
                     "diaryImages",
-                    diary.getDiaryImages().stream()
+                    diary.getDiaryImages() == null
+                            ? List.of()
+                            : diary.getDiaryImages().stream()
                             .filter(image -> !image.getDeleted())
                             .map(DiaryImage::getImageUrl)
+                            .toList()
+            );
+            m.put("diaryEmotions",
+                    diary.getDiaryEmotions() == null
+                            ? List.of()
+                            : diary.getDiaryEmotions().stream()
+                            .map(diaryEmotion -> diaryEmotion.getEmotion().getName())
                             .toList()
             );
             m.put("createdAt", diary.getCreatedAt());

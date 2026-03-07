@@ -9,6 +9,7 @@ import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
+import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
@@ -32,6 +33,7 @@ public class DiaryService {
     private final DiaryMapper diaryMapper;
     private final ActivityLogService activityLogService;
     private final DiaryImageService diaryImageService;
+    private final DiaryEmotionService diaryEmotionService;
     private final SnapshotFunc snapshotFunc;
 
     @Transactional
@@ -93,6 +95,8 @@ public class DiaryService {
 
         diaryImageService.uploadManyFiles(userId, diary.getId(), files);
 
+        diaryEmotionService.createDiaryEmotion(userId, diary.getId(), request.getEmoji());
+
         Object afterDiary = snapshotFunc.snapshot(diary);
 
         activityLogService.log(ActivityEntityType.DIARY, ActivityAction.CREATE, diary.getId(), diary.logMessage(), user, null, afterDiary);
@@ -103,41 +107,57 @@ public class DiaryService {
     @Transactional
     public DiaryResponse editDiary(Long userId, Long diaryId, DiaryRequest request, List<MultipartFile> files) {
         User user = userRepository.findById(userId)
-                .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
         Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
-                .orElseThrow(()->new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
+                .orElseThrow(() -> new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
         Object beforeDiary = snapshotFunc.snapshot(diary);
 
-        if(!Objects.equals(diary.getTitle(), request.getTitle())) {
+        if (!Objects.equals(diary.getTitle(), request.getTitle())) {
             diary.setTitle(request.getTitle());
         }
 
-        if(!Objects.equals(diary.getContent(), request.getContent())) {
+        if (!Objects.equals(diary.getContent(), request.getContent())) {
             diary.setContent(request.getContent());
         }
 
-        if(!Objects.equals(diary.getVisibility().toString(), request.getVisibility())) {
-            diary.setVisibility(Visibility.from(request.getVisibility()));
+        Visibility newVisibility = Visibility.from(request.getVisibility());
+        if (!Objects.equals(diary.getVisibility(), newVisibility)) {
+            diary.setVisibility(newVisibility);
         }
 
-        if(!Objects.equals(diary.getWeather(), request.getWeather())) {
+        if (!Objects.equals(diary.getWeather(), request.getWeather())) {
             diary.setWeather(request.getWeather());
         }
 
-        diaryImageService.uploadManyFiles(userId, diaryId, files);
+        if (files != null && !files.isEmpty()) {
+            diaryImageService.uploadManyFiles(userId, diaryId, files);
+        }
+
+        if (request.getEmoji() != null && !request.getEmoji().isBlank()) {
+            diaryEmotionService.editDiaryEmotion(userId, diaryId, request.getEmoji());
+        }
 
         diaryRepository.flush();
+
         Diary reloadedDiary = diaryRepository.findByUserIdAndId(userId, diaryId)
                 .orElseThrow(() -> new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
         Object afterDiary = snapshotFunc.snapshot(reloadedDiary);
 
-        activityLogService.log(ActivityEntityType.DIARY, ActivityAction.UPDATE, reloadedDiary.getId(), reloadedDiary.logMessage(), user, beforeDiary, afterDiary);
+        activityLogService.log(
+                ActivityEntityType.DIARY,
+                ActivityAction.UPDATE,
+                reloadedDiary.getId(),
+                reloadedDiary.logMessage(),
+                user,
+                beforeDiary,
+                afterDiary
+        );
+
         return diaryMapper.toResponse(reloadedDiary);
     }
-
     @Transactional
     public void deleteDiary(Long userId, Long diaryId) {
         try {

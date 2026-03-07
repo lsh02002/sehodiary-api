@@ -6,6 +6,8 @@ import com.shop.sehodiary_api.web.mapper.diaryimage.DiaryImageMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class DiaryMapper {
@@ -23,6 +25,13 @@ public class DiaryMapper {
                 .likesCount(diary.getLikes() != null ? (long) diary.getLikes().size() : null)
                 .isLiked(false)
                 .imageResponses(diary.getDiaryImages() != null ? diary.getDiaryImages().stream().filter(diaryImage -> !diaryImage.getDeleted()).map(diaryImageMapper::toResponse).toList() : null)
+                .emoji(
+                        Optional.ofNullable(diary.getDiaryEmotions())
+                                .filter(list -> !list.isEmpty())
+                                .map(list -> list.get(0))
+                                .map(de -> de.getEmotion().getEmoji())
+                                .orElse(null)
+                )
                 .createdAt(diary.getCreatedAt().toString())
                 .build();
     }

@@ -12,4 +12,5 @@ public class DiaryRequest {
     private String content;
     private String visibility;
     private String weather;
+    private String emoji;
 }
