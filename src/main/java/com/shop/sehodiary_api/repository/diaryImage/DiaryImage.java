@@ -28,8 +28,12 @@ public class DiaryImage extends BaseTimeEntity implements Loggable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "diary_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_user_id")
+    private User profileUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "diary_id")
     private Diary diary;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -61,6 +65,10 @@ public class DiaryImage extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
+        if(profileUser != null) {
+            return "USER '" + profileUser.getNickname() + "'의 PROFILE 파일 '" + fileName + "' ";
+        }
+
         return "글 '" + diary.getTitle() + "'의 IMAGE 파일 '" + fileName + "' ";
     }
 }

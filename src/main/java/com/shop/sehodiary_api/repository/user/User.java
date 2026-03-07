@@ -4,6 +4,7 @@ import com.shop.sehodiary_api.repository.activity.logger.Loggable;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
 import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import jakarta.persistence.*;
@@ -35,9 +36,6 @@ public class User extends BaseTimeEntity implements Loggable {
     @Column(name = "nickname", unique = true, nullable = false, length = 50)
     private String nickname;
 
-    @Column(name = "profile_image", length = 1024)
-    private String profileImage;
-
     @OneToMany(mappedBy = "user")
     private Collection<UserRoles> userRoles;
 
@@ -56,11 +54,14 @@ public class User extends BaseTimeEntity implements Loggable {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Like> likes = new ArrayList<>();
 
-    public User(String email, String password, String nickname, String profileImage) {
+    @OneToMany(mappedBy = "profileUser", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<DiaryImage> profileImages = new ArrayList<>();
+
+    public User(String email, String password, String nickname, String userStatus) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.profileImage = profileImage;
+        this.userStatus = userStatus;
     }
 
     @Override

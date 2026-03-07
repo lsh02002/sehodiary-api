@@ -2,6 +2,8 @@ package com.shop.sehodiary_api.web.dto.user;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @RequiredArgsConstructor
@@ -11,5 +13,5 @@ public class UserInfoResponse {
     private Long id;
     private String email;
     private String nickname;
-    private String profileImage;
+    private List<String> profileImages;
 }

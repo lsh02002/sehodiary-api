@@ -82,6 +82,7 @@ public class DiaryImageService {
         DiaryImage savedDiaryImage = diaryImageRepository.save(
                 DiaryImage.builder()
                         .diary(diary)
+                        .profileUser(null)
                         .uploader(uploader)
                         .imageUrl("/" + stored.storedKey())
                         .fileName(stored.originalFileName())

@@ -21,18 +21,21 @@ import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
 import com.shop.sehodiary_api.service.exceptions.BadRequestException;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
+import com.shop.sehodiary_api.service.user.profileimage.ProfileImageService;
 import com.shop.sehodiary_api.web.dto.user.*;
 import com.shop.sehodiary_api.web.dto.user.userLoginHist.UserLoginHistResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -49,11 +52,17 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisUtil redisUtil;
     private final UserLoginHistRepository userLoginHistRepository;
+    private final ProfileImageService profileImageService;
 
     private final PasswordEncoder passwordEncoder;
 
     private final ActivityLogService activityLogService;
     private final SnapshotFunc snapshotFunc;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+    @Value("${cloud.aws.region.static}")
+    private String region;
 
     @PostConstruct
     private void insertRoleUserAndRoleAdminToNewDb(){
@@ -118,7 +127,6 @@ public class UserService {
         User user = User.builder()
                 .email(signupRequest.getEmail())
                 .nickname(signupRequest.getNickname())
-                .profileImage(signupRequest.getProfileImage())
                 .password(signupRequest.getPassword())
                 .userStatus("정상")
                 .build();
@@ -202,11 +210,14 @@ public class UserService {
     }
 
     public UserInfoResponse getUserInfo(CustomUserDetails customUserDetails) {
+        User user =userRepository.findById(customUserDetails.getId())
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", customUserDetails.getId()));
+
         return UserInfoResponse.builder()
-                .id(customUserDetails.getId())
-                .email(customUserDetails.getEmail())
-                .nickname(customUserDetails.getNickname())
-                .profileImage(customUserDetails.getProfileImage())
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->"https://" + bucket + ".s3." + region + ".amazonaws.com" + image.getImageUrl()).toList())
                 .build();
     }
 
@@ -246,6 +257,25 @@ public class UserService {
         activityLogService.log(ActivityEntityType.USER, ActivityAction.DELETE, user.getId(), user.logMessage(), user, beforeUser, afterUser);
 
         return new UserResponse(200, "회원탈퇴 완료 되었습니다.", user.getNickname());
+    }
+
+    @Transactional
+    public UserResponse setProfileImages(Long userId, List<MultipartFile> files) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+        Object beforeUser = snapshotFunc.snapshot(user);
+
+        profileImageService.uploadManyFiles(userId, files);
+
+        userRepository.flush();
+        User reloadedUser = userRepository.findById(user.getId())
+                .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", user.getId()));
+
+        Object afterUser = snapshotFunc.snapshot(user);
+
+        activityLogService.log(ActivityEntityType.USER, ActivityAction.UPDATE, reloadedUser.getId(), reloadedUser.logMessage(), reloadedUser, beforeUser, afterUser);
+        return new UserResponse(HttpStatus.OK.value(), "프로파일 수정에 성공 하였습니다.", null);
     }
 
     public Page<UserLoginHistResponse> getUserLoginHist(Long userId, Pageable pageable) {

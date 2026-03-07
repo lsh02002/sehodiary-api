@@ -4,6 +4,8 @@ import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.user.UserService;
+import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
+import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.dto.user.LoginRequest;
 import com.shop.sehodiary_api.web.dto.user.SignupRequest;
 import com.shop.sehodiary_api.web.dto.user.UserInfoResponse;
@@ -14,10 +16,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -49,6 +53,11 @@ public class UserController {
     @DeleteMapping("/withdrawal")
     public ResponseEntity<UserResponse> withdrawal(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         return ResponseEntity.ok(userService.withdrawal(customUserDetails.getEmail()));
+    }
+
+    @PostMapping(path = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserResponse> setProfileImages(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestPart(required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(userService.setProfileImages(customUserDetails.getId(), files));
     }
 
     @GetMapping("/info")

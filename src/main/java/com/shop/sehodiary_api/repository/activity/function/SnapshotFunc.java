@@ -65,6 +65,7 @@ public class SnapshotFunc {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", diaryImage.getId());
             m.put("diaryId", diaryImage.getDiary() != null ? diaryImage.getDiary().getId() : null);
+            m.put("profileUserId", diaryImage.getProfileUser() != null ? diaryImage.getProfileUser().getId() : null);
             m.put("uploaderId", diaryImage.getUploader() != null ? diaryImage.getUploader().getId() : null);
             m.put("imageUrl", diaryImage.getImageUrl());
             m.put("fileName", diaryImage.getFileName());
@@ -102,7 +103,7 @@ public class SnapshotFunc {
             m.put("email", user.getEmail());
             m.put("password", user.getPassword());
             m.put("nickname", user.getNickname());
-            m.put("profileImage", user.getProfileImage());
+            m.put("profileImages", user.getProfileImages() != null ? user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(DiaryImage::getImageUrl).toList() : null);
             m.put("userStatus", user.getUserStatus());
             m.put("deletedAt", user.getDeletedAt());
             m.put("createdAt", user.getCreatedAt());

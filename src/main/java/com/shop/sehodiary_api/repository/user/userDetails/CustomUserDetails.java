@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.repository.user.userDetails;
 
+import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,7 +22,6 @@ public class CustomUserDetails implements UserDetails {
     private String password;
 
     private String nickname;
-    private String profileImage;
 
     private List<String> authorities;
 
