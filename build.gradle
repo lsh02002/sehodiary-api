@@ -35,7 +35,10 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // jwt
-    implementation 'io.jsonwebtoken:jjwt:0.9.1'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.7'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.7'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.7'
+
     implementation 'com.sun.xml.bind:jaxb-impl:4.0.1'
     implementation 'com.sun.xml.bind:jaxb-core:4.0.1'
     implementation 'javax.xml.bind:jaxb-api:2.4.0-b180830.0359'

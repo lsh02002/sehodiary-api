@@ -49,6 +49,6 @@ public class DiaryEmotion extends BaseTimeEntity implements Loggable {
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "글 '" + diary.getTitle() + "' 에 이모지 " + emotion.getName() + " '" + emotion.getEmoji() + "'";
     }
 }
