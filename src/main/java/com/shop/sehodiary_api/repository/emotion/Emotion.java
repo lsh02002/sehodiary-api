@@ -6,23 +6,15 @@ import java.util.List;
 import com.shop.sehodiary_api.repository.activity.logger.Loggable;
 import com.shop.sehodiary_api.repository.common.BaseTimeEntity;
 import com.shop.sehodiary_api.repository.diaryEmotion.DiaryEmotion;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.shop.sehodiary_api.repository.user.User;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(
     name = "emotions",
@@ -36,22 +28,27 @@ public class Emotion extends BaseTimeEntity implements Loggable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "emotion_name", nullable = false, length = 50)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "creator_id", nullable = false)
+    private User creator;
+
+    @Column(name = "emotion_name", unique = true, nullable = false, length = 50)
     private String name;
 
-    @Column(name = "emoji", length = 20)
+    @Column(name = "emoji", unique = true, nullable = false, length = 20)
     private String emoji;
 
     @OneToMany(mappedBy = "emotion", fetch = FetchType.LAZY)
     private List<DiaryEmotion> diaryEmotions = new ArrayList<>();
 
-    public Emotion(String name, String emoji) {
+    public Emotion(User creator, String name, String emoji) {
+        this.creator = creator;
         this.name = name;
         this.emoji = emoji;
     }
 
     @Override
     public String logMessage() {
-        return "name=";
+        return "이모지 " + name + " '" + emoji + "'" ;
     }
 }

@@ -155,7 +155,7 @@ public class DiaryService {
 
             diaryRepository.deleteByUserIdAndId(userId, diaryId);
         } catch (RuntimeException e) {
-            throw new ConflictException("해당 글을 삭제할 수 업습니다", diaryId);
+            throw new ConflictException("해당 글을 삭제할 수 없습니다", diaryId);
         }
     }
 }
