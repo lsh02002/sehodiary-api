@@ -107,11 +107,6 @@ public class JwtTokenProvider {
             return false;
         }
 
-        if (redisUtil.hasKeyBlackList(token)) {
-            log.warn("로그아웃된 refresh 토큰입니다.");
-            return false;
-        }
-
         try {
             // 파싱 자체가 서명/형식/만료 검증 역할을 수행
             parseRefreshClaims(token);
