@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.service.user;
 
+import com.shop.sehodiary_api.config.s3.S3Address;
 import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.config.redis.RedisUtil;
 import com.shop.sehodiary_api.config.security.JwtTokenProvider;
@@ -58,11 +59,7 @@ public class UserService {
 
     private final ActivityLogService activityLogService;
     private final SnapshotFunc snapshotFunc;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-    @Value("${cloud.aws.region.static}")
-    private String region;
+    private final S3Address s3Address;
 
     @PostConstruct
     private void insertRoleUserAndRoleAdminToNewDb(){
@@ -217,7 +214,7 @@ public class UserService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->"https://" + bucket + ".s3." + region + ".amazonaws.com" + image.getImageUrl()).toList())
+                .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->s3Address.siteAddress() + image.getImageUrl()).toList())
                 .build();
     }
 

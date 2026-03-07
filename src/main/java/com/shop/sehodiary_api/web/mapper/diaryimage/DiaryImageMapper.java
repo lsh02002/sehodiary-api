@@ -1,16 +1,15 @@
 package com.shop.sehodiary_api.web.mapper.diaryimage;
 
+import com.shop.sehodiary_api.config.s3.S3Address;
 import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
 import com.shop.sehodiary_api.web.dto.diaryimage.DiaryImageResponse;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class DiaryImageMapper {
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-    @Value("${cloud.aws.region.static}")
-    private String region;
+    private final S3Address s3Address;
 
     public DiaryImageResponse toResponse(DiaryImage diaryImage) {
         return DiaryImageResponse.builder()
@@ -18,7 +17,7 @@ public class DiaryImageMapper {
                 .diaryId(diaryImage.getDiary() != null ? diaryImage.getDiary().getId() : null)
                 .uploaderId(diaryImage.getUploader() != null ? diaryImage.getUploader().getId() : null)
                 .fileName(diaryImage.getFileName())
-                .fileUrl("https://" + bucket + ".s3." + region + ".amazonaws.com" + diaryImage.getImageUrl())
+                .fileUrl(s3Address.siteAddress() + diaryImage.getImageUrl())
                 .deleted(diaryImage.getDeleted())
                 .build();
     }

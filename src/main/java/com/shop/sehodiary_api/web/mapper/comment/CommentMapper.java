@@ -1,16 +1,15 @@
 package com.shop.sehodiary_api.web.mapper.comment;
 
+import com.shop.sehodiary_api.config.s3.S3Address;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.web.dto.comment.CommentResponse;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CommentMapper {
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-    @Value("${cloud.aws.region.static}")
-    private String region;
+    private final S3Address s3Address;
 
     public CommentResponse toResponse(Comment comment) {
         return CommentResponse.builder()
@@ -20,7 +19,7 @@ public class CommentMapper {
                 .profileImage(
                         comment.getUser().getProfileImages() != null &&
                                 !comment.getUser().getProfileImages().isEmpty()
-                                ? "https://" + bucket + ".s3." + region + ".amazonaws.com" +
+                                ? s3Address.siteAddress() +
                                 comment.getUser().getProfileImages().get(0).getImageUrl()
                                 : null
                 )
