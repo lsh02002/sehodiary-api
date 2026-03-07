@@ -5,9 +5,11 @@ import com.shop.sehodiary_api.service.diary.DiaryService;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -37,14 +39,14 @@ public class DiaryController {
         return ResponseEntity.ok(diaryService.getOneDiary(diaryId));
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<DiaryResponse> createDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody DiaryRequest request) {
-        return ResponseEntity.ok(diaryService.createDiary(customUserDetails.getId(), request));
+    @PostMapping(path = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DiaryResponse> createDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestPart DiaryRequest request, @RequestPart(required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(diaryService.createDiary(customUserDetails.getId(), request, files));
     }
 
-    @PostMapping("/edit/{diaryId}")
-    public ResponseEntity<DiaryResponse> editDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long diaryId, @RequestBody DiaryRequest request) {
-        return ResponseEntity.ok(diaryService.editDiary(customUserDetails.getId(), diaryId, request));
+    @PostMapping(path = "/edit/{diaryId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DiaryResponse> editDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long diaryId, @RequestPart DiaryRequest request, @RequestPart(required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(diaryService.editDiary(customUserDetails.getId(), diaryId, request, files));
     }
 
     @DeleteMapping("/{diaryId}")

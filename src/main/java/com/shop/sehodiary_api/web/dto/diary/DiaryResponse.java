@@ -1,6 +1,9 @@
 package com.shop.sehodiary_api.web.dto.diary;
 
+import com.shop.sehodiary_api.web.dto.diaryimage.DiaryImageResponse;
 import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -17,5 +20,6 @@ public class DiaryResponse {
     private Long commentsCount;
     private Long likesCount;
     private Boolean isLiked;
+    private List<DiaryImageResponse> images;
     private String createdAt;
 }

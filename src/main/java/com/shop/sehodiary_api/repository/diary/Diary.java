@@ -57,7 +57,7 @@ public class Diary extends BaseTimeEntity implements Loggable {
     private String weather;
 
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<DiaryImage> images = new ArrayList<>();
+    private List<DiaryImage> diaryImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<DiaryEmotion> diaryEmotions = new ArrayList<>();
@@ -82,12 +82,12 @@ public class Diary extends BaseTimeEntity implements Loggable {
     }
 
     public void addImage(DiaryImage image) {
-        images.add(image);
+        diaryImages.add(image);
         image.setDiary(this);
     }
 
     public void removeImage(DiaryImage image) {
-        images.remove(image);
+        diaryImages.remove(image);
         image.setDiary(null);
     }
 

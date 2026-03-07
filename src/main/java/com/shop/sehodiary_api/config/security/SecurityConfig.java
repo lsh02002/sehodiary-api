@@ -40,7 +40,7 @@ public class SecurityConfig {
                                 .contentSecurityPolicy(Customizer.withDefaults()))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .cors(c->{c.configurationSource(corsConfigurationSource());})
+                .cors(c-> c.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(e->{
                     e.authenticationEntryPoint(new AuthenticationEntryPointImpl());

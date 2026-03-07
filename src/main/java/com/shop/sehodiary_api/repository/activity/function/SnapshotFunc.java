@@ -39,6 +39,13 @@ public class SnapshotFunc {
             m.put("content", diary.getContent());
             m.put("visibility", diary.getVisibility().toString());
             m.put("weather", diary.getWeather());
+            m.put(
+                    "diaryImages",
+                    diary.getDiaryImages().stream()
+                            .filter(image -> !image.getDeleted())
+                            .map(DiaryImage::getImageUrl)
+                            .toList()
+            );
             m.put("createdAt", diary.getCreatedAt());
             m.put("updatedAt", diary.getUpdatedAt());
             return m;
@@ -58,7 +65,12 @@ public class SnapshotFunc {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", diaryImage.getId());
             m.put("diaryId", diaryImage.getDiary() != null ? diaryImage.getDiary().getId() : null);
+            m.put("uploaderId", diaryImage.getUploader() != null ? diaryImage.getUploader().getId() : null);
             m.put("imageUrl", diaryImage.getImageUrl());
+            m.put("fileName", diaryImage.getFileName());
+            m.put("mimeType", diaryImage.getMimeType());
+            m.put("sizeBytes", diaryImage.getSizeBytes());
+            m.put("deleted", diaryImage.getDeleted());
             m.put("createdAt", diaryImage.getCreatedAt());
             m.put("updatedAt", diaryImage.getUpdatedAt());
             return m;

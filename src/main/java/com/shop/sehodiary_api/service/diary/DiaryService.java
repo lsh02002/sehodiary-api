@@ -9,6 +9,7 @@ import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
+import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
@@ -18,6 +19,7 @@ import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,6 +31,7 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final DiaryMapper diaryMapper;
     private final ActivityLogService activityLogService;
+    private final DiaryImageService diaryImageService;
     private final SnapshotFunc snapshotFunc;
 
     @Transactional
@@ -58,7 +61,7 @@ public class DiaryService {
     }
 
     @Transactional
-    public DiaryResponse createDiary(Long userId, DiaryRequest request) {
+    public DiaryResponse createDiary(Long userId, DiaryRequest request, List<MultipartFile> files) {
         User user = userRepository.findById(userId)
                         .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
@@ -88,6 +91,8 @@ public class DiaryService {
 
         diaryRepository.save(diary);
 
+        diaryImageService.uploadManyFiles(userId, diary.getId(), files);
+
         Object afterDiary = snapshotFunc.snapshot(diary);
 
         activityLogService.log(ActivityEntityType.DIARY, ActivityAction.CREATE, diary.getId(), diary.logMessage(), user, null, afterDiary);
@@ -96,7 +101,7 @@ public class DiaryService {
     }
 
     @Transactional
-    public DiaryResponse editDiary(Long userId, Long diaryId, DiaryRequest request) {
+    public DiaryResponse editDiary(Long userId, Long diaryId, DiaryRequest request, List<MultipartFile> files) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
@@ -121,11 +126,16 @@ public class DiaryService {
             diary.setWeather(request.getWeather());
         }
 
-        Object afterDiary = snapshotFunc.snapshot(diary);
+        diaryImageService.uploadManyFiles(userId, diaryId, files);
 
-        activityLogService.log(ActivityEntityType.DIARY, ActivityAction.UPDATE, diary.getId(), diary.logMessage(), user, beforeDiary, afterDiary);
+        diaryRepository.flush();
+        Diary reloadedDiary = diaryRepository.findByUserIdAndId(userId, diaryId)
+                .orElseThrow(() -> new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
-        return diaryMapper.toResponse(diary);
+        Object afterDiary = snapshotFunc.snapshot(reloadedDiary);
+
+        activityLogService.log(ActivityEntityType.DIARY, ActivityAction.UPDATE, reloadedDiary.getId(), reloadedDiary.logMessage(), user, beforeDiary, afterDiary);
+        return diaryMapper.toResponse(reloadedDiary);
     }
 
     @Transactional
@@ -136,6 +146,8 @@ public class DiaryService {
 
             Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
                     .orElseThrow(()->new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
+
+            diaryImageService.deleteManyFiles(diary);
 
             Object beforeDiary = snapshotFunc.snapshot(diary);
 
