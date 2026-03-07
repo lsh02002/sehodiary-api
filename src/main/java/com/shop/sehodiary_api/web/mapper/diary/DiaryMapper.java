@@ -22,7 +22,7 @@ public class DiaryMapper {
                 .commentsCount(diary.getComments() != null ? (long) diary.getComments().size() : null)
                 .likesCount(diary.getLikes() != null ? (long) diary.getLikes().size() : null)
                 .isLiked(false)
-                .images(diary.getDiaryImages() != null ? diary.getDiaryImages().stream().filter(diaryImage -> !diaryImage.getDeleted()).map(diaryImageMapper::toResponse).toList() : null)
+                .imageResponses(diary.getDiaryImages() != null ? diary.getDiaryImages().stream().filter(diaryImage -> !diaryImage.getDeleted()).map(diaryImageMapper::toResponse).toList() : null)
                 .createdAt(diary.getCreatedAt().toString())
                 .build();
     }

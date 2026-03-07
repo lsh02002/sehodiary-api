@@ -20,6 +20,6 @@ public class DiaryResponse {
     private Long commentsCount;
     private Long likesCount;
     private Boolean isLiked;
-    private List<DiaryImageResponse> images;
+    private List<DiaryImageResponse> imageResponses;
     private String createdAt;
 }
