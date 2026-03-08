@@ -132,7 +132,7 @@ public class EmotionService {
                     .map(UserRoles::getRoles).map(Roles::getName).toList();
 
             if(!roles.contains("ROLE_ADMIN")) {
-                throw new BadRequestException("사용자 권한이 없습니다.", userId);
+                throw new BadRequestException("관리자 권한이 없습니다.", userId);
             }
 
             Emotion emotion = emotionRepository.findById(emotionId)
