@@ -1,4 +1,4 @@
-package com.shop.sehodiary_api.service.user.profileimage;
+package com.shop.sehodiary_api.service.profileimage;
 
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
