@@ -345,7 +345,9 @@ public class UserService {
         return userRepository.findAll(pageable)
                 .map(user->UserInfoResponse.builder()
                         .id(user.getId())
+                        .email(user.getEmail())
                         .nickname(user.getNickname())
+                        .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->s3Address.siteAddress() + image.getImageUrl()).toList())
                         .build());
     }
 
