@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.web.mapper.diary;
 
+import com.shop.sehodiary_api.config.s3.S3Address;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diaryimage.DiaryImageMapper;
@@ -12,6 +13,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class DiaryMapper {
     private final DiaryImageMapper diaryImageMapper;
+    private final S3Address s3Address;
 
     public DiaryResponse toResponse(Diary diary) {
         return DiaryResponse.builder()
@@ -25,6 +27,13 @@ public class DiaryMapper {
                 .likesCount(diary.getLikes() != null ? (long) diary.getLikes().size() : null)
                 .isLiked(false)
                 .imageResponses(diary.getDiaryImages() != null ? diary.getDiaryImages().stream().filter(diaryImage -> !diaryImage.getDeleted()).map(diaryImageMapper::toResponse).toList() : null)
+                .profileImage(
+                        diary.getUser().getProfileImages() != null &&
+                                !diary.getUser().getProfileImages().isEmpty()
+                                ? s3Address.siteAddress() +
+                                diary.getUser().getProfileImages().get(0).getImageUrl()
+                                : null
+                )
                 .emoji(
                         Optional.ofNullable(diary.getDiaryEmotions())
                                 .filter(list -> !list.isEmpty())

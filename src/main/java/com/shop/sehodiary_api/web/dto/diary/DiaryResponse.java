@@ -21,6 +21,7 @@ public class DiaryResponse {
     private Long likesCount;
     private Boolean isLiked;
     private List<DiaryImageResponse> imageResponses;
+    private String profileImage;
     private String emoji;
     private String createdAt;
 }

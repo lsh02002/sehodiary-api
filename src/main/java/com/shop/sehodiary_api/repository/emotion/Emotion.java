@@ -38,6 +38,7 @@ public class Emotion extends BaseTimeEntity implements Loggable {
     @Column(name = "emoji", unique = true, nullable = false, length = 20)
     private String emoji;
 
+    @Builder.Default
     @OneToMany(mappedBy = "emotion", fetch = FetchType.LAZY)
     private List<DiaryEmotion> diaryEmotions = new ArrayList<>();
 
