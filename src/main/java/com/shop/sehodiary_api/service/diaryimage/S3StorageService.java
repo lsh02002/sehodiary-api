@@ -5,6 +5,8 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.shop.sehodiary_api.service.exceptions.ConflictException;
+import com.shop.sehodiary_api.service.exceptions.NotFoundException;
 import com.shop.sehodiary_api.web.dto.diaryimage.FileRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,7 @@ public class S3StorageService {
      */
     public FileRequest saveFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("빈 파일은 업로드할 수 없습니다.");
+            throw new NotFoundException("빈 파일은 업로드할 수 없습니다.", null);
         }
 
         String originalName = file.getOriginalFilename();
@@ -48,7 +50,7 @@ public class S3StorageService {
         try {
             bytes = file.getBytes();
         } catch (IOException e) {
-            throw new RuntimeException("파일을 읽을 수 없습니다.", e);
+            throw new ConflictException("파일을 읽을 수 없습니다.", e);
         }
 
         String hash = sha256(bytes);
@@ -73,7 +75,7 @@ public class S3StorageService {
         try (ByteArrayInputStream in = new ByteArrayInputStream(bytes)) {
             s3.putObject(new PutObjectRequest(bucket, key, in, meta));
         } catch (IOException e) {
-            throw new RuntimeException("파일 업로드 실패", e);
+            throw new ConflictException("파일 업로드 실패", e);
         }
 
         return FileRequest.builder()
@@ -93,7 +95,7 @@ public class S3StorageService {
         try {
             s3.deleteObject(new DeleteObjectRequest(bucket, storedKey));
         } catch (AmazonS3Exception e) {
-            log.warn("S3 삭제 실패 (key: {}): {}", storedKey, e.getMessage());
+            throw new ConflictException("S3 삭제 실패 (key: {}): {}" + storedKey, e.getMessage());
         }
     }
 
@@ -107,8 +109,7 @@ public class S3StorageService {
             return true;
         } catch (AmazonS3Exception e) {
             if (e.getStatusCode() == 404) return false;
-            log.warn("S3 존재 확인 실패 (key: {}): {}", storedKey, e.getMessage());
-            return false;
+            throw new ConflictException("S3 존재 확인 실패 (key: {}): {}" + storedKey, e.getMessage());
         }
     }
 
@@ -157,7 +158,7 @@ public class S3StorageService {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 계산 실패", e);
+            throw new ConflictException("SHA-256 계산 실패", e);
         }
     }
 }

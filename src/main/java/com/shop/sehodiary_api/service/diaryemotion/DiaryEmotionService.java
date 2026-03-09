@@ -97,15 +97,17 @@ public class DiaryEmotionService {
 
         Object afterDiaryEmotion = snapshotFunc.snapshot(diaryEmotion);
 
-        activityLogService.log(
-                ActivityEntityType.DIARY_EMOTION,
-                ActivityAction.UPDATE,
-                diaryEmotion.getId(),
-                diaryEmotion.logMessage(),
-                user,
-                beforeDiaryEmotion,
-                afterDiaryEmotion
-        );
+        if(!Objects.equals(beforeDiaryEmotion, afterDiaryEmotion)) {
+            activityLogService.log(
+                    ActivityEntityType.DIARY_EMOTION,
+                    ActivityAction.UPDATE,
+                    diaryEmotion.getId(),
+                    diaryEmotion.logMessage(),
+                    user,
+                    beforeDiaryEmotion,
+                    afterDiaryEmotion
+            );
+        }
     }
 
     @Transactional
