@@ -8,7 +8,7 @@ import com.shop.sehodiary_api.repository.diaryImage.DiaryImageRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
-import com.shop.sehodiary_api.service.diaryimage.S3StorageService;
+import com.shop.sehodiary_api.service.s3.S3StorageService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;

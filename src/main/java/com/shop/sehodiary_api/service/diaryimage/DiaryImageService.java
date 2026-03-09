@@ -13,6 +13,7 @@ import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
+import com.shop.sehodiary_api.service.s3.S3StorageService;
 import com.shop.sehodiary_api.web.dto.diaryimage.DiaryImageResponse;
 import com.shop.sehodiary_api.web.dto.diaryimage.FileRequest;
 import com.shop.sehodiary_api.web.mapper.diaryimage.DiaryImageMapper;
