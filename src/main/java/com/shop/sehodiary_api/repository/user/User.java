@@ -82,4 +82,9 @@ public class User extends BaseTimeEntity implements Loggable {
         diaries.remove(diary);
         diary.setUser(null);
     }
+
+    public void removeProfileImage(DiaryImage image) {
+        profileImages.remove(image);
+        image.setProfileUser(null);
+    }
 }

@@ -109,13 +109,20 @@ public class DiaryImageService {
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다. id=", userId));
 
         List<DiaryImageResponse> responses = new ArrayList<>();
-        if (files == null || files.isEmpty()) {
-            return responses;
-        }
 
         List<DiaryImage> currentImages = diary.getDiaryImages().stream()
                 .filter(image -> !image.getDeleted())
                 .toList();
+
+        if (files == null || files.isEmpty()) {
+            List<DiaryImage> imagesToDelete = new ArrayList<>(uploader.getProfileImages());
+
+            for (DiaryImage image : imagesToDelete) {
+                deleteFile(uploader, image); // 실제 파일 삭제만
+                diary.removeDiaryImage(image); // 연관관계 제거
+            }
+            return responses;
+        }
 
         for (DiaryImage diaryImage : currentImages) {
             boolean existsInRequest = files.stream().anyMatch(file ->

@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,13 +68,19 @@ public class ProfileImageService {
         User uploader = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("존재하지 않는 사용자입니다. id=", userId));
 
-        if (files == null || files.isEmpty()) {
-            return;
-        }
-
         List<DiaryImage> currentImages = uploader.getProfileImages().stream()
                 .filter(image -> !image.getDeleted())
                 .toList();
+
+        if (files == null || files.isEmpty()) {
+            List<DiaryImage> imagesToDelete = new ArrayList<>(uploader.getProfileImages());
+
+            for (DiaryImage image : imagesToDelete) {
+                deleteFile(uploader, image); // 실제 파일 삭제만
+                uploader.removeProfileImage(image); // 연관관계 제거
+            }
+            return;
+        }
 
         for (DiaryImage diaryImage : currentImages) {
             boolean existsInRequest = files.stream().anyMatch(file ->

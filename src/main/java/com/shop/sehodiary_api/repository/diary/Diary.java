@@ -85,12 +85,12 @@ public class Diary extends BaseTimeEntity implements Loggable {
         return "글 '" + title + "'";
     }
 
-    public void addImage(DiaryImage image) {
+    public void addDiaryImage(DiaryImage image) {
         diaryImages.add(image);
         image.setDiary(this);
     }
 
-    public void removeImage(DiaryImage image) {
+    public void removeDiaryImage(DiaryImage image) {
         diaryImages.remove(image);
         image.setDiary(null);
     }
