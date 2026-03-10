@@ -131,9 +131,9 @@ public class DiaryService {
             diary.setWeather(request.getWeather());
         }
 
-        if (files != null && !files.isEmpty()) {
+        // if (files != null && !files.isEmpty()) {
             diaryImageService.uploadManyFiles(userId, diaryId, files);
-        }
+        // }
 
         if (request.getEmoji() != null && !request.getEmoji().isBlank()) {
             diaryEmotionService.editDiaryEmotion(userId, diaryId, request.getEmoji());

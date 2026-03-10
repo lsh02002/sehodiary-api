@@ -115,7 +115,7 @@ public class DiaryImageService {
                 .toList();
 
         if (files == null || files.isEmpty()) {
-            List<DiaryImage> imagesToDelete = new ArrayList<>(uploader.getProfileImages());
+            List<DiaryImage> imagesToDelete = new ArrayList<>(diary.getDiaryImages());
 
             for (DiaryImage image : imagesToDelete) {
                 deleteFile(uploader, image); // 실제 파일 삭제만
