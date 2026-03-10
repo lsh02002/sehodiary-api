@@ -73,12 +73,12 @@ public class ProfileImageService {
                 .toList();
 
         if (files == null || files.isEmpty()) {
-            List<DiaryImage> imagesToDelete = new ArrayList<>(uploader.getProfileImages());
-
-            for (DiaryImage image : imagesToDelete) {
-                deleteFile(uploader, image); // 실제 파일 삭제만
-                uploader.removeProfileImage(image); // 연관관계 제거
-            }
+//            List<DiaryImage> imagesToDelete = new ArrayList<>(uploader.getProfileImages());
+//
+//            for (DiaryImage image : imagesToDelete) {
+//                deleteFile(uploader, image); // 실제 파일 삭제만
+//                uploader.removeProfileImage(image); // 연관관계 제거
+//            }
             return;
         }
 
