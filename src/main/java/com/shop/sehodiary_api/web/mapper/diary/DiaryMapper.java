@@ -31,7 +31,9 @@ public class DiaryMapper {
                         diary.getUser().getProfileImages() != null &&
                                 !diary.getUser().getProfileImages().isEmpty()
                                 ? s3Address.siteAddress() +
-                                diary.getUser().getProfileImages().get(0).getImageUrl()
+                                diary.getUser().getProfileImages()
+                                        .get(diary.getUser().getProfileImages().size() - 1)
+                                        .getImageUrl()
                                 : null
                 )
                 .emoji(

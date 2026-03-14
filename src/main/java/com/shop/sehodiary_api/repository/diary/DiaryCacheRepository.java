@@ -13,9 +13,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DiaryCacheRepository {
 
-    private static final String DIARY_CACHE_KEY = "diary:cache";
-    private static final String PUBLIC_IDS_KEY = "diary:ids:public";
-    private static final String FRIENDS_IDS_KEY = "diary:ids:friends";
+    private static final String DIARY_CACHE_KEY = "diary:cache:";
 
     private final DiaryRepository diaryRepository;
     private final DiaryMapper diaryMapper;
@@ -35,61 +33,35 @@ public class DiaryCacheRepository {
 
     public void delete(Long diaryId) {
         redisTemplate.opsForHash().delete(DIARY_CACHE_KEY, diaryId);
-        redisTemplate.opsForSet().remove(PUBLIC_IDS_KEY, diaryId);
-        redisTemplate.opsForSet().remove(FRIENDS_IDS_KEY, diaryId);
     }
 
     public Map<Long, DiaryResponse> getAll() {
         Map<Object, Object> entries = redisTemplate.opsForHash().entries(DIARY_CACHE_KEY);
 
         if (entries.isEmpty()) {
-            List<Diary> diaries = diaryRepository.findAllWithUser();
-
-            Map<Object, Object> map = diaries.stream()
-                    .collect(Collectors.toMap(
-                            Diary::getId,
-                            diaryMapper::toResponse
-                    ));
-
-            if (!map.isEmpty()) {
-                redisTemplate.opsForHash().putAll(DIARY_CACHE_KEY, map);
-            }
-            entries = map;
+            return Collections.emptyMap();
         }
 
-        return entries.entrySet().stream()
-                .collect(Collectors.toMap(
-                        e -> Long.valueOf(String.valueOf(e.getKey())),
-                        e -> (DiaryResponse) e.getValue()
-                ));
-    }
+        Map<Long, DiaryResponse> result = new HashMap<>();
 
-    public Set<Long> findAllPublic() {
-        return findIds(
-                PUBLIC_IDS_KEY,
-                diaryRepository.findAllPublicIds()
-        );
-    }
-
-    public Set<Long> findAllFriends() {
-        return findIds(
-                FRIENDS_IDS_KEY,
-                diaryRepository.findAllFriendsIds()
-        );
-    }
-
-    private Set<Long> findIds(String key, List<Long> fallbackIds) {
-        Set<Object> members = redisTemplate.opsForSet().members(key);
-
-        if (members == null || members.isEmpty()) {
-            if (!fallbackIds.isEmpty()) {
-                redisTemplate.opsForSet().add(key, fallbackIds.toArray());
+        for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+            DiaryResponse value = (DiaryResponse) entry.getValue();
+            if (value != null && value.getId() != null) {
+                result.put(value.getId(), value);
             }
-            return new HashSet<>(fallbackIds);
         }
 
-        return members.stream()
-                .map(v -> Long.valueOf(String.valueOf(v)))
-                .collect(Collectors.toSet());
+        return result;
+    }
+
+    public void evictDiaryCacheByUser(Long userId) {
+        List<Long> diaryIds = diaryRepository.findIdsByUserId(userId);
+
+        if (!diaryIds.isEmpty()) {
+            redisTemplate.opsForHash().delete(
+                    DIARY_CACHE_KEY,
+                    diaryIds.toArray(new Object[0])
+            );
+        }
     }
 }

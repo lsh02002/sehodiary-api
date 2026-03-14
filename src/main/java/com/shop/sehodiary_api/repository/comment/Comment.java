@@ -15,6 +15,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,7 +24,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "comments")
-public class Comment extends BaseTimeEntity implements Loggable {
+public class Comment extends BaseTimeEntity implements Loggable, Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

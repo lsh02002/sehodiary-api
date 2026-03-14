@@ -20,7 +20,9 @@ public class CommentMapper {
                         comment.getUser().getProfileImages() != null &&
                                 !comment.getUser().getProfileImages().isEmpty()
                                 ? s3Address.siteAddress() +
-                                comment.getUser().getProfileImages().get(0).getImageUrl()
+                                comment.getUser().getProfileImages()
+                                        .get(comment.getUser().getProfileImages().size() - 1)
+                                        .getImageUrl()
                                 : null
                 )
                 .content(comment.getContent())

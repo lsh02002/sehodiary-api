@@ -3,6 +3,7 @@ package com.shop.sehodiary_api.repository.diary;
 import com.shop.sehodiary_api.repository.common.Visibility;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +29,16 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
        where d.visibility = 'FRIENDS'
        """)
     List<Long> findAllFriendsIds();
+
+    @Query("select d.id from Diary d where d.user.id = :userId")
+    List<Long> findIdsByUserId(@Param("userId") Long userId);
+
+    @Query("""
+    select d
+    from Diary d
+    join fetch d.user u
+    left join fetch d.diaryImages di
+    where u.id = :userId
+""")
+    List<Diary> findAllByUserIdWithUser(@Param("userId") Long userId);
 }

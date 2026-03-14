@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.config.redis;
 
+import com.shop.sehodiary_api.web.dto.comment.CommentResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -9,9 +10,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.serializer.*;
 
 import java.time.Duration;
 
@@ -35,6 +34,40 @@ public class RedisConfig {
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, CommentResponse> commentRedisTemplate(
+            RedisConnectionFactory connectionFactory
+    ) {
+
+        RedisTemplate<String, CommentResponse> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(CommentResponse.class));
+
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, Long> longRedisTemplate(
+            RedisConnectionFactory connectionFactory
+    ) {
+        RedisTemplate<String, Long> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        StringRedisSerializer keySerializer = new StringRedisSerializer();
+        GenericToStringSerializer<Long> valueSerializer =
+                new GenericToStringSerializer<>(Long.class);
+
+        template.setKeySerializer(keySerializer);
+        template.setValueSerializer(valueSerializer);
+        template.setHashKeySerializer(keySerializer);
+        template.setHashValueSerializer(valueSerializer);
+
+        template.afterPropertiesSet();
         return template;
     }
 

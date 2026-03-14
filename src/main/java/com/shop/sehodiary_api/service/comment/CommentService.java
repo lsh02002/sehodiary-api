@@ -4,6 +4,8 @@ import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.comment.Comment;
+import com.shop.sehodiary_api.repository.comment.CommentCacheRepository;
+import com.shop.sehodiary_api.repository.comment.CommentIdRedisRepository;
 import com.shop.sehodiary_api.repository.comment.CommentRepository;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
@@ -23,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,17 +41,86 @@ public class CommentService {
     private final DiaryCacheRepository diaryCacheRepository;
     private final DiaryMapper diaryMapper;
 
+    private final CommentCacheRepository commentCacheRepository;
+    private final CommentIdRedisRepository commentIdRedisRepository;
+
     @Transactional(readOnly = true)
-    public List<CommentResponse> getCommentsByDiaryId(Long diaryId){
-        return commentRepository.findByDiaryId(diaryId)
-                .stream().map(commentMapper::toResponse).toList();
+    public List<CommentResponse> getCommentsByDiaryId(Long diaryId) {
+        List<Long> commentIds = commentIdRedisRepository.findAllByDiaryId(diaryId);
+        Map<Long, CommentResponse> cached = commentCacheRepository.getAll();
+
+        if (commentIds.isEmpty()) {
+            List<Long> ids = commentRepository.findAllIdsByDiaryId(diaryId);
+
+            commentIdRedisRepository.saveAllByDiaryId(diaryId, ids);
+            commentIds = ids;
+        }
+
+        List<CommentResponse> result = commentIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<Long> missingIds = commentIds.stream()
+                .filter(id -> !cached.containsKey(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            List<CommentResponse> dbResults = commentRepository.findAllById(missingIds).stream()
+                    .map(commentMapper::toResponse)
+                    .toList();
+
+            dbResults.forEach(commentCacheRepository::put);
+            result.addAll(dbResults);
+        }
+
+        return result;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByUser(Long userId) {
-        return commentRepository.findByUserId(userId)
-                .stream().map(commentMapper::toResponse).toList();
+
+        List<Long> commentIds = commentIdRedisRepository.findAllByUserId(userId);
+
+        // Redis에 없으면 DB에서 채우기
+        if (commentIds.isEmpty()) {
+            List<Long> ids = commentRepository.findIdsByUserId(userId);
+
+            if (ids.isEmpty()) {
+                return List.of();
+            }
+
+            commentIdRedisRepository.saveAllByUserId(userId, ids);
+            commentIds = new ArrayList<>(ids);
+        }
+
+        Map<Long, CommentResponse> cached = commentCacheRepository.getAll();
+
+        List<CommentResponse> result = new ArrayList<>();
+        List<Long> missingIds = new ArrayList<>();
+
+        for (Long commentId : commentIds) {
+            CommentResponse cachedComment = cached.get(commentId);
+
+            if (cachedComment != null) {
+                result.add(cachedComment);
+            } else {
+                missingIds.add(commentId);
+            }
+        }
+
+        if (!missingIds.isEmpty()) {
+            List<CommentResponse> dbResults = commentRepository.findAllById(missingIds).stream()
+                    .map(commentMapper::toResponse)
+                    .toList();
+
+            dbResults.forEach(commentCacheRepository::put);
+            result.addAll(dbResults);
+        }
+
+        return result;
     }
+
 
     @Transactional
     public CommentResponse createComment(Long userId, CommentRequest request) {
@@ -71,16 +143,18 @@ public class CommentService {
         commentRepository.save(comment);
 
         Object afterComment = snapshotFunc.snapshot(comment);
-
         activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.CREATE, comment.getId(), comment.logMessage(), user, null, afterComment);
 
         diary.getComments().add(comment);
 
         DiaryResponse response = diaryMapper.toResponse(diary);
-
         diaryCacheRepository.put(response);
 
-        return commentMapper.toResponse(comment);
+        CommentResponse commentResponse = commentMapper.toResponse(comment);
+        commentCacheRepository.put(commentResponse);
+        commentIdRedisRepository.addByDiaryId(comment.getDiary().getId(), comment.getId());
+
+        return commentResponse;
     }
 
     @Transactional
@@ -98,18 +172,17 @@ public class CommentService {
         }
 
         comment.setContent(request.getContent());
-
         Object aftercomment = snapshotFunc.snapshot(comment);
-
         activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.UPDATE, comment.getId(), comment.logMessage(), user, beforecomment, aftercomment);
 
         comment.getDiary().addComment(comment);
-
         DiaryResponse response = diaryMapper.toResponse(comment.getDiary());
-
         diaryCacheRepository.put(response);
 
-        return commentMapper.toResponse(comment);
+        CommentResponse commentResponse = commentMapper.toResponse(comment);
+        commentCacheRepository.put(commentResponse);
+
+        return commentResponse;
     }
 
     @Transactional
@@ -122,14 +195,14 @@ public class CommentService {
                     .orElseThrow(()->new NotFoundException("해당 사용자의 댓글이 아닙니다.", commentId));
 
             Object beforecomment = snapshotFunc.snapshot(comment);
-
             activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.DELETE, comment.getId(), comment.logMessage(), user, beforecomment, null);
 
             comment.getDiary().removeComment(comment);
-
             DiaryResponse response = diaryMapper.toResponse(comment.getDiary());
-
             diaryCacheRepository.put(response);
+
+            commentCacheRepository.evict(commentId);
+            commentIdRedisRepository.removeByDiaryId(comment.getDiary().getId(), commentId);
 
             commentRepository.delete(comment);
         } catch (Exception e) {

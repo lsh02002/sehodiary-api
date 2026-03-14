@@ -113,13 +113,44 @@ public class DiaryService {
     }
 
     @Transactional(readOnly = true)
-    public List<DiaryResponse> getDiariesByUser(String nickname) {
+    public List<DiaryResponse> getDiariesByUser(Long userId) {
+        Set<Long> diaryIds = diaryIdRedisRepository.findAllUser(userId);
+
+        // user diaryIds가 비어있으면 DB에서 채우기
+        if (diaryIds.isEmpty()) {
+            List<Long> ids = diaryRepository.findIdsByUserId(userId);
+
+            if (!ids.isEmpty()) {
+                diaryIdRedisRepository.saveUserIds(userId, ids);
+                diaryIds = new HashSet<>(ids);
+            } else {
+                return List.of();
+            }
+        }
+
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
-        return cached.values().stream()
-                .filter(d -> Objects.equals(d.getNickname(), nickname))
+        List<DiaryResponse> result = diaryIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<Long> missingIds = diaryIds.stream()
+                .filter(id -> !cached.containsKey(id))
                 .toList();
+
+        if (!missingIds.isEmpty()) {
+            List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
+                    .map(diaryMapper::toResponse)
+                    .toList();
+
+            dbResults.forEach(diaryCacheRepository::put);
+            result.addAll(dbResults);
+        }
+
+        return result;
     }
+
 
     @Transactional(readOnly = true)
     public DiaryResponse getOneDiary(Long diaryId) {
