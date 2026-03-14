@@ -6,6 +6,7 @@ import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.comment.Comment;
 import com.shop.sehodiary_api.repository.comment.CommentRepository;
 import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
@@ -15,7 +16,9 @@ import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
 import com.shop.sehodiary_api.web.dto.comment.CommentRequest;
 import com.shop.sehodiary_api.web.dto.comment.CommentResponse;
+import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.comment.CommentMapper;
+import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,9 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final ActivityLogService activityLogService;
     private final SnapshotFunc snapshotFunc;
+
+    private final DiaryCacheRepository diaryCacheRepository;
+    private final DiaryMapper diaryMapper;
 
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByDiaryId(Long diaryId){
@@ -68,6 +74,12 @@ public class CommentService {
 
         activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.CREATE, comment.getId(), comment.logMessage(), user, null, afterComment);
 
+        diary.getComments().add(comment);
+
+        DiaryResponse response = diaryMapper.toResponse(diary);
+
+        diaryCacheRepository.put(response);
+
         return commentMapper.toResponse(comment);
     }
 
@@ -91,6 +103,12 @@ public class CommentService {
 
         activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.UPDATE, comment.getId(), comment.logMessage(), user, beforecomment, aftercomment);
 
+        comment.getDiary().addComment(comment);
+
+        DiaryResponse response = diaryMapper.toResponse(comment.getDiary());
+
+        diaryCacheRepository.put(response);
+
         return commentMapper.toResponse(comment);
     }
 
@@ -106,6 +124,12 @@ public class CommentService {
             Object beforecomment = snapshotFunc.snapshot(comment);
 
             activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.DELETE, comment.getId(), comment.logMessage(), user, beforecomment, null);
+
+            comment.getDiary().removeComment(comment);
+
+            DiaryResponse response = diaryMapper.toResponse(comment.getDiary());
+
+            diaryCacheRepository.put(response);
 
             commentRepository.delete(comment);
         } catch (Exception e) {

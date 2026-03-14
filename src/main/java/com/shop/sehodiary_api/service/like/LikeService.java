@@ -4,6 +4,7 @@ import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.like.LikeRepository;
@@ -29,6 +30,8 @@ public class LikeService {
     private final DiaryMapper diaryMapper;
     private final ActivityLogService activityLogService;
     private final SnapshotFunc snapshotFunc;
+
+    private final DiaryCacheRepository diaryCacheRepository;
 
     @Transactional
     public List<String> getLikingNicknamesByDiary(Long diaryId) {
@@ -66,6 +69,10 @@ public class LikeService {
 
         activityLogService.log(ActivityEntityType.LIKE, ActivityAction.CREATE, like.getId(), like.logMessage(), user, null, afterLike);
 
+        DiaryResponse response = diaryMapper.toResponse(like.getDiary());
+
+        diaryCacheRepository.put(response);
+
         return true;
     }
 
@@ -75,6 +82,9 @@ public class LikeService {
         User user =userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
+        Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(()-> new NotFoundException("해당 글을 찾을 수 없습니다.", null));
+
         Like like = likeRepository.findByUserIdAndDiaryId(userId, diaryId)
                 .orElseThrow(() -> new NotFoundException("좋아요가 되어있지 않았습니다. ", null));
 
@@ -82,7 +92,12 @@ public class LikeService {
 
         activityLogService.log(ActivityEntityType.LIKE, ActivityAction.DELETE, like.getId(), like.logMessage(), user, beforeLike, null);
 
+        diary.removeLike(like);
         likeRepository.delete(like);
+
+        DiaryResponse response = diaryMapper.toResponse(diary);
+
+        diaryCacheRepository.put(response);
 
         return false;
     }
