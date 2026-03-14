@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.repository.diary;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "diaries")
-public class Diary extends BaseTimeEntity implements Loggable {
+public class Diary extends BaseTimeEntity implements Loggable, Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

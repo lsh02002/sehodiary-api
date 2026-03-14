@@ -5,6 +5,8 @@ import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
 import com.shop.sehodiary_api.repository.common.Visibility;
 import com.shop.sehodiary_api.repository.diary.Diary;
+import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
+import com.shop.sehodiary_api.repository.diary.DiaryIdRedisRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
@@ -22,8 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -36,30 +37,78 @@ public class DiaryService {
     private final DiaryEmotionService diaryEmotionService;
     private final SnapshotFunc snapshotFunc;
 
-    @Transactional
+    private final DiaryIdRedisRepository diaryIdRedisRepository;
+    private final DiaryCacheRepository diaryCacheRepository;
+
+    @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic() {
-        return diaryRepository.findByVisibilityIn(List.of(Visibility.PUBLIC))
-                .stream().map(diaryMapper::toResponse).toList();
+        Set<Long> publicIds = diaryIdRedisRepository.findAll();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllPublic();
+
+        List<Long> missingIds = publicIds.stream()
+                .filter(id -> !cached.containsKey(id))
+                .toList();
+
+        List<DiaryResponse> result = new ArrayList<>(cached.values());
+
+        if (!missingIds.isEmpty()) {
+            List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
+                    .filter(diary -> diary.getVisibility() == Visibility.PUBLIC)
+                    .map(diaryMapper::toResponse)
+                    .toList();
+
+            result.addAll(dbResults);
+        }
+
+        return result;
     }
 
     @Transactional
     public List<DiaryResponse> getDiariesByFriends() {
-        return diaryRepository.findByVisibilityIn(List.of(Visibility.PUBLIC, Visibility.FRIENDS))
-                .stream().map(diaryMapper::toResponse).toList();
+        Set<Long> friendIds = diaryIdRedisRepository.findAll();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllFriends();
+
+        List<Long> missingIds = friendIds.stream()
+                .filter(id -> !cached.containsKey(id))
+                .toList();
+
+        List<DiaryResponse> result = new ArrayList<>(cached.values());
+
+        if (!missingIds.isEmpty()) {
+            List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
+                    .filter(diary -> diary.getVisibility() == Visibility.FRIENDS)
+                    .map(diaryMapper::toResponse)
+                    .toList();
+
+            result.addAll(dbResults);
+        }
+
+        return result;
     }
 
-    @Transactional
-    public List<DiaryResponse> getDiariesByUser(Long userId) {
-        return diaryRepository.findByUserId(userId)
-                .stream().map(diaryMapper::toResponse).toList();
+    @Transactional(readOnly = true)
+    public List<DiaryResponse> getDiariesByUser(String nickname) {
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+
+        return cached.values().stream()
+                .filter(d -> d.getNickname().equals(nickname))
+                .toList();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public DiaryResponse getOneDiary(Long diaryId) {
-        Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(()-> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
+        Optional<DiaryResponse> cached = diaryCacheRepository.get(diaryId);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
 
-        return diaryMapper.toResponse(diary);
+        Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
+
+        DiaryResponse response = diaryMapper.toResponse(diary);
+        diaryCacheRepository.put(response);
+
+        return response;
     }
 
     @Transactional
@@ -101,7 +150,12 @@ public class DiaryService {
 
         activityLogService.log(ActivityEntityType.DIARY, ActivityAction.CREATE, diary.getId(), diary.logMessage(), user, null, afterDiary);
 
-        return diaryMapper.toResponse(diary);
+        DiaryResponse response = diaryMapper.toResponse(diary);
+
+        diaryCacheRepository.put(response);
+        diaryIdRedisRepository.add(diary.getId());
+
+        return response;
     }
 
     @Transactional
@@ -156,7 +210,12 @@ public class DiaryService {
                 afterDiary
         );
 
-        return diaryMapper.toResponse(reloadedDiary);
+        DiaryResponse response = diaryMapper.toResponse(diary);
+
+        diaryCacheRepository.put(response);
+        diaryIdRedisRepository.add(diary.getId());
+
+        return response;
     }
     @Transactional
     public void deleteDiary(Long userId, Long diaryId) {
@@ -174,6 +233,10 @@ public class DiaryService {
             activityLogService.log(ActivityEntityType.DIARY, ActivityAction.DELETE, diary.getId(), diary.logMessage(), user, beforeDiary, null);
 
             diaryRepository.deleteByUserIdAndId(userId, diaryId);
+
+            diaryCacheRepository.delete(diaryId);
+            diaryIdRedisRepository.remove(diaryId);
+
         } catch (RuntimeException e) {
             throw new ConflictException("해당 글을 삭제할 수 없습니다", diaryId);
         }

@@ -3,6 +3,7 @@ package com.shop.sehodiary_api.web.dto.diary;
 import com.shop.sehodiary_api.web.dto.diaryimage.DiaryImageResponse;
 import lombok.*;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Getter
@@ -10,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DiaryResponse {
+public class DiaryResponse implements Serializable {
     private Long id;
     private String nickname;
     private String title;

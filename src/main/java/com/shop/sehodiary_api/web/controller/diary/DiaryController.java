@@ -31,7 +31,7 @@ public class DiaryController {
 
     @GetMapping("/user")
     public ResponseEntity<List<DiaryResponse>> getDiariesByUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        return ResponseEntity.ok(diaryService.getDiariesByUser(customUserDetails.getId()));
+        return ResponseEntity.ok(diaryService.getDiariesByUser(customUserDetails.getNickname()));
     }
 
     @GetMapping("/{diaryId}")
