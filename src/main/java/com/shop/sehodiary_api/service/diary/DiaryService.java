@@ -83,7 +83,7 @@ public class DiaryService {
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         if (friendIds.isEmpty()) {
-            List<Long> ids = diaryRepository.findAllPublicIds();
+            List<Long> ids = diaryRepository.findAllFriendsIds();
 
             diaryIdRedisRepository.saveFriends(ids);
             friendIds = new HashSet<>(ids);
