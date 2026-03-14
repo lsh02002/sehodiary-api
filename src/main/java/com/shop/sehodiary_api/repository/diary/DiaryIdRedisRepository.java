@@ -26,19 +26,11 @@ public class DiaryIdRedisRepository {
     public Set<Long> findAll() {
         Set<Object> members = redisTemplate.opsForSet().members(KEY);
 
-        if (members == null || diaryRepository.count() != members.size()) {
+        if (members == null || members.isEmpty()) {
             List<Long> ids = diaryRepository.findAllIds();
 
             if (!ids.isEmpty()) {
-                Set<Long> missingIds = new HashSet<>(ids);
-
-                if (members != null) {
-                    missingIds.removeAll(members); // members에 없는 id만 남김
-                }
-
-                if (!missingIds.isEmpty()) {
-                    redisTemplate.opsForSet().add(KEY, missingIds.toArray());
-                }
+                redisTemplate.opsForSet().add(KEY, ids.toArray());
             }
 
             return new HashSet<>(ids);
