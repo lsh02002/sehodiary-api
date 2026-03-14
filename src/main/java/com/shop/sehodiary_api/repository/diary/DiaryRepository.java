@@ -15,6 +15,17 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
     @Query("select d from Diary d join fetch d.user")
     List<Diary> findAllWithUser();
 
-    @Query("select d.id from Diary d")
-    List<Long> findAllIds();
+    @Query("""
+       select d.id
+       from Diary d
+       where d.visibility = 'PUBLIC'
+       """)
+    List<Long> findAllPublicIds();
+
+    @Query("""
+       select d.id
+       from Diary d
+       where d.visibility = 'FRIENDS'
+       """)
+    List<Long> findAllFriendsIds();
 }

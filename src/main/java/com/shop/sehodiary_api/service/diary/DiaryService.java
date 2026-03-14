@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,14 +43,26 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic() {
-        Set<Long> publicIds = diaryIdRedisRepository.findAll();
+        Set<Long> publicIds = diaryIdRedisRepository.findAllPublic();
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+
+        // publicIds가 비어있으면 DB에서 채우기
+        if (publicIds.isEmpty()) {
+            List<Long> ids = diaryRepository.findAllPublicIds();
+
+            diaryIdRedisRepository.savePublicIds(ids);
+            publicIds = new HashSet<>(ids);
+        }
+
+        List<DiaryResponse> result = publicIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .filter(cache -> Objects.equals(cache.getVisibility(), Visibility.PUBLIC.toString()))
+                .collect(Collectors.toCollection(ArrayList::new));
 
         List<Long> missingIds = publicIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
-
-        List<DiaryResponse> result = new ArrayList<>(cached.values());
 
         if (!missingIds.isEmpty()) {
             List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
@@ -57,22 +70,34 @@ public class DiaryService {
                     .map(diaryMapper::toResponse)
                     .toList();
 
+            dbResults.forEach(diaryCacheRepository::put);
             result.addAll(dbResults);
         }
 
         return result;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByFriends() {
-        Set<Long> friendIds = diaryIdRedisRepository.findAll();
+        Set<Long> friendIds = diaryIdRedisRepository.findAllFriends();
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+
+        if (friendIds.isEmpty()) {
+            List<Long> ids = diaryRepository.findAllPublicIds();
+
+            diaryIdRedisRepository.saveFriends(ids);
+            friendIds = new HashSet<>(ids);
+        }
+
+        List<DiaryResponse> result = friendIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .filter(cache -> Objects.equals(cache.getVisibility(), Visibility.FRIENDS.toString()))
+                .collect(Collectors.toCollection(ArrayList::new));
 
         List<Long> missingIds = friendIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
-
-        List<DiaryResponse> result = new ArrayList<>(cached.values());
 
         if (!missingIds.isEmpty()) {
             List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
@@ -80,6 +105,7 @@ public class DiaryService {
                     .map(diaryMapper::toResponse)
                     .toList();
 
+            dbResults.forEach(diaryCacheRepository::put);
             result.addAll(dbResults);
         }
 
@@ -91,7 +117,7 @@ public class DiaryService {
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         return cached.values().stream()
-                .filter(d -> d.getNickname().equals(nickname))
+                .filter(d -> Objects.equals(d.getNickname(), nickname))
                 .toList();
     }
 
@@ -153,7 +179,12 @@ public class DiaryService {
         DiaryResponse response = diaryMapper.toResponse(diary);
 
         diaryCacheRepository.put(response);
-        diaryIdRedisRepository.add(diary.getId());
+
+        if (diary.getVisibility() == Visibility.PUBLIC) {
+            diaryIdRedisRepository.addPublic(diary.getId());
+        } else if (diary.getVisibility() == Visibility.FRIENDS) {
+            diaryIdRedisRepository.addFriends(diary.getId());
+        }
 
         return response;
     }
@@ -213,7 +244,12 @@ public class DiaryService {
         DiaryResponse response = diaryMapper.toResponse(diary);
 
         diaryCacheRepository.put(response);
-        diaryIdRedisRepository.add(diary.getId());
+
+        if (diary.getVisibility() == Visibility.PUBLIC) {
+            diaryIdRedisRepository.addPublic(diary.getId());
+        } else if (diary.getVisibility() == Visibility.FRIENDS) {
+            diaryIdRedisRepository.addFriends(diary.getId());
+        }
 
         return response;
     }
