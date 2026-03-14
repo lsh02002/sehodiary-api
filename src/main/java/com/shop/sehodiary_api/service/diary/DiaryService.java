@@ -43,7 +43,7 @@ public class DiaryService {
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic() {
         Set<Long> publicIds = diaryIdRedisRepository.findAll();
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllPublic();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         List<Long> missingIds = publicIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -66,7 +66,7 @@ public class DiaryService {
     @Transactional
     public List<DiaryResponse> getDiariesByFriends() {
         Set<Long> friendIds = diaryIdRedisRepository.findAll();
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllFriends();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         List<Long> missingIds = friendIds.stream()
                 .filter(id -> !cached.containsKey(id))

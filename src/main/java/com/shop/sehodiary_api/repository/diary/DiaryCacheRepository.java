@@ -58,16 +58,4 @@ public class DiaryCacheRepository {
                         e -> (DiaryResponse) e.getValue()
                 ));
     }
-
-    public Map<Long, DiaryResponse> getAllPublic() {
-        return getAll().values().stream()
-                .filter(d -> d != null && Objects.equals(d.getVisibility(), Visibility.PUBLIC.toString()))
-                .collect(Collectors.toMap(DiaryResponse::getId, d -> d));
-    }
-
-    public Map<Long, DiaryResponse> getAllFriends() {
-        return getAll().values().stream()
-                .filter(d -> d != null && Objects.equals(d.getVisibility(), Visibility.PUBLIC.toString()))
-                .collect(Collectors.toMap(DiaryResponse::getId, d -> d));
-    }
 }
