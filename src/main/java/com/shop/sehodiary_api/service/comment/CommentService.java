@@ -198,6 +198,7 @@ public class CommentService {
 
             commentCacheRepository.evict(commentId);
             commentIdRedisRepository.removeByDiaryId(comment.getDiary().getId(), commentId);
+            commentIdRedisRepository.removeByUserId(userId, commentId);
 
             commentRepository.delete(comment);
         } catch (Exception e) {

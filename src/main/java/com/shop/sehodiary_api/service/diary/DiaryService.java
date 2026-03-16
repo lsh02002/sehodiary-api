@@ -200,11 +200,9 @@ public class DiaryService {
         diaryRepository.save(diary);
 
         diaryImageService.uploadManyFiles(userId, diary.getId(), files);
-
         diaryEmotionService.createDiaryEmotion(userId, diary.getId(), request.getEmoji());
 
         Object afterDiary = snapshotFunc.snapshot(diary);
-
         activityLogService.log(ActivityEntityType.DIARY, ActivityAction.CREATE, diary.getId(), diary.logMessage(), user, null, afterDiary);
 
         DiaryResponse response = diaryMapper.toResponse(diary);
@@ -262,7 +260,6 @@ public class DiaryService {
                 .orElseThrow(() -> new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
         Object afterDiary = snapshotFunc.snapshot(reloadedDiary);
-
         activityLogService.log(
                 ActivityEntityType.DIARY,
                 ActivityAction.UPDATE,
@@ -297,13 +294,13 @@ public class DiaryService {
             diaryImageService.deleteManyFiles(diary);
 
             Object beforeDiary = snapshotFunc.snapshot(diary);
-
             activityLogService.log(ActivityEntityType.DIARY, ActivityAction.DELETE, diary.getId(), diary.logMessage(), user, beforeDiary, null);
 
             diaryRepository.deleteByUserIdAndId(userId, diaryId);
 
             diaryCacheRepository.delete(diaryId);
             diaryIdRedisRepository.remove(diaryId);
+            diaryIdRedisRepository.removeFromUser(userId, diaryId);
 
         } catch (RuntimeException e) {
             throw new ConflictException("해당 글을 삭제할 수 없습니다", diaryId);
