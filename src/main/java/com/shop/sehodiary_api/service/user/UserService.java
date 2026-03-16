@@ -28,14 +28,11 @@ import com.shop.sehodiary_api.service.profileimage.ProfileImageService;
 import com.shop.sehodiary_api.web.dto.user.*;
 import com.shop.sehodiary_api.web.dto.user.userLoginHist.UserLoginHistResponse;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -67,9 +64,6 @@ public class UserService {
 
     private final DiaryCacheRepository diaryCacheRepository;
     private final CommentCacheRepository commentCacheRepository;
-
-    @PersistenceContext
-    private EntityManager em;
 
     @PostConstruct
     private void insertRoleUserAndRoleAdminToNewDb(){
@@ -274,9 +268,6 @@ public class UserService {
         Object beforeUser = snapshotFunc.snapshot(user);
 
         profileImageService.uploadManyFiles(userId, files);
-
-        em.flush();
-        em.clear();
 
         User reloadedUser = userRepository.findById(user.getId())
                 .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", user.getId()));
