@@ -81,20 +81,15 @@ public class CommentService {
     public List<CommentResponse> getCommentsByUser(Long userId) {
 
         List<Long> commentIds = commentIdRedisRepository.findAllByUserId(userId);
+        Map<Long, CommentResponse> cached = commentCacheRepository.getAll();
 
         // Redis에 없으면 DB에서 채우기
         if (commentIds.isEmpty()) {
             List<Long> ids = commentRepository.findIdsByUserId(userId);
 
-            if (ids.isEmpty()) {
-                return List.of();
-            }
-
             commentIdRedisRepository.saveAllByUserId(userId, ids);
-            commentIds = new ArrayList<>(ids);
+            commentIds = ids;
         }
-
-        Map<Long, CommentResponse> cached = commentCacheRepository.getAll();
 
         List<CommentResponse> result = new ArrayList<>();
         List<Long> missingIds = new ArrayList<>();
@@ -120,7 +115,6 @@ public class CommentService {
 
         return result;
     }
-
 
     @Transactional
     public CommentResponse createComment(Long userId, CommentRequest request) {
@@ -153,6 +147,7 @@ public class CommentService {
         CommentResponse commentResponse = commentMapper.toResponse(comment);
         commentCacheRepository.put(commentResponse);
         commentIdRedisRepository.addByDiaryId(comment.getDiary().getId(), comment.getId());
+        commentIdRedisRepository.addByUserId(userId, comment.getId());
 
         return commentResponse;
     }

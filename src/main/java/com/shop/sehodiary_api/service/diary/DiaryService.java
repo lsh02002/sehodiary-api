@@ -216,6 +216,7 @@ public class DiaryService {
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
             diaryIdRedisRepository.addFriends(diary.getId());
         }
+        diaryIdRedisRepository.addUser(userId, diary.getId());
 
         return response;
     }
