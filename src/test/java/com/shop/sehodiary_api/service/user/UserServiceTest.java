@@ -25,7 +25,6 @@ import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -110,7 +109,10 @@ class UserServiceTest {
 
         when(userRepository.existsByEmail("test001@sample.com")).thenReturn(true);
 
-        assertThrows(ConflictException.class, () -> userService.signUp(request));
+        assertThatThrownBy(() -> userService.signUp(request))
+                .isInstanceOf(ConflictException.class)
+                .extracting("detailMessage")
+                .isEqualTo("이미 입력하신 " + request.getEmail() + " 이메일로 가입된 계정이 있습니다.");
     }
 
     @Test
@@ -126,7 +128,10 @@ class UserServiceTest {
         when(userRepository.existsByEmail("test001@sample.com")).thenReturn(false);
         when(userRepository.existsByNickname("test001")).thenReturn(true);
 
-        assertThrows(ConflictException.class, () -> userService.signUp(request));
+        assertThatThrownBy(() -> userService.signUp(request))
+                .isInstanceOf(ConflictException.class)
+                .extracting("detailMessage")
+                .isEqualTo("이미 입력하신 " + request.getNickname() + " 닉네임으로 가입된 계정이 있습니다.");
     }
 
     @Test
@@ -142,7 +147,10 @@ class UserServiceTest {
         when(userRepository.existsByEmail("test001@sample.com")).thenReturn(false);
         when(userRepository.existsByNickname("test001")).thenReturn(false);
 
-        assertThrows(BadRequestException.class, () -> userService.signUp(request));
+        assertThatThrownBy(() -> userService.signUp(request))
+                .isInstanceOf(BadRequestException.class)
+                .extracting("detailMessage")
+                .isEqualTo("비밀번호와 비밀번호 확인이 같지 않습니다.");
     }
 
     @Test
@@ -159,7 +167,5 @@ class UserServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .extracting("detailMessage")
                 .isEqualTo("닉네임란이 비어있습니다.");
-
-
     }
 }
