@@ -51,6 +51,7 @@ public class Diary extends BaseTimeEntity implements Loggable, Serializable {
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(name = "visibility", nullable = false, length = 20)
     private Visibility visibility = Visibility.PRIVATE;
 

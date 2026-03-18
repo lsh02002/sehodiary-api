@@ -149,6 +149,7 @@ public class UserService {
 
         SignupResponse signupResponse = SignupResponse.builder()
                 .userId(savedUser.getId())
+                .nickname(savedUser.getNickname())
                 .build();
 
         return new UserResponse(HttpStatus.OK.value(), user.getEmail() + "님 회원 가입 완료 되었습니다.", signupResponse);
