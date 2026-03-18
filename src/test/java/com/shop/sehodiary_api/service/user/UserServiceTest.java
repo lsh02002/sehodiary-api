@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -142,5 +143,23 @@ class UserServiceTest {
         when(userRepository.existsByNickname("test001")).thenReturn(false);
 
         assertThrows(BadRequestException.class, () -> userService.signUp(request));
+    }
+
+    @Test
+    @DisplayName("회원 가입 실패 - 닉네임이 비어있음")
+    void signUp_fail_emptyNickname() {
+        SignupRequest request = SignupRequest.builder()
+                .email("test001@sample.com")
+                .nickname("") // 핵심
+                .password("12341234aaaa")
+                .passwordConfirm("12341234aaaa")
+                .build();
+
+        assertThatThrownBy(() -> userService.signUp(request))
+                .isInstanceOf(BadRequestException.class)
+                .extracting("detailMessage")
+                .isEqualTo("닉네임란이 비어있습니다.");
+
+
     }
 }

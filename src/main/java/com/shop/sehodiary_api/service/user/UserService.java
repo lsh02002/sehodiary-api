@@ -108,6 +108,10 @@ public class UserService {
             throw new ConflictException("이미 입력하신 " + email + " 이메일로 가입된 계정이 있습니다.", email);
         }
 
+        if (nickname == null || nickname.trim().isEmpty()) {
+            throw new BadRequestException("닉네임란이 비어있습니다.", nickname);
+        }
+
         if(userRepository.existsByNickname(nickname)){
             throw new ConflictException("이미 입력하신 " + nickname + " 닉네임으로 가입된 계정이 있습니다.", nickname);
         }
