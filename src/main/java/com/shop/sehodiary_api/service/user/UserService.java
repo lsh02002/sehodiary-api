@@ -108,8 +108,8 @@ public class UserService {
             throw new ConflictException("이미 입력하신 " + email + " 이메일로 가입된 계정이 있습니다.", email);
         }
 
-        if (nickname == null || nickname.trim().isEmpty()) {
-            throw new BadRequestException("닉네임란이 비어있습니다.", nickname);
+        if (!nickname.matches("^[A-Za-z][A-Za-z0-9]*$")) {
+            throw new BadRequestException("닉네임은 첫번째 영문자이고 나머지는 영문자 숫자 조합입니다.", nickname);
         }
 
         if(userRepository.existsByNickname(nickname)){
@@ -161,7 +161,7 @@ public class UserService {
 
     @Transactional
     public List<Object> login(LoginRequest request, HttpServletRequest httpServletRequest) {
-        if(request.getEmail()==null||request.getPassword()==null){
+        if(request.getEmail().isEmpty() ||request.getPassword().isEmpty()){
             throw new BadRequestException("이메일이나 비밀번호 값이 비어있습니다.","email : "+request.getEmail()+", password : "+request.getPassword());
         }
         User user;
