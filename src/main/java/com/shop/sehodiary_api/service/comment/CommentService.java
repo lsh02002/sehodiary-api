@@ -134,20 +134,20 @@ public class CommentService {
                 .content(request.getContent())
                 .build();
 
-        commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
 
-        Object afterComment = snapshotFunc.snapshot(comment);
-        activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.CREATE, comment.getId(), comment.logMessage(), user, null, afterComment);
+        Object afterComment = snapshotFunc.snapshot(savedComment);
+        activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.CREATE, savedComment.getId(), savedComment.logMessage(), user, null, afterComment);
 
-        diary.getComments().add(comment);
+        diary.getComments().add(savedComment);
 
         DiaryResponse response = diaryMapper.toResponse(diary);
         diaryCacheRepository.put(response);
 
-        CommentResponse commentResponse = commentMapper.toResponse(comment);
+        CommentResponse commentResponse = commentMapper.toResponse(savedComment);
         commentCacheRepository.put(commentResponse);
-        commentIdRedisRepository.addByDiaryId(comment.getDiary().getId(), comment.getId());
-        commentIdRedisRepository.addByUserId(userId, comment.getId());
+        commentIdRedisRepository.addByDiaryId(savedComment.getDiary().getId(), savedComment.getId());
+        commentIdRedisRepository.addByUserId(userId, savedComment.getId());
 
         return commentResponse;
     }
