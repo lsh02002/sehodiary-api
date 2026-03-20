@@ -266,8 +266,6 @@ class CommentServiceTest {
             ReflectionTestUtils.setField(diary, "id", diaryId);
             ReflectionTestUtils.setField(diary, "comments", new ArrayList<Comment>());
 
-            System.out.println(diary.getId());
-
             given(request.getDiaryId()).willReturn(diaryId);
             given(request.getContent()).willReturn("댓글 내용");
 
