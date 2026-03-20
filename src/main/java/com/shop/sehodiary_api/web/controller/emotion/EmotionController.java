@@ -22,6 +22,12 @@ import java.util.List;
 public class EmotionController {
     private final EmotionService emotionService;
 
+    @PostMapping("/insertEmojisIntoNewDB")
+    public ResponseEntity<Void> insertEmojisIntoNewDB(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        emotionService.insertEmojisIntoNewDB(customUserDetails.getId());
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/all")
     public ResponseEntity<List<EmotionResponse>> getAllEmotions() {
         return ResponseEntity.ok(emotionService.getAllEmotions());

@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +33,23 @@ public class EmotionService {
     private final ActivityLogService activityLogService;
     private final SnapshotFunc snapshotFunc;
     private final EmotionMapper emotionMapper;
+
+    @Transactional
+    public void insertEmojisIntoNewDB(Long userId) {
+        List<EmotionRequest> emotions = Arrays.asList(
+                new EmotionRequest("happy", "😊"),
+                new EmotionRequest("sad", "😢"),
+                new EmotionRequest("angry", "😡"),
+                new EmotionRequest("excited", "🤩"),
+                new EmotionRequest("tired", "😴")
+        );
+
+        if(emotionRepository.count() > 0) {
+            throw new NotAcceptableException("해당 이모션 DB가 비어있지 않습니다.", null);
+        }
+
+        emotions.forEach(emotionRequest -> createEmotion(userId, emotionRequest));
+    }
 
     @Transactional
     public List<EmotionResponse> getAllEmotions() {
