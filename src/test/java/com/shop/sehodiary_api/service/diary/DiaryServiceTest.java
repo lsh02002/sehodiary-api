@@ -626,8 +626,6 @@ class DiaryServiceTest {
             @DisplayName("이미지 삭제 중 예외 발생 시 ConflictException 발생")
             void deleteDiary_fail_deleteFiles() {
 
-                ReflectionTestUtils.setField(diary, "id", diaryId);
-
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
                 given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
                 doThrow(new RuntimeException("S3 삭제 실패"))
