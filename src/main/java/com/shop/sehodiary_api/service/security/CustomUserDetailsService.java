@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.service.security;
 
-import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;

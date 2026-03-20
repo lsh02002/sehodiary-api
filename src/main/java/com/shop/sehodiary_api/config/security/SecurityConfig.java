@@ -4,6 +4,7 @@ import com.shop.sehodiary_api.config.filter.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -48,9 +49,9 @@ public class SecurityConfig {
                 })
                 .authorizeHttpRequests(a->
                         a
-                                .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/all/**", "/diary/**", "/like/nicknames/**", "/emotion/all/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/public/**", "/diary/all/**", "/diary/[0-9]*", "/like/nicknames/**", "/emotion/all/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/admin-login/**").permitAll()
-                                .requestMatchers( "/**").authenticated())
+                                .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
