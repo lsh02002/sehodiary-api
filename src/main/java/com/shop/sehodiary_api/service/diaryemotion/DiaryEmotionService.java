@@ -57,6 +57,8 @@ public class DiaryEmotionService {
                         .emotion(emotion)
                 .build());
 
+        diary.addDiaryEmotion(diaryEmotion);
+
         Object afterdiaryemotion = snapshotFunc.snapshot(diaryEmotion);
 
         activityLogService.log(ActivityEntityType.DIARY_EMOTION, ActivityAction.CREATE, diaryEmotion.getId(), diaryEmotion.logMessage(), user, null, afterdiaryemotion);
