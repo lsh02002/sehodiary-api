@@ -517,18 +517,22 @@ class DiaryServiceTest {
 
     @Nested
     class DeleteDiaryTest {
-        @Test
-        @DisplayName("일기 삭제 성공")
-        void deleteDiary_success() {
-            // given
-            Long userId = 1L;
-            Long diaryId = 10L;
+        private Long userId;
+        private Long diaryId;
+        private User user;
+        private Diary diary;
+        private Object beforeSnapshot;
 
-            User user = User.builder()
+        @BeforeEach
+        void setup() {
+            userId = 1L;
+            diaryId = 10L;
+
+            user = User.builder()
                     .id(userId)
                     .build();
 
-            Diary diary = Diary.builder()
+            diary = Diary.builder()
                     .user(user)
                     .title("삭제할 일기")
                     .content("삭제할 내용")
@@ -538,8 +542,12 @@ class DiaryServiceTest {
 
             ReflectionTestUtils.setField(diary, "id", diaryId);
 
-            Object beforeSnapshot = new HashMap<>();
+            beforeSnapshot = new HashMap<>();
+        }
 
+        @Test
+        @DisplayName("일기 삭제 성공")
+        void deleteDiary_success() {
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(snapshotFunc.snapshot(diary)).willReturn(new HashMap<>());
@@ -598,14 +606,6 @@ class DiaryServiceTest {
             @Test
             @DisplayName("해당 유저의 일기가 아니면 ConflictException 발생")
             void deleteDiary_fail_diaryNotFound() {
-                // given
-                Long userId = 1L;
-                Long diaryId = 10L;
-
-                User user = User.builder()
-                        .id(userId)
-                        .build();
-
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
                 given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.empty());
 
@@ -625,21 +625,6 @@ class DiaryServiceTest {
             @Test
             @DisplayName("이미지 삭제 중 예외 발생 시 ConflictException 발생")
             void deleteDiary_fail_deleteFiles() {
-                // given
-                Long userId = 1L;
-                Long diaryId = 10L;
-
-                User user = User.builder()
-                        .id(userId)
-                        .build();
-
-                Diary diary = Diary.builder()
-                        .user(user)
-                        .title("삭제할 일기")
-                        .content("삭제할 내용")
-                        .visibility(Visibility.PUBLIC)
-                        .weather("SUNNY")
-                        .build();
 
                 ReflectionTestUtils.setField(diary, "id", diaryId);
 
@@ -665,25 +650,6 @@ class DiaryServiceTest {
             @Test
             @DisplayName("DB 삭제 중 예외 발생 시 ConflictException 발생")
             void deleteDiary_fail_deleteRepository() {
-                // given
-                Long userId = 1L;
-                Long diaryId = 10L;
-
-                User user = User.builder()
-                        .id(userId)
-                        .build();
-
-                Diary diary = Diary.builder()
-                        .user(user)
-                        .title("삭제할 일기")
-                        .content("삭제할 내용")
-                        .visibility(Visibility.PUBLIC)
-                        .weather("SUNNY")
-                        .build();
-
-                ReflectionTestUtils.setField(diary, "id", diaryId);
-
-                Object beforeSnapshot = new HashMap<>();
 
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
                 given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
