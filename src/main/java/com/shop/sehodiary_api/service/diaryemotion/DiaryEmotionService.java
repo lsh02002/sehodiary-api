@@ -46,6 +46,9 @@ public class DiaryEmotionService {
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
+        diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
+
         Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
                 .orElseThrow(()->new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
@@ -68,6 +71,9 @@ public class DiaryEmotionService {
     public void editDiaryEmotion(Long userId, Long diaryId, String emoji) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+        diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
 
         Diary diary = diaryRepository.findByUserIdAndId(userId, diaryId)
                 .orElseThrow(() -> new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
@@ -117,6 +123,9 @@ public class DiaryEmotionService {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+            diaryRepository.findById(diaryId)
+                    .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
 
             Emotion emotion = emotionRepository.findByEmoji(emoji)
                     .orElseThrow(()->new NotFoundException("해당 이모션을 찾을 수 없습니다", emoji));

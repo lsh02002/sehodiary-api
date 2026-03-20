@@ -71,6 +71,7 @@ class DiaryEmotionServiceTest {
             DiaryEmotion savedDiaryEmotion = mock(DiaryEmotion.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(emotionRepository.findByEmoji(emoji)).willReturn(Optional.of(emotion));
 
@@ -125,8 +126,10 @@ class DiaryEmotionServiceTest {
             String emoji = "😊";
 
             User user = mock(User.class);
+            Diary diary = mock(Diary.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.empty());
 
             assertThrows(NotFoundException.class,
@@ -148,6 +151,7 @@ class DiaryEmotionServiceTest {
             Diary diary = mock(Diary.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(emotionRepository.findByEmoji(emoji)).willReturn(Optional.empty());
 
@@ -178,6 +182,7 @@ class DiaryEmotionServiceTest {
             List<DiaryEmotion> diaryEmotions = new ArrayList<>();
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(diary.getDiaryEmotions()).willReturn(diaryEmotions);
             given(emotionRepository.findByEmoji(emoji)).willReturn(Optional.of(emotion));
@@ -227,6 +232,7 @@ class DiaryEmotionServiceTest {
             List<DiaryEmotion> diaryEmotions = List.of(diaryEmotion);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(diary.getDiaryEmotions()).willReturn(diaryEmotions);
 
@@ -273,6 +279,7 @@ class DiaryEmotionServiceTest {
             List<DiaryEmotion> diaryEmotions = List.of(diaryEmotion);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(diary.getDiaryEmotions()).willReturn(diaryEmotions);
 
@@ -305,6 +312,7 @@ class DiaryEmotionServiceTest {
             List<DiaryEmotion> diaryEmotions = List.of(mock(DiaryEmotion.class), mock(DiaryEmotion.class));
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(diary.getDiaryEmotions()).willReturn(diaryEmotions);
 
@@ -328,10 +336,12 @@ class DiaryEmotionServiceTest {
             String emoji = "😊";
 
             User user = mock(User.class);
+            Diary diary = mock(Diary.class);
             Emotion emotion = mock(Emotion.class);
             DiaryEmotion diaryEmotion = mock(DiaryEmotion.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(emotionRepository.findByEmoji(emoji)).willReturn(Optional.of(emotion));
             given(diaryemotionRepository.findByDiaryIdAndEmotionName(diaryId, emoji)).willReturn(Optional.of(diaryEmotion));
 
@@ -379,9 +389,11 @@ class DiaryEmotionServiceTest {
             String emoji = "😊";
 
             User user = mock(User.class);
+            Diary diary = mock(Diary.class);
             Emotion emotion = mock(Emotion.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
             given(emotionRepository.findByEmoji(emoji)).willReturn(Optional.of(emotion));
             given(diaryemotionRepository.findByDiaryIdAndEmotionName(diaryId, emoji)).willReturn(Optional.empty());
 

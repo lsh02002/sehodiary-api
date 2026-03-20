@@ -157,6 +157,9 @@ public class CommentService {
         User user = userRepository.findById(userId)
                 .orElseThrow(()->new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
+        commentRepository.findById(commentId)
+                .orElseThrow(()->new NotFoundException("해당 댓글을 찾을 수 없습니다.", commentId));
+
         Comment comment = commentRepository.findByUserIdAndId(userId, commentId)
                 .orElseThrow(()->new NotFoundException("해당 사용자의 댓글이 아닙니다.", commentId));
 
@@ -185,6 +188,9 @@ public class CommentService {
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(()->new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+            commentRepository.findById(commentId)
+                    .orElseThrow(()->new NotFoundException("해당 댓글을 찾을 수 없습니다.", commentId));
 
             Comment comment = commentRepository.findByUserIdAndId(userId, commentId)
                     .orElseThrow(()->new NotFoundException("해당 사용자의 댓글이 아닙니다.", commentId));

@@ -389,6 +389,7 @@ class CommentServiceTest {
 
             given(request.getContent()).willReturn("수정된 댓글");
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.of(comment));
 
             given(comment.getDiary()).willReturn(diary);
@@ -445,8 +446,10 @@ class CommentServiceTest {
 
             CommentRequest request = mock(CommentRequest.class);
             User user = mock(User.class);
+            Comment comment = mock(Comment.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.empty());
 
             assertThrows(NotFoundException.class,
@@ -467,6 +470,7 @@ class CommentServiceTest {
 
             given(request.getContent()).willReturn("   ");
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.of(comment));
 
             given(snapshotFunc.snapshot(comment)).willReturn(new HashMap<>());
@@ -498,6 +502,7 @@ class CommentServiceTest {
             DiaryResponse diaryResponse = mock(DiaryResponse.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.of(comment));
 
             given(comment.getId()).willReturn(commentId);
@@ -553,8 +558,10 @@ class CommentServiceTest {
             Long commentId = 20L;
 
             User user = mock(User.class);
+            Comment comment = mock(Comment.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.empty());
 
             assertThrows(ConflictException.class,
@@ -577,6 +584,7 @@ class CommentServiceTest {
             DiaryResponse diaryResponse = mock(DiaryResponse.class);
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.of(comment));
 
             given(comment.getId()).willReturn(commentId);

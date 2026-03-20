@@ -716,6 +716,7 @@ class DiaryServiceTest {
         void editDiary_success_allChanged_public() {
             // given
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(1L, 10L))
                     .willReturn(Optional.of(diary))
                     .willReturn(Optional.of(diary)); // flush 후 재조회
@@ -761,6 +762,7 @@ class DiaryServiceTest {
             request.setVisibility("FRIENDS");
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(1L, 10L))
                     .willReturn(Optional.of(diary))
                     .willReturn(Optional.of(diary));
@@ -784,6 +786,7 @@ class DiaryServiceTest {
             request.setEmoji(null);
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(1L, 10L))
                     .willReturn(Optional.of(diary))
                     .willReturn(Optional.of(diary));
@@ -808,6 +811,7 @@ class DiaryServiceTest {
             request.setEmoji("   ");
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(1L, 10L))
                     .willReturn(Optional.of(diary))
                     .willReturn(Optional.of(diary));
@@ -834,6 +838,7 @@ class DiaryServiceTest {
             request.setEmoji("🙂");
 
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(1L, 10L))
                     .willReturn(Optional.of(diary))
                     .willReturn(Optional.of(diary));
@@ -887,6 +892,7 @@ class DiaryServiceTest {
             void editDiary_fail_diaryNotFound() {
                 // given
                 given(userRepository.findById(1L)).willReturn(Optional.of(user));
+                given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
                 given(diaryRepository.findByUserIdAndId(1L, 10L)).willReturn(Optional.empty());
 
                 // when & then
@@ -905,6 +911,7 @@ class DiaryServiceTest {
             void editDiary_fail_reloadedDiaryNotFound() {
                 // given
                 given(userRepository.findById(1L)).willReturn(Optional.of(user));
+                given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
                 given(diaryRepository.findByUserIdAndId(1L, 10L))
                         .willReturn(Optional.of(diary))
                         .willReturn(Optional.empty());
@@ -957,6 +964,7 @@ class DiaryServiceTest {
         @DisplayName("일기 삭제 성공")
         void deleteDiary_success() {
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
             given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
             given(snapshotFunc.snapshot(diary)).willReturn(new HashMap<>());
 
@@ -1015,6 +1023,7 @@ class DiaryServiceTest {
             @DisplayName("해당 유저의 일기가 아니면 ConflictException 발생")
             void deleteDiary_fail_diaryNotFound() {
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
+                given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
                 given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.empty());
 
                 // when & then
@@ -1035,6 +1044,7 @@ class DiaryServiceTest {
             void deleteDiary_fail_deleteFiles() {
 
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
+                given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
                 given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
                 doThrow(new RuntimeException("S3 삭제 실패"))
                         .when(diaryImageService).deleteManyFiles(diary);
@@ -1058,6 +1068,7 @@ class DiaryServiceTest {
             void deleteDiary_fail_deleteRepository() {
 
                 given(userRepository.findById(userId)).willReturn(Optional.of(user));
+                given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
                 given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
                 given(snapshotFunc.snapshot(diary)).willReturn(new HashMap<>());
 
