@@ -282,6 +282,7 @@ public class DiaryService {
 
         return response;
     }
+
     @Transactional
     public void deleteDiary(Long userId, Long diaryId) {
         try {
