@@ -150,13 +150,15 @@ public class DiaryImageService {
     }
 
     public void deleteFile(User user, DiaryImage entity) {
+        Object beforeDiaryImage = snapshotFunc.snapshot(entity);
+
         if(!entity.getDeleted()) {
             entity.setDeleted(true);
         }
 
         Object afterDiaryImage = snapshotFunc.snapshot(entity);
 
-        activityLogService.log(ActivityEntityType.DIARY_IMAGE, ActivityAction.DELETE, entity.getId(), entity.logMessage(), user, null, afterDiaryImage);
+        activityLogService.log(ActivityEntityType.DIARY_IMAGE, ActivityAction.DELETE, entity.getId(), entity.logMessage(), user, beforeDiaryImage, afterDiaryImage);
     }
 
     public void deleteFileByUserIdAndDiaryImageId(Long userId, Long entityId) {

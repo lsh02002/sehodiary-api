@@ -55,7 +55,7 @@ public class LikeService {
 
         // 이미 좋아요되어있으면 에러 반환
         if(likeRepository.findByUserIdAndDiaryId(userId, diaryId).isPresent()) {
-                throw new ConflictException("이미 좋아요가 되어있습니다. ", null);
+                throw new ConflictException("이미 좋아요가 되어있습니다.", null);
         }
 
         Like like = Like.builder()
@@ -86,7 +86,7 @@ public class LikeService {
                 .orElseThrow(()-> new NotFoundException("해당 글을 찾을 수 없습니다.", null));
 
         Like like = likeRepository.findByUserIdAndDiaryId(userId, diaryId)
-                .orElseThrow(() -> new NotFoundException("좋아요가 되어있지 않았습니다. ", null));
+                .orElseThrow(() -> new NotFoundException("좋아요가 되어있지 않았습니다.", null));
 
         Object beforeLike = snapshotFunc.snapshot(like);
 

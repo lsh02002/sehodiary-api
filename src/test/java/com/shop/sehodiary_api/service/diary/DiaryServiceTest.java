@@ -31,9 +31,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -79,6 +77,416 @@ class DiaryServiceTest {
     private DiaryRequest request;
     private DiaryResponse response;
     private List<MultipartFile> files;
+
+    @Nested
+    @DisplayName("getDiariesByPublic()")
+    class GetDiariesByPublicTest {
+
+        @Test
+        @DisplayName("Redis에 public ids가 있고 모두 cache에 있으며 visibility가 PUBLIC이면 cache만 반환한다")
+        void returnsOnlyCachedPublicDiaries() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            DiaryResponse response1 = mock(DiaryResponse.class);
+            DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+                    id1, response1,
+                    id2, response2
+            ));
+            when(response1.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
+            when(response2.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
+
+            List<DiaryResponse> result = diaryService.getDiariesByPublic();
+
+            assertThat(result).containsExactlyInAnyOrder(response1, response2);
+
+            verify(diaryRepository, never()).findAllPublicIds();
+            verify(diaryRepository, never()).findAllById(anyList());
+            verify(diaryCacheRepository, never()).put(any());
+        }
+
+        @Test
+        @DisplayName("Redis에 public ids가 없으면 DB에서 ids를 조회하고 Redis에 저장한다")
+        void loadsPublicIdsFromDbWhenRedisEmpty() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            Diary diary1 = mock(Diary.class);
+            Diary diary2 = mock(Diary.class);
+
+            DiaryResponse response1 = mock(DiaryResponse.class);
+            DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of());
+            when(diaryRepository.findAllPublicIds()).thenReturn(List.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of());
+
+            when(diaryRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(diary1, diary2));
+            when(diary1.getVisibility()).thenReturn(Visibility.PUBLIC);
+            when(diary2.getVisibility()).thenReturn(Visibility.PUBLIC);
+            when(diaryMapper.toResponse(diary1)).thenReturn(response1);
+            when(diaryMapper.toResponse(diary2)).thenReturn(response2);
+
+            List<DiaryResponse> result = diaryService.getDiariesByPublic();
+
+            assertThat(result).containsExactlyInAnyOrder(response1, response2);
+
+            verify(diaryRepository).findAllPublicIds();
+            verify(diaryIdRedisRepository).savePublicIds(List.of(id1, id2));
+            verify(diaryRepository).findAllById(List.of(id1, id2));
+            verify(diaryCacheRepository).put(response1);
+            verify(diaryCacheRepository).put(response2);
+        }
+
+        @Test
+        @DisplayName("cache에 있어도 visibility가 PUBLIC이 아니면 결과에서 제외한다")
+        void excludesCachedDiaryWhenVisibilityIsNotPublic() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            DiaryResponse publicResponse = mock(DiaryResponse.class);
+            DiaryResponse friendsResponse = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+                    id1, publicResponse,
+                    id2, friendsResponse
+            ));
+            when(publicResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
+            when(friendsResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
+
+            List<DiaryResponse> result = diaryService.getDiariesByPublic();
+
+            assertThat(result).containsExactly(publicResponse);
+
+            verify(diaryRepository, never()).findAllById(anyList());
+        }
+
+        @Test
+        @DisplayName("cache에 없는 diary만 DB에서 조회하고 PUBLIC diary만 반환 및 cache 저장한다")
+        void loadsOnlyMissingPublicDiariesFromDb() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+            Long id3 = 3L;
+
+            DiaryResponse cachedResponse = mock(DiaryResponse.class);
+            DiaryResponse dbResponse = mock(DiaryResponse.class);
+
+            Diary publicDiary = mock(Diary.class);
+            Diary friendsDiary = mock(Diary.class);
+
+            Map<Long, DiaryResponse> cacheMap = new HashMap<>();
+            cacheMap.put(id1, cachedResponse);
+
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of(id1, id2, id3));
+            when(diaryCacheRepository.getAll()).thenReturn(cacheMap);
+            when(cachedResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
+
+            when(diaryRepository.findAllById(anyList())).thenReturn(List.of(publicDiary, friendsDiary));
+            when(publicDiary.getVisibility()).thenReturn(Visibility.PUBLIC);
+            when(friendsDiary.getVisibility()).thenReturn(Visibility.FRIENDS);
+            when(diaryMapper.toResponse(publicDiary)).thenReturn(dbResponse);
+
+            List<DiaryResponse> result = diaryService.getDiariesByPublic();
+
+            assertThat(result).containsExactlyInAnyOrder(cachedResponse, dbResponse);
+
+            verify(diaryRepository).findAllById(anyList());
+            verify(diaryCacheRepository).put(dbResponse);
+            verify(diaryMapper, never()).toResponse(friendsDiary);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDiariesByFriends()")
+    class GetDiariesByFriendsTest {
+
+        @Test
+        @DisplayName("Redis에 friends ids가 있고 모두 cache에 있으며 visibility가 FRIENDS면 cache만 반환한다")
+        void returnsOnlyCachedFriendsDiaries() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            DiaryResponse response1 = mock(DiaryResponse.class);
+            DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+                    id1, response1,
+                    id2, response2
+            ));
+            when(response1.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
+            when(response2.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
+
+            List<DiaryResponse> result = diaryService.getDiariesByFriends();
+
+            assertThat(result).containsExactlyInAnyOrder(response1, response2);
+
+            verify(diaryRepository, never()).findAllFriendsIds();
+            verify(diaryRepository, never()).findAllById(anyList());
+            verify(diaryCacheRepository, never()).put(any());
+        }
+
+        @Test
+        @DisplayName("Redis에 friends ids가 없으면 DB에서 ids를 조회하고 Redis에 저장한다")
+        void loadsFriendsIdsFromDbWhenRedisEmpty() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            Diary diary1 = mock(Diary.class);
+            Diary diary2 = mock(Diary.class);
+
+            DiaryResponse response1 = mock(DiaryResponse.class);
+            DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of());
+            when(diaryRepository.findAllFriendsIds()).thenReturn(List.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of());
+
+            when(diaryRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(diary1, diary2));
+            when(diary1.getVisibility()).thenReturn(Visibility.FRIENDS);
+            when(diary2.getVisibility()).thenReturn(Visibility.FRIENDS);
+            when(diaryMapper.toResponse(diary1)).thenReturn(response1);
+            when(diaryMapper.toResponse(diary2)).thenReturn(response2);
+
+            List<DiaryResponse> result = diaryService.getDiariesByFriends();
+
+            assertThat(result).containsExactlyInAnyOrder(response1, response2);
+
+            verify(diaryRepository).findAllFriendsIds();
+            verify(diaryIdRedisRepository).saveFriends(List.of(id1, id2));
+            verify(diaryRepository).findAllById(List.of(id1, id2));
+            verify(diaryCacheRepository).put(response1);
+            verify(diaryCacheRepository).put(response2);
+        }
+
+        @Test
+        @DisplayName("cache에 있어도 visibility가 FRIENDS가 아니면 결과에서 제외한다")
+        void excludesCachedDiaryWhenVisibilityIsNotFriends() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            DiaryResponse friendsResponse = mock(DiaryResponse.class);
+            DiaryResponse publicResponse = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+                    id1, friendsResponse,
+                    id2, publicResponse
+            ));
+            when(friendsResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
+            when(publicResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
+
+            List<DiaryResponse> result = diaryService.getDiariesByFriends();
+
+            assertThat(result).containsExactly(friendsResponse);
+
+            verify(diaryRepository, never()).findAllById(anyList());
+        }
+
+        @Test
+        @DisplayName("cache에 없는 diary만 DB에서 조회하고 FRIENDS diary만 반환 및 cache 저장한다")
+        void loadsOnlyMissingFriendsDiariesFromDb() {
+            Long id1 = 1L;
+            Long id2 = 2L;
+            Long id3 = 3L;
+
+            DiaryResponse cachedResponse = mock(DiaryResponse.class);
+            DiaryResponse dbResponse = mock(DiaryResponse.class);
+
+            Diary friendsDiary = mock(Diary.class);
+            Diary publicDiary = mock(Diary.class);
+
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of(id1, id2, id3));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(id1, cachedResponse));
+            when(cachedResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
+
+            when(diaryRepository.findAllById(anyList())).thenReturn(List.of(friendsDiary, publicDiary));
+            when(friendsDiary.getVisibility()).thenReturn(Visibility.FRIENDS);
+            when(publicDiary.getVisibility()).thenReturn(Visibility.PUBLIC);
+            when(diaryMapper.toResponse(friendsDiary)).thenReturn(dbResponse);
+
+            List<DiaryResponse> result = diaryService.getDiariesByFriends();
+
+            assertThat(result).containsExactlyInAnyOrder(cachedResponse, dbResponse);
+
+            verify(diaryRepository).findAllById(anyList());
+            verify(diaryCacheRepository).put(dbResponse);
+            verify(diaryMapper, never()).toResponse(publicDiary);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDiariesByUser()")
+    class GetDiariesByUserTest {
+
+        @Test
+        @DisplayName("Redis에 user diary ids가 있고 모두 cache에 있으면 cache만 반환한다")
+        void returnsOnlyCachedUserDiaries() {
+            Long userId = 10L;
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            DiaryResponse response1 = mock(DiaryResponse.class);
+            DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+                    id1, response1,
+                    id2, response2
+            ));
+
+            List<DiaryResponse> result = diaryService.getDiariesByUser(userId);
+
+            assertThat(result).containsExactlyInAnyOrder(response1, response2);
+
+            verify(diaryRepository, never()).findIdsByUserId(anyLong());
+            verify(diaryRepository, never()).findAllById(anyList());
+            verify(diaryCacheRepository, never()).put(any());
+        }
+
+        @Test
+        @DisplayName("Redis에 user diary ids가 없으면 DB에서 ids 조회 후 Redis에 저장한다")
+        void loadsUserIdsFromDbAndSavesRedis() {
+            Long userId = 10L;
+            Long id1 = 1L;
+            Long id2 = 2L;
+
+            Diary diary1 = mock(Diary.class);
+            Diary diary2 = mock(Diary.class);
+
+            DiaryResponse response1 = mock(DiaryResponse.class);
+            DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of());
+            when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of(id1, id2));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of());
+
+            when(diaryRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(diary1, diary2));
+            when(diaryMapper.toResponse(diary1)).thenReturn(response1);
+            when(diaryMapper.toResponse(diary2)).thenReturn(response2);
+
+            List<DiaryResponse> result = diaryService.getDiariesByUser(userId);
+
+            assertThat(result).containsExactlyInAnyOrder(response1, response2);
+
+            verify(diaryRepository).findIdsByUserId(userId);
+            verify(diaryIdRedisRepository).saveUserIds(userId, List.of(id1, id2));
+            verify(diaryRepository).findAllById(List.of(id1, id2));
+            verify(diaryCacheRepository).put(response1);
+            verify(diaryCacheRepository).put(response2);
+        }
+
+        @Test
+        @DisplayName("Redis가 비어 있고 DB에도 user diary ids가 없으면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenRedisAndDbAreEmpty() {
+            Long userId = 10L;
+
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of());
+            when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of());
+
+            List<DiaryResponse> result = diaryService.getDiariesByUser(userId);
+
+            assertThat(result).isEmpty();
+
+            verify(diaryRepository).findIdsByUserId(userId);
+            verify(diaryIdRedisRepository, never()).saveUserIds(anyLong(), anyList());
+            verify(diaryCacheRepository, never()).getAll();
+            verify(diaryRepository, never()).findAllById(anyList());
+        }
+
+        @Test
+        @DisplayName("cache에 없는 diary만 DB에서 조회하고 cache에 저장 후 결과에 추가한다")
+        void loadsOnlyMissingUserDiariesFromDb() {
+            Long userId = 10L;
+            Long id1 = 1L;
+            Long id2 = 2L;
+            Long id3 = 3L;
+
+            DiaryResponse cachedResponse = mock(DiaryResponse.class);
+            DiaryResponse dbResponse1 = mock(DiaryResponse.class);
+            DiaryResponse dbResponse2 = mock(DiaryResponse.class);
+
+            Diary diary2 = mock(Diary.class);
+            Diary diary3 = mock(Diary.class);
+
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of(id1, id2, id3));
+            when(diaryCacheRepository.getAll()).thenReturn(Map.of(id1, cachedResponse));
+            when(diaryRepository.findAllById(anyList())).thenReturn(List.of(diary2, diary3));
+            when(diaryMapper.toResponse(diary2)).thenReturn(dbResponse1);
+            when(diaryMapper.toResponse(diary3)).thenReturn(dbResponse2);
+
+            List<DiaryResponse> result = diaryService.getDiariesByUser(userId);
+
+            assertThat(result).containsExactlyInAnyOrder(cachedResponse, dbResponse1, dbResponse2);
+
+            verify(diaryRepository).findAllById(anyList());
+            verify(diaryCacheRepository).put(dbResponse1);
+            verify(diaryCacheRepository).put(dbResponse2);
+        }
+    }
+
+    @Nested
+    @DisplayName("getOneDiary()")
+    class GetOneDiaryTest {
+
+        @Test
+        @DisplayName("cache에 diary가 있으면 cache 데이터를 바로 반환한다")
+        void returnsCachedDiary() {
+            Long diaryId = 1L;
+            DiaryResponse cachedResponse = mock(DiaryResponse.class);
+
+            when(diaryCacheRepository.get(diaryId)).thenReturn(Optional.of(cachedResponse));
+
+            DiaryResponse result = diaryService.getOneDiary(diaryId);
+
+            assertThat(result).isSameAs(cachedResponse);
+
+            verify(diaryRepository, never()).findById(anyLong());
+            verify(diaryMapper, never()).toResponse(any());
+            verify(diaryCacheRepository, never()).put(any());
+        }
+
+        @Test
+        @DisplayName("cache에 없으면 DB에서 조회 후 response로 변환하고 cache에 저장한다")
+        void loadsDiaryFromDbAndCachesIt() {
+            Long diaryId = 1L;
+            Diary diary = mock(Diary.class);
+            DiaryResponse response = mock(DiaryResponse.class);
+
+            when(diaryCacheRepository.get(diaryId)).thenReturn(Optional.empty());
+            when(diaryRepository.findById(diaryId)).thenReturn(Optional.of(diary));
+            when(diaryMapper.toResponse(diary)).thenReturn(response);
+
+            DiaryResponse result = diaryService.getOneDiary(diaryId);
+
+            assertThat(result).isSameAs(response);
+
+            verify(diaryRepository).findById(diaryId);
+            verify(diaryMapper).toResponse(diary);
+            verify(diaryCacheRepository).put(response);
+        }
+
+        @Test
+        @DisplayName("cache에도 없고 DB에도 없으면 NotFoundException을 던진다")
+        void throwsNotFoundExceptionWhenDiaryDoesNotExist() {
+            Long diaryId = 1L;
+
+            when(diaryCacheRepository.get(diaryId)).thenReturn(Optional.empty());
+            when(diaryRepository.findById(diaryId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> diaryService.getOneDiary(diaryId))
+                    .isInstanceOf(NotFoundException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 글을 찾을 수 없습니다.");
+
+            verify(diaryMapper, never()).toResponse(any());
+            verify(diaryCacheRepository, never()).put(any());
+        }
+    }
 
     @Nested
     class CreateDiaryTest {

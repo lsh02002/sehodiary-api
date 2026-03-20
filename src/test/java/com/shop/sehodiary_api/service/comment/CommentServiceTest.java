@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.service.comment;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,10 +10,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
@@ -63,6 +61,190 @@ class CommentServiceTest {
 
     @InjectMocks
     private CommentService commentService;
+
+    @Nested
+    @DisplayName("getCommentsByDiaryId()")
+    class GetCommentsByDiaryIdTest {
+
+        @Test
+        @DisplayName("Redis에 diaryId별 commentIds가 있고, 모두 캐시에 있으면 캐시 데이터만 반환한다")
+        void returnsOnlyCachedCommentsWhenRedisIdsExistAndAllCached() {
+            Long diaryId = 1L;
+            List<Long> commentIds = List.of(10L, 20L);
+
+            CommentResponse response1 = mock(CommentResponse.class);
+            CommentResponse response2 = mock(CommentResponse.class);
+
+            when(commentIdRedisRepository.findAllByDiaryId(diaryId)).thenReturn(commentIds);
+            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+                    10L, response1,
+                    20L, response2
+            ));
+
+            List<CommentResponse> result = commentService.getCommentsByDiaryId(diaryId);
+
+            assertThat(result).containsExactly(response1, response2);
+
+            verify(commentRepository, never()).findAllIdsByDiaryId(anyLong());
+            verify(commentRepository, never()).findAllById(anyList());
+            verify(commentCacheRepository, never()).put(any());
+        }
+
+        @Test
+        @DisplayName("Redis에 diaryId별 commentIds가 없으면 DB에서 ids 조회 후 Redis에 저장한다")
+        void loadsIdsFromDbAndSavesToRedisWhenRedisIsEmpty() {
+            Long diaryId = 1L;
+            List<Long> dbIds = List.of(10L, 20L);
+
+            Comment comment1 = mock(Comment.class);
+            Comment comment2 = mock(Comment.class);
+
+            CommentResponse response1 = mock(CommentResponse.class);
+            CommentResponse response2 = mock(CommentResponse.class);
+
+            when(commentIdRedisRepository.findAllByDiaryId(diaryId)).thenReturn(List.of());
+            when(commentRepository.findAllIdsByDiaryId(diaryId)).thenReturn(dbIds);
+            when(commentCacheRepository.getAll()).thenReturn(Map.of());
+
+            when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
+            when(commentMapper.toResponse(comment1)).thenReturn(response1);
+            when(commentMapper.toResponse(comment2)).thenReturn(response2);
+
+            List<CommentResponse> result = commentService.getCommentsByDiaryId(diaryId);
+
+            assertThat(result).containsExactly(response1, response2);
+
+            verify(commentRepository).findAllIdsByDiaryId(diaryId);
+            verify(commentIdRedisRepository).saveAllByDiaryId(diaryId, dbIds);
+            verify(commentRepository).findAllById(dbIds);
+            verify(commentCacheRepository).put(response1);
+            verify(commentCacheRepository).put(response2);
+        }
+
+        @Test
+        @DisplayName("캐시에 없는 comment들만 DB에서 조회해서 cache에 저장 후 결과에 추가한다")
+        void loadsOnlyMissingCommentsFromDb() {
+            Long diaryId = 1L;
+            List<Long> commentIds = List.of(10L, 20L, 30L);
+
+            CommentResponse cachedResponse = mock(CommentResponse.class);
+            CommentResponse dbResponse1 = mock(CommentResponse.class);
+            CommentResponse dbResponse2 = mock(CommentResponse.class);
+
+            Comment comment20 = mock(Comment.class);
+            Comment comment30 = mock(Comment.class);
+
+            when(commentIdRedisRepository.findAllByDiaryId(diaryId)).thenReturn(commentIds);
+            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+                    10L, cachedResponse
+            ));
+
+            when(commentRepository.findAllById(List.of(20L, 30L)))
+                    .thenReturn(List.of(comment20, comment30));
+            when(commentMapper.toResponse(comment20)).thenReturn(dbResponse1);
+            when(commentMapper.toResponse(comment30)).thenReturn(dbResponse2);
+
+            List<CommentResponse> result = commentService.getCommentsByDiaryId(diaryId);
+
+            assertThat(result).containsExactly(cachedResponse, dbResponse1, dbResponse2);
+
+            verify(commentRepository).findAllById(List.of(20L, 30L));
+            verify(commentCacheRepository).put(dbResponse1);
+            verify(commentCacheRepository).put(dbResponse2);
+        }
+    }
+
+    @Nested
+    @DisplayName("getCommentsByUser()")
+    class GetCommentsByUserTest {
+
+        @Test
+        @DisplayName("Redis에 userId별 commentIds가 있고, 모두 캐시에 있으면 캐시 데이터만 반환한다")
+        void returnsOnlyCachedCommentsWhenRedisIdsExistAndAllCached() {
+            Long userId = 100L;
+            List<Long> commentIds = List.of(1L, 2L);
+
+            CommentResponse response1 = mock(CommentResponse.class);
+            CommentResponse response2 = mock(CommentResponse.class);
+
+            when(commentIdRedisRepository.findAllByUserId(userId)).thenReturn(commentIds);
+            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+                    1L, response1,
+                    2L, response2
+            ));
+
+            List<CommentResponse> result = commentService.getCommentsByUser(userId);
+
+            assertThat(result).containsExactly(response1, response2);
+
+            verify(commentRepository, never()).findIdsByUserId(anyLong());
+            verify(commentRepository, never()).findAllById(anyList());
+            verify(commentCacheRepository, never()).put(any());
+        }
+
+        @Test
+        @DisplayName("Redis에 userId별 commentIds가 없으면 DB에서 ids 조회 후 Redis에 저장한다")
+        void loadsIdsFromDbAndSavesToRedisWhenRedisIsEmpty() {
+            Long userId = 100L;
+            List<Long> dbIds = List.of(1L, 2L);
+
+            Comment comment1 = mock(Comment.class);
+            Comment comment2 = mock(Comment.class);
+
+            CommentResponse response1 = mock(CommentResponse.class);
+            CommentResponse response2 = mock(CommentResponse.class);
+
+            when(commentIdRedisRepository.findAllByUserId(userId)).thenReturn(List.of());
+            when(commentRepository.findIdsByUserId(userId)).thenReturn(dbIds);
+            when(commentCacheRepository.getAll()).thenReturn(Map.of());
+
+            when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
+            when(commentMapper.toResponse(comment1)).thenReturn(response1);
+            when(commentMapper.toResponse(comment2)).thenReturn(response2);
+
+            List<CommentResponse> result = commentService.getCommentsByUser(userId);
+
+            assertThat(result).containsExactly(response1, response2);
+
+            verify(commentRepository).findIdsByUserId(userId);
+            verify(commentIdRedisRepository).saveAllByUserId(userId, dbIds);
+            verify(commentRepository).findAllById(dbIds);
+            verify(commentCacheRepository).put(response1);
+            verify(commentCacheRepository).put(response2);
+        }
+
+        @Test
+        @DisplayName("캐시에 없는 comment들만 DB에서 조회해서 cache에 저장 후 결과에 추가한다")
+        void loadsOnlyMissingCommentsFromDb() {
+            Long userId = 100L;
+            List<Long> commentIds = List.of(1L, 2L, 3L);
+
+            CommentResponse cachedResponse = mock(CommentResponse.class);
+            CommentResponse dbResponse1 = mock(CommentResponse.class);
+            CommentResponse dbResponse2 = mock(CommentResponse.class);
+
+            Comment comment2 = mock(Comment.class);
+            Comment comment3 = mock(Comment.class);
+
+            when(commentIdRedisRepository.findAllByUserId(userId)).thenReturn(commentIds);
+            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+                    1L, cachedResponse
+            ));
+
+            when(commentRepository.findAllById(List.of(2L, 3L)))
+                    .thenReturn(List.of(comment2, comment3));
+            when(commentMapper.toResponse(comment2)).thenReturn(dbResponse1);
+            when(commentMapper.toResponse(comment3)).thenReturn(dbResponse2);
+
+            List<CommentResponse> result = commentService.getCommentsByUser(userId);
+
+            assertThat(result).containsExactly(cachedResponse, dbResponse1, dbResponse2);
+
+            verify(commentRepository).findAllById(List.of(2L, 3L));
+            verify(commentCacheRepository).put(dbResponse1);
+            verify(commentCacheRepository).put(dbResponse2);
+        }
+    }
 
     @Nested
     @DisplayName("createComment()")
