@@ -50,7 +50,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a->
                         a
                                 .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/public/**", "/diary/all/**", "/diary/[0-9]*", "/like/nicknames/**", "/emotion/all/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/admin-login/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/logout/**", "/user/admin-login/**").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 

@@ -45,8 +45,11 @@ public class UserController {
         return ResponseEntity.ok((UserResponse) accessTokenAndRefreshTokenAndResponse.get(2));
     }
 
-    @DeleteMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<UserResponse> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails, HttpServletRequest request, HttpServletResponse response){
+        if(customUserDetails == null) {
+            return null;
+        }
         return ResponseEntity.ok(userService.logout(customUserDetails.getEmail(), request, response));
     }
 
