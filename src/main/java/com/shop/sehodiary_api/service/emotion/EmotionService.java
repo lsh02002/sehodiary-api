@@ -67,6 +67,7 @@ public class EmotionService {
                 .map(UserRoles::getRoles).map(Roles::getName).toList();
 
         //관리자 권한 부여가 까다롭다면 이 내용을 지우거나 "ROLE_USER"로 임시로 바꿔도 됨!
+        //아참! 이 부분도 테스트로 만들어 놓았기 때문에 이모지만 입력하고 다시 돌려놔야 됨!
         if(!roles.contains("ROLE_ADMIN")){
             throw new BadRequestException("관리자 권한이 없습니다.", userId);
         }
