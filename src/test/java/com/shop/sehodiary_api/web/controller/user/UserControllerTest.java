@@ -171,7 +171,7 @@ class UserControllerTest {
 
             given(userService.logout(eq(USER_EMAIL), any(), any())).willReturn(response);
 
-            mockMvc.perform(delete("/user/logout")
+            mockMvc.perform(post("/user/logout")
                             .with(authentication(createAuthentication())).with(csrf()))
                     .andExpect(status().isOk());
 
