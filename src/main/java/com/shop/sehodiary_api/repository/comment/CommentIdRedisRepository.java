@@ -100,22 +100,6 @@ public class CommentIdRedisRepository {
         redisTemplate.opsForList().remove(generateUserKey(userId), 1, commentId);
     }
 
-    public void deleteAllByDiaryId(Long diaryId) {
-        if (diaryId == null) {
-            return;
-        }
-
-        redisTemplate.delete(generateDiaryKey(diaryId));
-    }
-
-    public void deleteAllByUserId(Long userId) {
-        if (userId == null) {
-            return;
-        }
-
-        redisTemplate.delete(generateUserKey(userId));
-    }
-
     private String generateDiaryKey(Long diaryId) {
         return DIARY_ID_KEY + diaryId;
     }

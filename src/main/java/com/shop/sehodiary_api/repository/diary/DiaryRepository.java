@@ -11,10 +11,6 @@ import java.util.Optional;
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
     Optional<Diary> findByUserIdAndId(Long userId, Long diaryId);
     void deleteByUserIdAndId(Long userId, Long diaryId);
-    List<Diary> findByUserId(Long userId);
-    List<Diary> findByVisibilityIn(List<Visibility> visibilities);
-    @Query("select d from Diary d join fetch d.user")
-    List<Diary> findAllWithUser();
 
     @Query("""
        select d.id
@@ -32,13 +28,4 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
 
     @Query("select d.id from Diary d where d.user.id = :userId")
     List<Long> findIdsByUserId(@Param("userId") Long userId);
-
-    @Query("""
-    select d
-    from Diary d
-    join fetch d.user u
-    left join fetch d.diaryImages di
-    where u.id = :userId
-""")
-    List<Diary> findAllByUserIdWithUser(@Param("userId") Long userId);
 }
