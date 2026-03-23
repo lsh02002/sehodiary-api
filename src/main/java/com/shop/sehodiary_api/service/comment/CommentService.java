@@ -198,15 +198,19 @@ public class CommentService {
             Object beforecomment = snapshotFunc.snapshot(comment);
             activityLogService.log(ActivityEntityType.COMMENT, ActivityAction.DELETE, comment.getId(), comment.logMessage(), user, beforecomment, null);
 
-            comment.getDiary().removeComment(comment);
-            DiaryResponse response = diaryMapper.toResponse(comment.getDiary());
+            Diary diary = comment.getDiary();
+            diary.removeComment(comment);
+
+            DiaryResponse response = diaryMapper.toResponse(diary);
             diaryCacheRepository.put(response);
 
             commentCacheRepository.evict(commentId);
-            commentIdRedisRepository.removeByDiaryId(comment.getDiary().getId(), commentId);
+            commentIdRedisRepository.removeByDiaryId(diary.getId(), commentId);
             commentIdRedisRepository.removeByUserId(userId, commentId);
 
             commentRepository.delete(comment);
+        } catch (NotFoundException e) {
+            throw e;
         } catch (Exception e) {
             throw new ConflictException("글 삭제를 실패했습니다.", commentId);
         }

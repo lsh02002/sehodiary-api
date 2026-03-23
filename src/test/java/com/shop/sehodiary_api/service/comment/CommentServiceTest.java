@@ -537,14 +537,14 @@ class CommentServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 사용자 없음 -> ConflictException 으로 래핑")
+        @DisplayName("실패: 사용자 없음 -> NotFoundException 으로 래핑")
         void deleteComment_fail_userNotFound_wrappedConflict() {
             Long userId = 1L;
             Long commentId = 20L;
 
             given(userRepository.findById(userId)).willReturn(Optional.empty());
 
-            assertThrows(ConflictException.class,
+            assertThrows(NotFoundException.class,
                     () -> commentService.deleteComment(userId, commentId));
 
             verify(commentRepository, never()).findByUserIdAndId(anyLong(), anyLong());
@@ -552,7 +552,7 @@ class CommentServiceTest {
         }
 
         @Test
-        @DisplayName("실패: 댓글 없음 -> ConflictException 으로 래핑")
+        @DisplayName("실패: 댓글 없음 -> NotFoundException 으로 래핑")
         void deleteComment_fail_commentNotFound_wrappedConflict() {
             Long userId = 1L;
             Long commentId = 20L;
@@ -564,7 +564,7 @@ class CommentServiceTest {
             given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
             given(commentRepository.findByUserIdAndId(userId, commentId)).willReturn(Optional.empty());
 
-            assertThrows(ConflictException.class,
+            assertThrows(NotFoundException.class,
                     () -> commentService.deleteComment(userId, commentId));
 
             verify(commentRepository, never()).delete(any());
