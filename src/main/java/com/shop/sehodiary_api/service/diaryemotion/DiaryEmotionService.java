@@ -36,12 +36,6 @@ public class DiaryEmotionService {
     private final DiaryEmotionMapper diaryEmotionMapper;
 
     @Transactional
-    public List<DiaryEmotionResponse> getEmotionsByDiary(Long diaryId) {
-        return diaryemotionRepository.findByDiaryId(diaryId)
-                .stream().map(diaryEmotionMapper::toResponse).toList();
-    }
-
-    @Transactional
     public void createDiaryEmotion(Long userId, Long diaryId, String emoji) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));

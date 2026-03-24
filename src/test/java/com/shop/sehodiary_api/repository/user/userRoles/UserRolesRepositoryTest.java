@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.repository.user.userRoles;
 
-import com.shop.sehodiary_api.TestUserFactory;
 import com.shop.sehodiary_api.repository.user.User;
 import jakarta.persistence.*;
 import org.junit.jupiter.api.DisplayName;

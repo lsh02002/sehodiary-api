@@ -70,7 +70,7 @@ class ActivityLogServiceTest {
             assertThat(savedLog.getBeforeJson()).isEqualTo(beforeJson);
             assertThat(savedLog.getAfterJson()).isEqualTo(afterJson);
             assertThat(savedLog.getMessage())
-                    .isEqualTo(type.toString() + "에서 " + message + " 이(가) " + action.toString() + " 되었습니다.");
+                    .isEqualTo(type + "에서 " + message + " 이(가) " + action + " 되었습니다.");
         }
 
         @Test

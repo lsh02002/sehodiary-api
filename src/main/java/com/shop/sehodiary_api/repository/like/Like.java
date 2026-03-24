@@ -41,11 +41,6 @@ public class Like extends BaseTimeEntity implements Loggable {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public Like(Diary diary, User user) {
-        this.diary = diary;
-        this.user = user;
-    }
-
     @Override
     public String logMessage() {
         return user.getNickname() + "의 글 '" + diary.getTitle() + "'에 좋아요" ;

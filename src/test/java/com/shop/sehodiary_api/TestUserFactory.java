@@ -3,7 +3,6 @@ package com.shop.sehodiary_api;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.user.User;
 
-import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class TestUserFactory {

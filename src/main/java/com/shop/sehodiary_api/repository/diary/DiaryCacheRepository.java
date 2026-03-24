@@ -1,13 +1,11 @@
 package com.shop.sehodiary_api.repository.diary;
 
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
-import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -16,7 +14,6 @@ public class DiaryCacheRepository {
     private static final String DIARY_CACHE_KEY = "diary:cache:";
 
     private final DiaryRepository diaryRepository;
-    private final DiaryMapper diaryMapper;
     private final RedisTemplate<String, Object> redisTemplate;
 
     public Optional<DiaryResponse> get(Long diaryId) {

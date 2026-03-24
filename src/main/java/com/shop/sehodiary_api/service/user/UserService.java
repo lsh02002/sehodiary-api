@@ -228,7 +228,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse logout(String email, HttpServletRequest request, HttpServletResponse response){
+    public UserResponse logout(String email, HttpServletRequest request){
         String refreshToken = request.getHeader("refreshToken");
         String accessToken = request.getHeader("accessToken");
 

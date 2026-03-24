@@ -24,19 +24,11 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class S3StorageService {
 
-    /**
-     * 날짜 기반 하위 폴더 앞에 붙일 고정 루트(옵션, 필요 없으면 빈 문자열로 두셔도 됩니다)
-     */
     private static final String KEY_ROOT = "diaryImages";
     private final AmazonS3 s3;
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-    @Value("${cloud.aws.region.static}")
-    private String region;
 
-    /**
-     * 파일 업로드
-     */
     public FileRequest saveFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("빈 파일은 업로드할 수 없습니다.", null);
@@ -84,9 +76,6 @@ public class S3StorageService {
                 .build();
     }
 
-    /**
-     * 파일 삭제 (storedKey = S3 key 전체 경로)
-     */
     public void deleteFile(String storedKey) {
         if (!StringUtils.hasText(storedKey)) return;
         try {
@@ -96,9 +85,6 @@ public class S3StorageService {
         }
     }
 
-    /**
-     * 존재 여부 확인
-     */
     public boolean exists(String storedKey) {
         if (!StringUtils.hasText(storedKey)) return false;
         try {
@@ -110,8 +96,6 @@ public class S3StorageService {
             return false;
         }
     }
-
-    // ================= helpers =================
 
     private String buildDatedKey(String storedName) {
         LocalDate d = LocalDate.now();
@@ -134,9 +118,6 @@ public class S3StorageService {
         return (ct != null && !ct.isBlank()) ? ct : "application/octet-stream";
     }
 
-    /**
-     * S3 Virtual-hosted–style URL
-     */
     private String buildS3Url(String key) {
         return key;
     }

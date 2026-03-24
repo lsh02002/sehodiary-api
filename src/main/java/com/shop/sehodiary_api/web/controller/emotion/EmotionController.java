@@ -1,18 +1,13 @@
 package com.shop.sehodiary_api.web.controller.emotion;
 
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
-import com.shop.sehodiary_api.service.diary.DiaryService;
 import com.shop.sehodiary_api.service.emotion.EmotionService;
-import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
-import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.dto.emotion.EmotionRequest;
 import com.shop.sehodiary_api.web.dto.emotion.EmotionResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 

@@ -30,12 +30,10 @@ class CommentRepositoryTest {
     void findByUserIdAndId() {
         // given
         User user = persistUser("user1@test.com");
-        User otherUser = persistUser("user2@test.com");
 
         Diary diary = persistDiary(user, "테스트 일기");
 
         Comment comment = commentRepository.save(new Comment(diary, user, "내 댓글"));
-        Comment otherComment = commentRepository.save(new Comment(diary, otherUser, "남의 댓글"));
 
         em.flush();
         em.clear();

@@ -46,7 +46,7 @@ public class DiaryImage extends BaseTimeEntity implements Loggable {
     @Column(name = "file_name", length = 512)
     private String fileName;
 
-    @Column(name = "mime_type", length = 255)
+    @Column(name = "mime_type")
     private String mimeType;
 
     @Column(name = "size_bytes")

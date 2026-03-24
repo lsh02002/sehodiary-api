@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.repository.like;
 
-import com.shop.sehodiary_api.repository.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

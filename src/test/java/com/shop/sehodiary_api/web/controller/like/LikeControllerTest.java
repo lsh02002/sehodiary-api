@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.web.controller.like;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.like.LikeService;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
@@ -34,9 +33,6 @@ class LikeControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private LikeService likeService;

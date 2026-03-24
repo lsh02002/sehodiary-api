@@ -1,7 +1,5 @@
 package com.shop.sehodiary_api.repository.diaryEmotion;
 
-import com.shop.sehodiary_api.TestUserFactory;
-import com.shop.sehodiary_api.repository.common.Visibility;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.emotion.Emotion;
 import com.shop.sehodiary_api.repository.user.User;

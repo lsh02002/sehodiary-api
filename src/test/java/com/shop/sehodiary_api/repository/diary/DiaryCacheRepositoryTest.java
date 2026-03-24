@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
-import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,9 +29,6 @@ class DiaryCacheRepositoryTest {
     private DiaryRepository diaryRepository;
 
     @Mock
-    private DiaryMapper diaryMapper;
-
-    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
@@ -42,7 +38,7 @@ class DiaryCacheRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        diaryCacheRepository = new DiaryCacheRepository(diaryRepository, diaryMapper, redisTemplate);
+        diaryCacheRepository = new DiaryCacheRepository(diaryRepository, redisTemplate);
     }
 
     @Nested

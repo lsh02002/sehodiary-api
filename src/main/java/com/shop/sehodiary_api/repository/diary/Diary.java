@@ -87,24 +87,9 @@ public class Diary extends BaseTimeEntity implements Loggable, Serializable {
         return "글 '" + title + "'";
     }
 
-    public void addDiaryImage(DiaryImage image) {
-        diaryImages.add(image);
-        image.setDiary(this);
-    }
-
-    public void removeDiaryImage(DiaryImage image) {
-        diaryImages.remove(image);
-        image.setDiary(null);
-    }
-
     public void addDiaryEmotion(DiaryEmotion diaryEmotion) {
         diaryEmotions.add(diaryEmotion);
         diaryEmotion.setDiary(this);
-    }
-
-    public void removeDiaryEmotion(DiaryEmotion diaryEmotion) {
-        diaryEmotions.remove(diaryEmotion);
-        diaryEmotion.setDiary(null);
     }
 
     public void addComment(Comment comment) {
@@ -115,11 +100,6 @@ public class Diary extends BaseTimeEntity implements Loggable, Serializable {
     public void removeComment(Comment comment) {
         comments.remove(comment);
         comment.setDiary(null);
-    }
-
-    public void addLike(Like like) {
-        likes.add(like);
-        like.setDiary(this);
     }
 
     public void removeLike(Like like) {

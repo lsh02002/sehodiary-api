@@ -169,16 +169,9 @@ public class DiaryImageService {
 
         Object beforeDiaryImage = snapshotFunc.snapshot(entity);
 
-        // fileUrl에서 저장 파일명을 추출할 수 있게 해두었다면 여기서 삭제
-        // 단순하게 storedFileName만 별도 칼럼으로 저장하는 방법을 권장합니다.
-        // 예시로 fileUrl 마지막 토큰을 파일명으로 가정:
-        String storedFileName = extractStoredFileName(entity.getImageUrl());
-        // s3storageService.deleteFile(storedFileName);
         if(!entity.getDeleted()) {
             entity.setDeleted(true);
         }
-
-        // diaryImageRepository.delete(entity);
 
         Object afterDiaryImage = snapshotFunc.snapshot(entity);
 

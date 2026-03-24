@@ -41,11 +41,6 @@ public class DiaryEmotion extends BaseTimeEntity implements Loggable {
     @JoinColumn(name = "emotion_id", nullable = false)
     private Emotion emotion;
 
-    public DiaryEmotion(Diary diary, Emotion emotion) {
-        this.diary = diary;
-        this.emotion = emotion;
-    }
-
     @Override
     public String logMessage() {
         return "글 '" + diary.getTitle() + "' 에 이모지 " + emotion.getName() + " '" + emotion.getEmoji() + "'";

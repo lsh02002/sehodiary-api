@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.repository.user.userDetails;
 
-import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

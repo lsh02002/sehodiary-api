@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.repository.diaryImage;
 
-import com.shop.sehodiary_api.TestUserFactory;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.user.User;
 import org.junit.jupiter.api.DisplayName;

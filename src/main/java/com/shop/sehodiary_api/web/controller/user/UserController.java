@@ -4,8 +4,6 @@ import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.user.UserService;
-import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
-import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.dto.user.LoginRequest;
 import com.shop.sehodiary_api.web.dto.user.SignupRequest;
 import com.shop.sehodiary_api.web.dto.user.UserInfoResponse;
@@ -46,11 +44,11 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<UserResponse> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails, HttpServletRequest request, HttpServletResponse response){
+    public ResponseEntity<UserResponse> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails, HttpServletRequest request){
         if(customUserDetails == null) {
             return null;
         }
-        return ResponseEntity.ok(userService.logout(customUserDetails.getEmail(), request, response));
+        return ResponseEntity.ok(userService.logout(customUserDetails.getEmail(), request));
     }
 
     @DeleteMapping("/withdrawal")

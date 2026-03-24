@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.repository.diary;
 
-import com.shop.sehodiary_api.repository.common.Visibility;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

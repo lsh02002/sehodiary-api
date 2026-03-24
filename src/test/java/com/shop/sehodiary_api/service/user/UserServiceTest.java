@@ -28,7 +28,6 @@ import com.shop.sehodiary_api.service.exceptions.NotFoundException;
 import com.shop.sehodiary_api.service.profileimage.ProfileImageService;
 import com.shop.sehodiary_api.web.dto.user.*;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -75,9 +74,6 @@ class UserServiceTest {
 
     @Mock
     private HttpServletRequest httpServletRequest;
-
-    @Mock
-    private HttpServletResponse httpServletResponse;
 
     @Mock
     private UserLoginHistRepository userLoginHistRepository;
@@ -530,7 +526,7 @@ class UserServiceTest {
             given(jwtTokenProvider.validateAccessToken(accessToken)).willReturn(true);
 
             // when
-            UserResponse result = userService.logout(email, httpServletRequest, httpServletResponse);
+            UserResponse result = userService.logout(email, httpServletRequest);
 
             // then
             assertThat(result).isNotNull();
@@ -555,7 +551,7 @@ class UserServiceTest {
             given(jwtTokenProvider.validateAccessToken(accessToken)).willReturn(false);
 
             // when
-            UserResponse result = userService.logout(email, httpServletRequest, httpServletResponse);
+            UserResponse result = userService.logout(email, httpServletRequest);
 
             // then
             assertThat(result).isNotNull();
@@ -574,7 +570,7 @@ class UserServiceTest {
             String email = null;
 
             // when & then
-            assertThatThrownBy(() -> userService.logout(email, httpServletRequest, httpServletResponse))
+            assertThatThrownBy(() -> userService.logout(email, httpServletRequest))
                     .isInstanceOf(BadRequestException.class)
                     .extracting("detailMessage")
                     .isEqualTo("유저 정보가 비어있습니다.");

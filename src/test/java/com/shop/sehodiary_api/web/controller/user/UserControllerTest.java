@@ -59,7 +59,7 @@ class UserControllerTest {
     private static final Long USER_ID = 1L;
     private static final String USER_EMAIL = "test@test.com";
 
-    private CustomUserDetails createCustomUserDetails(Long userId, String email, String role) {
+    private CustomUserDetails createCustomUserDetails(Long userId, String email) {
         CustomUserDetails userDetails = Mockito.mock(CustomUserDetails.class);
         given(userDetails.getId()).willReturn(userId);
         given(userDetails.getEmail()).willReturn(email);
@@ -67,7 +67,7 @@ class UserControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken createAuthentication() {
-        CustomUserDetails userDetails = createCustomUserDetails(USER_ID, USER_EMAIL, "ROLE_USER");
+        CustomUserDetails userDetails = createCustomUserDetails(USER_ID, USER_EMAIL);
         return new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
@@ -76,7 +76,7 @@ class UserControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken createAdminAuthentication() {
-        CustomUserDetails userDetails = createCustomUserDetails(USER_ID, USER_EMAIL, "ROLE_ADMIN");
+        CustomUserDetails userDetails = createCustomUserDetails(USER_ID, USER_EMAIL);
         return new UsernamePasswordAuthenticationToken(
                 userDetails,
                 null,
@@ -169,13 +169,13 @@ class UserControllerTest {
         void logout_success() throws Exception {
             UserResponse response = Mockito.mock(UserResponse.class);
 
-            given(userService.logout(eq(USER_EMAIL), any(), any())).willReturn(response);
+            given(userService.logout(eq(USER_EMAIL), any())).willReturn(response);
 
             mockMvc.perform(post("/user/logout")
                             .with(authentication(createAuthentication())).with(csrf()))
                     .andExpect(status().isOk());
 
-            then(userService).should().logout(eq(USER_EMAIL), any(), any());
+            then(userService).should().logout(eq(USER_EMAIL), any());
         }
 
         @Test
@@ -354,7 +354,7 @@ class UserControllerTest {
         @Test
         @DisplayName("GET /user/test1 성공")
         void test1_success() throws Exception {
-            CustomUserDetails userDetails = createCustomUserDetails(USER_ID, USER_EMAIL, "ROLE_USER");
+            CustomUserDetails userDetails = createCustomUserDetails(USER_ID, USER_EMAIL);
             given(userDetails.toString()).willReturn("custom-user-details");
 
             UsernamePasswordAuthenticationToken authentication =
