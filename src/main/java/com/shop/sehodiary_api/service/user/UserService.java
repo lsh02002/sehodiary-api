@@ -29,7 +29,6 @@ import com.shop.sehodiary_api.web.dto.user.*;
 import com.shop.sehodiary_api.web.dto.user.userLoginHist.UserLoginHistResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -208,6 +207,7 @@ public class UserService {
                 .email(user.getEmail())
                 .build();
 
+        refreshTokenRepository.deleteByEmail(user.getEmail());
         refreshTokenRepository.save(newToken);
 
         UserResponse authResponse = new UserResponse(HttpStatus.OK.value(), "로그인에 성공 하였습니다.", signupResponse);
@@ -236,7 +236,10 @@ public class UserService {
             throw new BadRequestException("유저 정보가 비어있습니다.", null);
         }
 
-        refreshTokenRepository.deleteByRefreshToken(refreshToken);
+        RefreshToken deleteRefreshToken = refreshTokenRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(()-> new RuntimeException("해당 리프레시 토큰을 찾을 수 없습니다."));
+
+        refreshTokenRepository.delete(deleteRefreshToken);
 
         if(jwtTokenProvider.validateAccessToken(accessToken)) {
             redisUtil.setBlackList(accessToken, "accessToken", 30);

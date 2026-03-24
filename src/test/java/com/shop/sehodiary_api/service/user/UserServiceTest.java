@@ -521,8 +521,16 @@ class UserServiceTest {
             String refreshToken = "refresh-token";
             String accessToken = "access-token";
 
+            RefreshToken savedToken = RefreshToken.builder()
+                    .authId("1")
+                    .refreshToken(refreshToken)
+                    .email(email)
+                    .build();
+
             given(httpServletRequest.getHeader("refreshToken")).willReturn(refreshToken);
             given(httpServletRequest.getHeader("accessToken")).willReturn(accessToken);
+            given(refreshTokenRepository.findByRefreshToken(refreshToken))
+                    .willReturn(Optional.of(savedToken));
             given(jwtTokenProvider.validateAccessToken(accessToken)).willReturn(true);
 
             // when
@@ -533,7 +541,8 @@ class UserServiceTest {
             assertThat(result.getMessage()).isEqualTo("로그아웃에 성공 하였습니다.");
             assertThat(result.getData()).isNull();
 
-            verify(refreshTokenRepository).deleteByRefreshToken(refreshToken);
+            verify(refreshTokenRepository).findByRefreshToken(refreshToken);
+            verify(refreshTokenRepository).delete(savedToken);
             verify(jwtTokenProvider).validateAccessToken(accessToken);
             verify(redisUtil).setBlackList(accessToken, "accessToken", 30);
         }
@@ -546,8 +555,16 @@ class UserServiceTest {
             String refreshToken = "refresh-token";
             String accessToken = "invalid-access-token";
 
+            RefreshToken savedToken = RefreshToken.builder()
+                    .authId("1")
+                    .refreshToken(refreshToken)
+                    .email(email)
+                    .build();
+
             given(httpServletRequest.getHeader("refreshToken")).willReturn(refreshToken);
             given(httpServletRequest.getHeader("accessToken")).willReturn(accessToken);
+            given(refreshTokenRepository.findByRefreshToken(refreshToken))
+                    .willReturn(Optional.of(savedToken));
             given(jwtTokenProvider.validateAccessToken(accessToken)).willReturn(false);
 
             // when
@@ -558,7 +575,7 @@ class UserServiceTest {
             assertThat(result.getMessage()).isEqualTo("로그아웃에 성공 하였습니다.");
             assertThat(result.getData()).isNull();
 
-            verify(refreshTokenRepository).deleteByRefreshToken(refreshToken);
+            verify(refreshTokenRepository).delete(savedToken);
             verify(jwtTokenProvider).validateAccessToken(accessToken);
             verify(redisUtil, never()).setBlackList(anyString(), anyString(), org.mockito.ArgumentMatchers.anyInt());
         }
