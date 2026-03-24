@@ -34,7 +34,7 @@ public class DiaryController {
         return ResponseEntity.ok(diaryService.getDiariesByUser(customUserDetails.getId()));
     }
 
-    @GetMapping("/{diaryId}")
+    @GetMapping("/one/{diaryId}")
     public ResponseEntity<DiaryResponse> getOneDiary(@PathVariable Long diaryId) {
         return ResponseEntity.ok(diaryService.getOneDiary(diaryId));
     }
