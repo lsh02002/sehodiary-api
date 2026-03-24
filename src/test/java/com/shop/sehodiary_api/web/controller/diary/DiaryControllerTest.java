@@ -148,7 +148,7 @@ class DiaryControllerTest {
 
             given(diaryService.getOneDiary(diaryId)).willReturn(response);
 
-            mockMvc.perform(get("/diary/{diaryId}", diaryId))
+            mockMvc.perform(get("/diary/one/{diaryId}", diaryId))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(diaryId))
                     .andExpect(jsonPath("$.title").value("one diary"));
