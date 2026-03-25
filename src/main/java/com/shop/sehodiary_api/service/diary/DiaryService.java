@@ -274,7 +274,13 @@ public class DiaryService {
             diary.setContent(request.getContent());
         }
 
-        LocalDate newDate = LocalDate.parse(request.getDate());
+        LocalDate newDate;
+        try {
+            newDate = LocalDate.parse(request.getDate());
+        } catch (DateTimeParseException e) {
+            throw new NotAcceptableException("올바르지 않은 날짜 형식입니다.", request.getDate());
+        }
+
         if (!diary.getDate().equals(newDate)) {
             diary.setDate(newDate);
         }

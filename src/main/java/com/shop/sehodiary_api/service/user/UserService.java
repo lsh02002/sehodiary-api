@@ -200,20 +200,18 @@ public class UserService {
                 .nickname(user.getNickname())
                 .build();
 
-        Optional<RefreshToken> oldRefreshToken =
-                refreshTokenRepository.findByEmail(user.getEmail());
-
-        oldRefreshToken.ifPresent(refreshTokenRepository::delete);
-
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
 
-        RefreshToken newToken = RefreshToken.builder()
-                .authId(user.getId().toString())
-                .refreshToken(newRefreshToken)
-                .email(user.getEmail())
-                .build();
+        RefreshToken token = refreshTokenRepository
+                .findByEmail(user.getEmail())
+                .orElseGet(() -> RefreshToken.builder()
+                        .authId(user.getId().toString())
+                        .email(user.getEmail())
+                        .build());
 
-        refreshTokenRepository.save(newToken);
+        token.setRefreshToken(newRefreshToken);
+
+        refreshTokenRepository.save(token);
 
         UserResponse authResponse = new UserResponse(HttpStatus.OK.value(), "로그인에 성공 하였습니다.", signupResponse);
 
