@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -181,6 +183,17 @@ public class DiaryService {
             throw new NotAcceptableException("해당 내용란이 비어있습니다", request.getContent());
         }
 
+        if (request.getDate() == null) {
+            throw new NotAcceptableException("날짜가 비어있습니다.", null);
+        }
+
+        LocalDate newDate;
+        try {
+            newDate = LocalDate.parse(request.getDate());
+        } catch (DateTimeParseException e) {
+            throw new NotAcceptableException("올바르지 않은 날짜 형식입니다.", request.getDate());
+        }
+
         if(request.getVisibility().trim().isEmpty()) {
             throw new NotAcceptableException("해당 공개여부란이 비어있습니다", request.getVisibility());
         }
@@ -193,6 +206,7 @@ public class DiaryService {
                 .user(user)
                 .title(request.getTitle())
                 .content(request.getContent())
+                .date(newDate)
                 .visibility(Visibility.from(request.getVisibility()))
                 .weather(request.getWeather())
                 .build();
@@ -232,12 +246,37 @@ public class DiaryService {
 
         Object beforeDiary = snapshotFunc.snapshot(diary);
 
+        if(request.getTitle().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 제목란이 비어있습니다", request.getTitle());
+        }
+
+        if(request.getContent().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 내용란이 비어있습니다", request.getContent());
+        }
+
+        if (request.getDate() == null) {
+            throw new NotAcceptableException("날짜가 비어있습니다.", null);
+        }
+
+        if(request.getVisibility().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 공개여부란이 비어있습니다", request.getVisibility());
+        }
+
+        if(request.getWeather().trim().isEmpty()) {
+            throw new NotAcceptableException("해당 날씨란이 비어있습니다", request.getWeather());
+        }
+
         if (!Objects.equals(diary.getTitle(), request.getTitle())) {
             diary.setTitle(request.getTitle());
         }
 
         if (!Objects.equals(diary.getContent(), request.getContent())) {
             diary.setContent(request.getContent());
+        }
+
+        LocalDate newDate = LocalDate.parse(request.getDate());
+        if (!diary.getDate().equals(newDate)) {
+            diary.setDate(newDate);
         }
 
         Visibility newVisibility = Visibility.from(request.getVisibility());

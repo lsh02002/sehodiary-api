@@ -10,6 +10,7 @@ import lombok.*;
 public class DiaryRequest {
     private String title;
     private String content;
+    private String date;
     private String visibility;
     private String weather;
     private String emoji;

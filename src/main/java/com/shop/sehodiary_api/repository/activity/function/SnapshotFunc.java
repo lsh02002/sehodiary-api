@@ -38,6 +38,7 @@ public class SnapshotFunc {
             m.put("userId", diary.getUser() != null ? diary.getUser().getId(): null);
             m.put("title", diary.getTitle());
             m.put("content", diary.getContent());
+            m.put("date", diary.getDate().toString());
             m.put("visibility", diary.getVisibility() != null ? diary.getVisibility().name() : null);
             m.put("weather", diary.getWeather());
             m.put(

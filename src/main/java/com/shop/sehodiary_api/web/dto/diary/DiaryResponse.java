@@ -16,6 +16,7 @@ public class DiaryResponse implements Serializable {
     private String nickname;
     private String title;
     private String content;
+    private String date;
     private String visibility;
     private String weather;
     private Long commentsCount;

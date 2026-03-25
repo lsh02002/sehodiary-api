@@ -592,7 +592,7 @@ class UserServiceTest {
                     .extracting("detailMessage")
                     .isEqualTo("유저 정보가 비어있습니다.");
 
-            verify(refreshTokenRepository, never()).deleteByRefreshToken(anyString());
+            verify(refreshTokenRepository, never()).delete(any(RefreshToken.class));
             verify(jwtTokenProvider, never()).validateAccessToken(anyString());
             verify(redisUtil, never()).setBlackList(anyString(), anyString(), org.mockito.ArgumentMatchers.anyInt());
         }

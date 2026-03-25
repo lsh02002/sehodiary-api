@@ -21,6 +21,7 @@ public class DiaryMapper {
                 .nickname(diary.getUser().getNickname())
                 .title(diary.getTitle())
                 .content(diary.getContent())
+                .date(diary.getDate().toString())
                 .visibility(diary.getVisibility().toString())
                 .weather(diary.getWeather())
                 .commentsCount(diary.getComments() != null ? (long) diary.getComments().size() : null)

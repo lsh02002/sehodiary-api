@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -217,6 +218,7 @@ class LikeRepositoryTest {
                 .user(user)
                 .title(title)
                 .content("내용")
+                .date(LocalDate.now())
                 .build();
         em.persist(diary);
         return diary;

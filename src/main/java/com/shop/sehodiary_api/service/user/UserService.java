@@ -42,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -199,6 +200,11 @@ public class UserService {
                 .nickname(user.getNickname())
                 .build();
 
+        Optional<RefreshToken> oldRefreshToken =
+                refreshTokenRepository.findByEmail(user.getEmail());
+
+        oldRefreshToken.ifPresent(refreshTokenRepository::delete);
+
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
 
         RefreshToken newToken = RefreshToken.builder()
@@ -207,7 +213,6 @@ public class UserService {
                 .email(user.getEmail())
                 .build();
 
-        refreshTokenRepository.deleteByEmail(user.getEmail());
         refreshTokenRepository.save(newToken);
 
         UserResponse authResponse = new UserResponse(HttpStatus.OK.value(), "로그인에 성공 하였습니다.", signupResponse);

@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -143,6 +144,7 @@ class DiaryEmotionRepositoryTest {
                 .user(user)
                 .title(title)
                 .content("asdfasdfasfd")
+                .date(LocalDate.now())
                 .build();
         em.persist(diary);
         return diary;

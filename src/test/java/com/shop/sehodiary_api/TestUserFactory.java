@@ -3,6 +3,7 @@ package com.shop.sehodiary_api;
 import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.user.User;
 
+import java.time.LocalDate;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class TestUserFactory {
@@ -26,6 +27,7 @@ public final class TestUserFactory {
         Diary diary = Diary.builder()
                 .title("테스트 일기 " + suffix)
                 .content("테스트 내용 " + suffix)
+                .date(LocalDate.now())
                 .user(user)
                 .build();
 

@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -150,6 +151,7 @@ class DiaryRepositoryTest {
                 .user(user)
                 .title("title" + COUNTER.incrementAndGet())
                 .content("asdfasdfasfd")
+                .date(LocalDate.now())
                 .visibility(visibility)
                 .build();
         em.persist(diary);

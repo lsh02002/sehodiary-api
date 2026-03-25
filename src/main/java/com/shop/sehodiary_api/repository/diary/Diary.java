@@ -1,6 +1,7 @@
 package com.shop.sehodiary_api.repository.diary;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,6 +50,9 @@ public class Diary extends BaseTimeEntity implements Loggable, Serializable {
 
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    @Column(name = "date", nullable = false)
+    private LocalDate date;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

@@ -31,6 +31,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -500,6 +501,7 @@ class DiaryServiceTest {
             request = new DiaryRequest();
             request.setTitle("오늘 일기");
             request.setContent("정말 즐거운 하루였다.");
+            request.setDate(LocalDate.now().toString());
             request.setVisibility("PUBLIC");
             request.setWeather("SUNNY");
             request.setEmoji("😊");
@@ -682,6 +684,7 @@ class DiaryServiceTest {
                     .user(user)
                     .title("기존 제목")
                     .content("기존 내용")
+                    .date(LocalDate.now())
                     .visibility(Visibility.PRIVATE)
                     .weather("RAINY")
                     .build();
@@ -691,6 +694,7 @@ class DiaryServiceTest {
             request = new DiaryRequest();
             request.setTitle("수정된 제목");
             request.setContent("수정된 내용");
+            request.setDate(LocalDate.now().toString());
             request.setVisibility("PUBLIC");
             request.setWeather("SUNNY");
             request.setEmoji("😊");
@@ -833,6 +837,7 @@ class DiaryServiceTest {
             // given
             request.setTitle("기존 제목");
             request.setContent("기존 내용");
+            request.setDate(LocalDate.now().toString());
             request.setVisibility("PRIVATE");
             request.setWeather("RAINY");
             request.setEmoji("🙂");

@@ -66,27 +66,24 @@ class RefreshTokenRepositoryTest {
     }
 
     @Test
-    @DisplayName("refreshToken으로 RefreshToken을 삭제한다")
-    void deleteByRefreshToken() {
+    @DisplayName("email로 RefreshToken을 조회한다")
+    void findByEmail_success() {
         // given
         RefreshToken token = RefreshToken.builder()
-                .authId("auth3")
-                .refreshToken("refresh-token-789")
-                .email("delete@example.com")
+                .authId("auth1")
+                .refreshToken("refresh-token-123")
+                .email("test@example.com")
                 .build();
 
         refreshTokenRepository.save(token);
 
         // when
-        RefreshToken savedToken = refreshTokenRepository.findByRefreshToken("refresh-token-789")
-                .orElseThrow();
-
-        refreshTokenRepository.delete(savedToken);
+        Optional<RefreshToken> result =
+                refreshTokenRepository.findByEmail("test@example.com");
 
         // then
-        Optional<RefreshToken> result =
-                refreshTokenRepository.findByRefreshToken("refresh-token-789");
-
-        assertThat(result).isEmpty();
+        assertThat(result).isPresent();
+        assertThat(result.get().getEmail()).isEqualTo("test@example.com");
+        assertThat(result.get().getRefreshToken()).isEqualTo("refresh-token-123");
     }
 }

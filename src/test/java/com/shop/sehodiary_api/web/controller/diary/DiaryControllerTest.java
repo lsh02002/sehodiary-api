@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -164,7 +165,7 @@ class DiaryControllerTest {
             Long userId = 1L;
             CustomUserDetails userDetails = createCustomUserDetails(userId);
 
-            DiaryRequest request = new DiaryRequest("title", "content", Visibility.PUBLIC.name(), "맑음", "😊");
+            DiaryRequest request = new DiaryRequest("title", "content", LocalDate.now().toString(), Visibility.PUBLIC.name(), "맑음", "😊");
             DiaryResponse response = createDiaryResponse(100L, "title");
 
             MockMultipartFile requestPart = new MockMultipartFile(
@@ -203,7 +204,7 @@ class DiaryControllerTest {
             Long userId = 1L;
             CustomUserDetails userDetails = createCustomUserDetails(userId);
 
-            DiaryRequest request = new DiaryRequest("title", "content", Visibility.PUBLIC.name(), "맑음", "😊");
+            DiaryRequest request = new DiaryRequest("title", "content", LocalDate.now().toString(), Visibility.PUBLIC.name(), "맑음", "😊");
             DiaryResponse response = createDiaryResponse(101L, "title");
 
             MockMultipartFile requestPart = new MockMultipartFile(
@@ -240,7 +241,7 @@ class DiaryControllerTest {
             Long diaryId = 200L;
             CustomUserDetails userDetails = createCustomUserDetails(userId);
 
-            DiaryRequest request = new DiaryRequest("title", "content", Visibility.PUBLIC.name(), "맑음", "😊");
+            DiaryRequest request = new DiaryRequest("title", "content", LocalDate.now().toString(), Visibility.PUBLIC.name(), "맑음", "😊");
             DiaryResponse response = createDiaryResponse(diaryId, "edit title");
 
             MockMultipartFile requestPart = new MockMultipartFile(
