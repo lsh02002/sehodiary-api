@@ -44,7 +44,7 @@ public class DiaryController {
         return ResponseEntity.ok(diaryService.createDiary(customUserDetails.getId(), request, files));
     }
 
-    @PostMapping(path = "/edit/{diaryId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(path = "/edit/{diaryId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DiaryResponse> editDiary(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long diaryId, @RequestPart DiaryRequest request, @RequestPart(required = false) List<MultipartFile> files) {
         return ResponseEntity.ok(diaryService.editDiary(customUserDetails.getId(), diaryId, request, files));
     }
