@@ -33,7 +33,7 @@ public class EmotionController {
         return ResponseEntity.ok(emotionService.createEmotion(customUserDetails.getId(), request));
     }
 
-    @PostMapping("/edit/{emotionId}")
+    @PutMapping("/edit/{emotionId}")
     public ResponseEntity<EmotionResponse> editEmotion(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long emotionId, @RequestBody EmotionRequest request) {
         return ResponseEntity.ok(emotionService.editEmotion(customUserDetails.getId(), emotionId, request));
     }
