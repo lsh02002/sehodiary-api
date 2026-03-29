@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -146,8 +147,22 @@ public class CommentService {
 
         CommentResponse commentResponse = commentMapper.toResponse(savedComment);
         commentCacheRepository.put(commentResponse);
-        commentIdRedisRepository.addByDiaryId(savedComment.getDiary().getId(), savedComment.getId());
-        commentIdRedisRepository.addByUserId(userId, savedComment.getId());
+        double score = savedComment.getCreatedAt()
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+
+        commentIdRedisRepository.addByDiaryId(
+                savedComment.getDiary().getId(),
+                savedComment.getId(),
+                score
+        );
+
+        commentIdRedisRepository.addByUserId(
+                userId,
+                savedComment.getId(),
+                score
+        );
 
         return commentResponse;
     }

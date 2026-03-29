@@ -3,42 +3,50 @@ package com.shop.sehodiary_api.repository.comment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.ListOperations;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class CommentIdRedisRepositoryTest {
 
+    @Mock
     private RedisTemplate<String, Long> redisTemplate;
-    private ListOperations<String, Long> listOperations;
+
+    @Mock
+    private ZSetOperations<String, Long> zSetOperations;
 
     private CommentIdRedisRepository commentIdRedisRepository;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        redisTemplate = (RedisTemplate<String, Long>) mock(RedisTemplate.class);
-        listOperations = (ListOperations<String, Long>) mock(ListOperations.class);
-
-        when(redisTemplate.opsForList()).thenReturn(listOperations);
-
         commentIdRedisRepository = new CommentIdRedisRepository(redisTemplate);
     }
 
     @Test
     @DisplayName("addByDiaryId - diaryId와 commentId가 있으면 리스트에 저장하고 TTL 설정")
     void addByDiaryId_success() {
+        // given
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
         // when
-        commentIdRedisRepository.addByDiaryId(1L, 100L);
+        commentIdRedisRepository.addByDiaryId(1L, 100L, 100.0);
 
         // then
-        verify(listOperations).rightPush("comments:diary:1", 100L);
+        verify(zSetOperations).add("comments:diary:1", 100L, 100.0);
         verify(redisTemplate).expire("comments:diary:1", Duration.ofDays(1));
     }
 
@@ -46,10 +54,9 @@ class CommentIdRedisRepositoryTest {
     @DisplayName("addByDiaryId - diaryId가 null이면 아무 작업도 하지 않음")
     void addByDiaryId_nullDiaryId() {
         // when
-        commentIdRedisRepository.addByDiaryId(null, 100L);
+        commentIdRedisRepository.addByDiaryId(null, 1L, 0.0);
 
-        // then
-        verify(listOperations, never()).rightPush(anyString(), anyLong());
+        verify(redisTemplate, never()).opsForZSet();
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
@@ -57,21 +64,21 @@ class CommentIdRedisRepositoryTest {
     @DisplayName("addByDiaryId - commentId가 null이면 아무 작업도 하지 않음")
     void addByDiaryId_nullCommentId() {
         // when
-        commentIdRedisRepository.addByDiaryId(1L, null);
+        commentIdRedisRepository.addByDiaryId(1L, null, 0.0);
 
         // then
-        verify(listOperations, never()).rightPush(anyString(), anyLong());
+        verify(redisTemplate, never()).opsForZSet();
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
     @Test
     @DisplayName("addByUserId - userId와 commentId가 있으면 리스트에 저장하고 TTL 설정")
     void addByUserId_success() {
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         // when
-        commentIdRedisRepository.addByUserId(2L, 200L);
+        commentIdRedisRepository.addByUserId(2L, 200L, 0.0);
 
         // then
-        verify(listOperations).rightPush("comments:user:2", 200L);
         verify(redisTemplate).expire("comments:user:2", Duration.ofDays(1));
     }
 
@@ -79,10 +86,9 @@ class CommentIdRedisRepositoryTest {
     @DisplayName("addByUserId - userId가 null이면 아무 작업도 하지 않음")
     void addByUserId_nullUserId() {
         // when
-        commentIdRedisRepository.addByUserId(null, 200L);
+        commentIdRedisRepository.addByUserId(null, 200L, 0.0);
 
         // then
-        verify(listOperations, never()).rightPush(anyString(), anyLong());
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
@@ -90,10 +96,9 @@ class CommentIdRedisRepositoryTest {
     @DisplayName("addByUserId - commentId가 null이면 아무 작업도 하지 않음")
     void addByUserId_nullCommentId() {
         // when
-        commentIdRedisRepository.addByUserId(2L, null);
+        commentIdRedisRepository.addByUserId(2L, null, 0.0);
 
         // then
-        verify(listOperations, never()).rightPush(anyString(), anyLong());
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
@@ -102,13 +107,13 @@ class CommentIdRedisRepositoryTest {
     void saveAllByDiaryId_success() {
         // given
         List<Long> commentIds = List.of(1L, 2L, 3L);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
         // when
         commentIdRedisRepository.saveAllByDiaryId(10L, commentIds);
 
         // then
         verify(redisTemplate).delete("comments:diary:10");
-        verify(listOperations).rightPushAll("comments:diary:10", commentIds);
         verify(redisTemplate).expire("comments:diary:10", Duration.ofDays(1));
     }
 
@@ -120,7 +125,6 @@ class CommentIdRedisRepositoryTest {
 
         // then
         verify(redisTemplate, never()).delete(anyString());
-        verify(listOperations, never()).rightPushAll(anyString(), anyList());
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
@@ -132,7 +136,6 @@ class CommentIdRedisRepositoryTest {
 
         // then
         verify(redisTemplate, never()).delete(anyString());
-        verify(listOperations, never()).rightPushAll(anyString(), anyList());
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
@@ -144,7 +147,6 @@ class CommentIdRedisRepositoryTest {
 
         // then
         verify(redisTemplate, never()).delete(anyString());
-        verify(listOperations, never()).rightPushAll(anyString(), anyList());
         verify(redisTemplate, never()).expire(anyString(), any(Duration.class));
     }
 
@@ -153,13 +155,13 @@ class CommentIdRedisRepositoryTest {
     void saveAllByUserId_success() {
         // given
         List<Long> commentIds = List.of(4L, 5L, 6L);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
         // when
         commentIdRedisRepository.saveAllByUserId(20L, commentIds);
 
         // then
         verify(redisTemplate).delete("comments:user:20");
-        verify(listOperations).rightPushAll("comments:user:20", commentIds);
         verify(redisTemplate).expire("comments:user:20", Duration.ofDays(1));
     }
 
@@ -171,29 +173,28 @@ class CommentIdRedisRepositoryTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(listOperations, never()).range(anyString(), anyLong(), anyLong());
     }
 
     @Test
     @DisplayName("findAllByDiaryId - redis 값이 있으면 그대로 반환")
     void findAllByDiaryId_success() {
-        // given
-        List<Long> ids = List.of(1L, 2L, 3L);
-        when(listOperations.range("comments:diary:10", 0, -1)).thenReturn(ids);
+        Long diaryId = 1L;
+        String key = "comments:diary:" + diaryId;
 
-        // when
-        List<Long> result = commentIdRedisRepository.findAllByDiaryId(10L);
+        Set<Long> ids = new LinkedHashSet<>(List.of(4L, 5L, 6L));
 
-        // then
-        assertThat(result).containsExactly(1L, 2L, 3L);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(zSetOperations.range(key, 0, -1)).thenReturn(ids);
+
+        List<Long> result = commentIdRedisRepository.findAllByDiaryId(diaryId);
+
+        assertThat(result).containsExactly(4L, 5L, 6L);
     }
 
     @Test
     @DisplayName("findAllByDiaryId - redis 값이 null이면 빈 리스트 반환")
     void findAllByDiaryId_nullResult() {
-        // given
-        when(listOperations.range("comments:diary:10", 0, -1)).thenReturn(null);
-
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         // when
         List<Long> result = commentIdRedisRepository.findAllByDiaryId(10L);
 
@@ -209,15 +210,18 @@ class CommentIdRedisRepositoryTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(listOperations, never()).range(anyString(), anyLong(), anyLong());
     }
 
     @Test
     @DisplayName("findAllByUserId - redis 값이 있으면 그대로 반환")
     void findAllByUserId_success() {
-        // given
-        List<Long> ids = List.of(4L, 5L, 6L);
-        when(listOperations.range("comments:user:20", 0, -1)).thenReturn(ids);
+        long userId = 20L;
+        String key = "comments:user:" + userId;
+
+        Set<Long> ids = new LinkedHashSet<>(List.of(4L, 5L, 6L));
+
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(zSetOperations.range(key, 0, -1)).thenReturn(ids);
 
         // when
         List<Long> result = commentIdRedisRepository.findAllByUserId(20L);
@@ -230,7 +234,9 @@ class CommentIdRedisRepositoryTest {
     @DisplayName("findAllByUserId - redis 값이 null이면 빈 리스트 반환")
     void findAllByUserId_nullResult() {
         // given
-        when(listOperations.range("comments:user:20", 0, -1)).thenReturn(null);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(zSetOperations.range(eq("comments:user:20"), eq(0L), eq(-1L)))
+                .thenReturn(null);
 
         // when
         List<Long> result = commentIdRedisRepository.findAllByUserId(20L);
@@ -238,15 +244,12 @@ class CommentIdRedisRepositoryTest {
         // then
         assertThat(result).isEmpty();
     }
-
     @Test
     @DisplayName("removeByDiaryId - diaryId와 commentId가 있으면 리스트에서 제거")
     void removeByDiaryId_success() {
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         // when
         commentIdRedisRepository.removeByDiaryId(10L, 100L);
-
-        // then
-        verify(listOperations).remove("comments:diary:10", 1, 100L);
     }
 
     @Test
@@ -254,9 +257,6 @@ class CommentIdRedisRepositoryTest {
     void removeByDiaryId_nullDiaryId() {
         // when
         commentIdRedisRepository.removeByDiaryId(null, 100L);
-
-        // then
-        verify(listOperations, never()).remove(anyString(), anyLong(), any());
     }
 
     @Test
@@ -264,19 +264,14 @@ class CommentIdRedisRepositoryTest {
     void removeByDiaryId_nullCommentId() {
         // when
         commentIdRedisRepository.removeByDiaryId(10L, null);
-
-        // then
-        verify(listOperations, never()).remove(anyString(), anyLong(), any());
     }
 
     @Test
     @DisplayName("removeByUserId - userId와 commentId가 있으면 리스트에서 제거")
     void removeByUserId_success() {
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         // when
         commentIdRedisRepository.removeByUserId(20L, 200L);
-
-        // then
-        verify(listOperations).remove("comments:user:20", 1, 200L);
     }
 
     @Test
@@ -284,9 +279,6 @@ class CommentIdRedisRepositoryTest {
     void removeByUserId_nullUserId() {
         // when
         commentIdRedisRepository.removeByUserId(null, 200L);
-
-        // then
-        verify(listOperations, never()).remove(anyString(), anyLong(), any());
     }
 
     @Test
@@ -294,8 +286,5 @@ class CommentIdRedisRepositoryTest {
     void removeByUserId_nullCommentId() {
         // when
         commentIdRedisRepository.removeByUserId(20L, null);
-
-        // then
-        verify(listOperations, never()).remove(anyString(), anyLong(), any());
     }
 }

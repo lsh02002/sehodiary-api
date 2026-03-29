@@ -4,7 +4,11 @@ import com.shop.sehodiary_api.web.dto.comment.CommentResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
@@ -14,12 +18,19 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class CommentCacheRepositoryTest {
 
+    @Mock
     private RedisTemplate<String, CommentResponse> redisTemplate;
+
+    @Mock
     private ValueOperations<String, CommentResponse> valueOperations;
+
+    @Mock
     private CommentRepository commentRepository;
 
+    @InjectMocks
     private CommentCacheRepository commentCacheRepository;
 
     @BeforeEach
@@ -27,8 +38,6 @@ class CommentCacheRepositoryTest {
         redisTemplate = mock(RedisTemplate.class);
         valueOperations = mock(ValueOperations.class);
         commentRepository = mock(CommentRepository.class);
-
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         commentCacheRepository = new CommentCacheRepository(redisTemplate, commentRepository);
     }
@@ -39,6 +48,7 @@ class CommentCacheRepositoryTest {
         // given
         CommentResponse response = mock(CommentResponse.class);
         when(response.getCommentId()).thenReturn(1L);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         // when
         commentCacheRepository.put(response);
@@ -92,7 +102,7 @@ class CommentCacheRepositoryTest {
         // given
         CommentResponse response = mock(CommentResponse.class);
         when(valueOperations.get("comment:1")).thenReturn(response);
-
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         // when
         Optional<CommentResponse> result = commentCacheRepository.get(1L);
 
@@ -105,6 +115,7 @@ class CommentCacheRepositoryTest {
     void get_notFound() {
         // given
         when(valueOperations.get("comment:1")).thenReturn(null);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         // when
         Optional<CommentResponse> result = commentCacheRepository.get(1L);
@@ -160,6 +171,7 @@ class CommentCacheRepositoryTest {
         Set<String> keys = Set.of("comment:1", "comment:2");
 
         when(redisTemplate.keys("comment:*")).thenReturn(keys);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.multiGet(keys)).thenReturn(List.of(response1, response2));
 
         // when
@@ -181,6 +193,7 @@ class CommentCacheRepositoryTest {
         Set<String> keys = Set.of("comment:1", "comment:2");
 
         when(redisTemplate.keys("comment:*")).thenReturn(keys);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.multiGet(keys)).thenReturn(Arrays.asList(response1, null));
 
         // when

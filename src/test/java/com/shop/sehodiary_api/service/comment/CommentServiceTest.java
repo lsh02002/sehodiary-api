@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
@@ -278,6 +279,7 @@ class CommentServiceTest {
             given(commentRepository.save(any(Comment.class))).willAnswer(invocation -> {
                 Comment comment = invocation.getArgument(0);
                 ReflectionTestUtils.setField(comment, "id", commentId);
+                ReflectionTestUtils.setField(comment, "createdAt", LocalDateTime.now());
                 return comment;
             });
 
@@ -302,8 +304,8 @@ class CommentServiceTest {
 
             verify(diaryCacheRepository).put(diaryResponse);
             verify(commentCacheRepository).put(commentResponse);
-            verify(commentIdRedisRepository).addByDiaryId(diaryId, commentId);
-            verify(commentIdRedisRepository).addByUserId(userId, commentId);
+            verify(commentIdRedisRepository).addByDiaryId(eq(diaryId), eq(commentId), anyDouble());
+            verify(commentIdRedisRepository).addByUserId(eq(userId), eq(commentId), anyDouble());
 
             assertEquals(1, diary.getComments().size());
         }
