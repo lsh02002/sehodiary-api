@@ -27,9 +27,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(EmotionController.class)
@@ -149,7 +147,7 @@ class EmotionControllerTest {
             given(emotionService.editEmotion(eq(USER_ID), eq(emotionId), any(EmotionRequest.class)))
                     .willReturn(response);
 
-            mockMvc.perform(post("/emotion/edit/{emotionId}", emotionId)
+            mockMvc.perform(put("/emotion/edit/{emotionId}", emotionId)
                             .with(authentication(createAuthentication()))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)).with(csrf()))

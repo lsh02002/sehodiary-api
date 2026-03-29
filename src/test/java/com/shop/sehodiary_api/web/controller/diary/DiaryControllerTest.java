@@ -270,7 +270,7 @@ class DiaryControllerTest {
                                     )
                             ))
                             .with(request0 -> {
-                                request0.setMethod("POST");
+                                request0.setMethod("PUT");
                                 return request0;
                             }).with(csrf()))
                     .andExpect(status().isOk())

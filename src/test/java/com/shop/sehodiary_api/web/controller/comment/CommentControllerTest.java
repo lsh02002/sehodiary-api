@@ -24,9 +24,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CommentController.class)
@@ -165,7 +163,7 @@ class CommentControllerTest {
             given(commentService.editComment(eq(userId), eq(commentId), any(CommentRequest.class)))
                     .willReturn(response);
 
-            mockMvc.perform(post("/comment/{commentId}", commentId)
+            mockMvc.perform(put("/comment/{commentId}", commentId)
                             .with(authentication(
                                     new UsernamePasswordAuthenticationToken(
                                             customUserDetails,
