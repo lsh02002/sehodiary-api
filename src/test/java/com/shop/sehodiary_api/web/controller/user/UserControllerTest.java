@@ -221,6 +221,10 @@ class UserControllerTest {
             mockMvc.perform(multipart("/user/profile")
                             .file(file1)
                             .file(file2)
+                            .with(request -> {
+                              request.setMethod("PUT");
+                              return request;
+                            })
                             .with(authentication(createAuthentication()))
                             .contentType(MediaType.MULTIPART_FORM_DATA).with(csrf()))
                     .andExpect(status().isOk());
@@ -236,6 +240,10 @@ class UserControllerTest {
             given(userService.setProfileImages(eq(USER_ID), any())).willReturn(response);
 
             mockMvc.perform(multipart("/user/profile")
+                            .with(request -> {
+                                request.setMethod("PUT");
+                                return request;
+                            })
                             .with(authentication(createAuthentication()))
                             .contentType(MediaType.MULTIPART_FORM_DATA).with(csrf()))
                     .andExpect(status().isOk());

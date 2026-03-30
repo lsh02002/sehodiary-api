@@ -56,7 +56,7 @@ public class UserController {
         return ResponseEntity.ok(userService.withdrawal(customUserDetails.getEmail()));
     }
 
-    @PostMapping(path = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(path = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserResponse> setProfileImages(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestPart(required = false) List<MultipartFile> files) {
         return ResponseEntity.ok(userService.setProfileImages(customUserDetails.getId(), files));
     }
