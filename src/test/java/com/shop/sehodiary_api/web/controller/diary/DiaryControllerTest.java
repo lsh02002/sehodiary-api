@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -132,6 +134,81 @@ class DiaryControllerTest {
                     .andExpect(jsonPath("$.length()").value(1))
                     .andExpect(jsonPath("$[0].id").value(10))
                     .andExpect(jsonPath("$[0].title").value("my diary 1"));
+        }
+    }
+
+    @Nested
+    @DisplayName("팔로우한 사람의 다이어리 조회")
+    @WithMockUser(roles = "USER")
+    class GetDiariesPublicAndFriendsByUserTest {
+        @Test
+        @DisplayName("공개 및 친구 공개 다이어리 목록 조회 성공")
+        void getDiariesPublicAndFriendsByUser_success() throws Exception {
+            // given
+            Long loginUserId = 1L;
+            Long targetUserId = 2L;
+
+            CustomUserDetails customUserDetails = createCustomUserDetails(loginUserId);
+
+            DiaryResponse diary1 = createDiaryResponse(101L, "첫 번째 일기");
+            DiaryResponse diary2 = createDiaryResponse(102L, "두 번째 일기");
+
+            List<DiaryResponse> response = List.of(diary1, diary2);
+
+            given(diaryService.getDiariesPublicAndFriendsByUser(eq(loginUserId), eq(targetUserId)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/diary/{targetUserId}/user", targetUserId)
+                            .with(authentication(
+                                    new UsernamePasswordAuthenticationToken(
+                                            customUserDetails,
+                                            null,
+                                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                    )
+                            ))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(101L))
+                    .andExpect(jsonPath("$[0].title").value("첫 번째 일기"))
+                    .andExpect(jsonPath("$[1].id").value(102L))
+                    .andExpect(jsonPath("$[1].title").value("두 번째 일기"));
+        }
+
+        @Test
+        @DisplayName("조회 결과가 없으면 빈 리스트 반환")
+        void getDiariesPublicAndFriendsByUser_emptyList() throws Exception {
+            // given
+            Long loginUserId = 1L;
+            Long targetUserId = 99L;
+
+            CustomUserDetails customUserDetails = createCustomUserDetails(loginUserId);
+
+            given(diaryService.getDiariesPublicAndFriendsByUser(eq(loginUserId), eq(targetUserId)))
+                    .willReturn(List.of());
+
+            // when & then
+            mockMvc.perform(get("/diary/{targetUserId}/user", targetUserId)
+                            .with(authentication(
+                                    new UsernamePasswordAuthenticationToken(
+                                            customUserDetails,
+                                            null,
+                                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                    )
+                            ))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json("[]"));
+        }
+
+        private CustomUserDetails createCustomUserDetails(Long userId) {
+            // 실제 CustomUserDetails 생성 방식에 맞게 수정 필요
+            return org.mockito.Mockito.mock(CustomUserDetails.class, invocation -> {
+                if ("getId".equals(invocation.getMethod().getName())) {
+                    return userId;
+                }
+                return null;
+            });
         }
     }
 

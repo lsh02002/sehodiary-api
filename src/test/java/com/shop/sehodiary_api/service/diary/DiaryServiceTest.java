@@ -46,6 +46,8 @@ class DiaryServiceTest {
     @InjectMocks
     private DiaryService diaryService;
 
+    private DiaryService spyService;
+
     @Mock
     private UserRepository userRepository;
 
@@ -78,6 +80,11 @@ class DiaryServiceTest {
     private DiaryRequest request;
     private DiaryResponse response;
     private List<MultipartFile> files;
+
+    @BeforeEach
+    void setUp() {
+        spyService = spy(diaryService);
+    }
 
     @Nested
     @DisplayName("getDiariesByPublic()")
@@ -334,9 +341,6 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(response1.getVisibility()).thenReturn("PUBLIC");
-            when(response2.getVisibility()).thenReturn("FRIENDS");
-
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, response1,
@@ -364,9 +368,6 @@ class DiaryServiceTest {
 
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
-
-            when(response1.getVisibility()).thenReturn("PUBLIC");
-            when(response2.getVisibility()).thenReturn("FRIENDS");
 
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of());
             when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of(id1, id2));
@@ -417,10 +418,6 @@ class DiaryServiceTest {
             DiaryResponse dbResponse1 = mock(DiaryResponse.class);
             DiaryResponse dbResponse2 = mock(DiaryResponse.class);
 
-            when(cachedResponse.getVisibility()).thenReturn("PUBLIC");
-            when(dbResponse1.getVisibility()).thenReturn("PUBLIC");
-            when(dbResponse2.getVisibility()).thenReturn("FRIENDS");
-
             Diary diary2 = mock(Diary.class);
             Diary diary3 = mock(Diary.class);
 
@@ -437,6 +434,217 @@ class DiaryServiceTest {
             verify(diaryRepository).findAllById(anyList());
             verify(diaryCacheRepository).put(dbResponse1);
             verify(diaryCacheRepository).put(dbResponse2);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDiariesPublicAndFriendsByUser")
+    class getDiariesPublicAndFriendsByUser {
+        @Test
+        @DisplayName("Redis에 diaryIds가 없고 DB에도 없으면 빈 리스트 반환")
+        void getDiariesPublicAndFriendsByUser_returnEmpty_whenNoDiaryIdsAnywhere() {
+            // given
+            Long userId = 1L;
+            Long targetUserId = 2L;
+
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(Set.of());
+            given(diaryRepository.findIdsByUserId(targetUserId)).willReturn(List.of());
+
+            // when
+            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+
+            // then
+            assertThat(result).isEmpty();
+            verify(diaryRepository).findIdsByUserId(targetUserId);
+            verify(diaryIdRedisRepository, never()).saveUserIds(eq(targetUserId), any());
+            verify(diaryCacheRepository, never()).getAll();
+        }
+
+        @Test
+        @DisplayName("Redis에 diaryIds가 없으면 DB 조회 후 Redis 저장, 캐시에서 모두 조회")
+        void getDiariesPublicAndFriendsByUser_loadIdsFromDbAndSaveRedis() {
+            // given
+            Long userId = 1L;
+            Long targetUserId = 2L;
+
+            List<Long> idsFromDb = List.of(10L, 20L);
+            Map<Long, DiaryResponse> cachedMap = new HashMap<>();
+            DiaryResponse diary1 = mockDiaryResponse(10L);
+            DiaryResponse diary2 = mockDiaryResponse(20L);
+            cachedMap.put(10L, diary1);
+            cachedMap.put(20L, diary2);
+
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(Set.of());
+            given(diaryRepository.findIdsByUserId(targetUserId)).willReturn(idsFromDb);
+            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+
+            doReturn(true).when(spyService).isFriend(userId, targetUserId);
+            doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(true));
+
+            // when
+            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).containsExactlyInAnyOrder(diary1, diary2);
+
+            verify(diaryIdRedisRepository).saveUserIds(targetUserId, idsFromDb);
+            verify(diaryCacheRepository).getAll();
+            verify(diaryRepository, never()).findAllById(any());
+        }
+
+        @Test
+        @DisplayName("캐시에 일부만 있으면 없는 diary만 DB 조회 후 캐시에 저장")
+        void getDiariesPublicAndFriendsByUser_loadMissingFromDbAndPutCache() {
+            // given
+            Long userId = 1L;
+            Long targetUserId = 2L;
+
+            Set<Long> diaryIds = Set.of(10L, 20L, 30L);
+
+            DiaryResponse cachedDiary = mockDiaryResponse(10L);
+            Map<Long, DiaryResponse> cachedMap = new HashMap<>();
+            cachedMap.put(10L, cachedDiary);
+
+            Diary diary20 = mock(Diary.class); // 실제 생성자/빌더에 맞게 수정
+            Diary diary30 = mock(Diary.class);
+
+            DiaryResponse response20 = mockDiaryResponse(20L);
+            DiaryResponse response30 = mockDiaryResponse(30L);
+
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
+            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryRepository.findAllById(anyList())).willReturn(List.of(diary20, diary30));
+            given(diaryMapper.toResponse(diary20)).willReturn(response20);
+            given(diaryMapper.toResponse(diary30)).willReturn(response30);
+
+            doReturn(false).when(spyService).isFriend(userId, targetUserId);
+            doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(false));
+
+            // when
+            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+
+            // then
+            assertThat(result).hasSize(3);
+            assertThat(result).containsExactlyInAnyOrder(cachedDiary, response20, response30);
+
+            verify(diaryRepository).findAllById(
+                    argThat((List<Long> ids) ->
+                            ids.size() == 2 &&
+                                    ids.containsAll(List.of(20L, 30L))
+                    )
+            );
+            verify(diaryCacheRepository).put(response20);
+            verify(diaryCacheRepository).put(response30);
+        }
+
+        @Test
+        @DisplayName("친구가 아니면 공개 범위만 반환")
+        void getDiariesPublicAndFriendsByUser_onlyPublicWhenNotFriend() {
+            // given
+            Long userId = 1L;
+            Long targetUserId = 2L;
+
+            Set<Long> diaryIds = Set.of(10L, 20L);
+
+            DiaryResponse publicDiary = mockDiaryResponse(10L);
+            DiaryResponse friendDiary = mockDiaryResponse(20L);
+
+            Map<Long, DiaryResponse> cachedMap = new HashMap<>();
+            cachedMap.put(10L, publicDiary);
+            cachedMap.put(20L, friendDiary);
+
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
+            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+
+            doReturn(false).when(spyService).isFriend(userId, targetUserId);
+            doReturn(true).when(spyService).isVisibleToUser(publicDiary, false);
+            doReturn(false).when(spyService).isVisibleToUser(friendDiary, false);
+
+            // when
+            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result).containsExactly(publicDiary);
+            verify(diaryRepository, never()).findAllById(any());
+        }
+
+        @Test
+        @DisplayName("친구면 공개 + 친구공개 범위 모두 반환")
+        void getDiariesPublicAndFriendsByUser_publicAndFriendVisibleWhenFriend() {
+            // given
+            Long userId = 1L;
+            Long targetUserId = 2L;
+
+            Set<Long> diaryIds = Set.of(10L, 20L);
+
+            DiaryResponse publicDiary = mockDiaryResponse(10L);
+            DiaryResponse friendDiary = mockDiaryResponse(20L);
+
+            Map<Long, DiaryResponse> cachedMap = new HashMap<>();
+            cachedMap.put(10L, publicDiary);
+            cachedMap.put(20L, friendDiary);
+
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
+            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+
+            doReturn(true).when(spyService).isFriend(userId, targetUserId);
+            doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(true));
+
+            // when
+            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).containsExactlyInAnyOrder(publicDiary, friendDiary);
+        }
+
+        @Test
+        @DisplayName("캐시와 DB 모두 조회했을 때 비공개 글은 제외")
+        void getDiariesPublicAndFriendsByUser_excludeInvisibleDiaries() {
+            // given
+            Long userId = 1L;
+            Long targetUserId = 2L;
+
+            Set<Long> diaryIds = Set.of(10L, 20L, 30L);
+
+            DiaryResponse visibleCached = mockDiaryResponse(10L);
+            Map<Long, DiaryResponse> cachedMap = new HashMap<>();
+            cachedMap.put(10L, visibleCached);
+
+            Diary diary20 = mock(Diary.class);
+            Diary diary30 = mock(Diary.class);
+
+            DiaryResponse visibleDb = mockDiaryResponse(20L);
+            DiaryResponse invisibleDb = mockDiaryResponse(30L);
+
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
+            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryRepository.findAllById(anyList())).willReturn(List.of(diary20, diary30));
+            given(diaryMapper.toResponse(diary20)).willReturn(visibleDb);
+            given(diaryMapper.toResponse(diary30)).willReturn(invisibleDb);
+
+            doReturn(false).when(spyService).isFriend(userId, targetUserId);
+            doReturn(true).when(spyService).isVisibleToUser(visibleCached, false);
+            doReturn(true).when(spyService).isVisibleToUser(visibleDb, false);
+            doReturn(false).when(spyService).isVisibleToUser(invisibleDb, false);
+
+            // when
+            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).containsExactlyInAnyOrder(visibleCached, visibleDb);
+            assertThat(result).doesNotContain(invisibleDb);
+
+            verify(diaryCacheRepository).put(visibleDb);
+            verify(diaryCacheRepository, never()).put(invisibleDb); // 현재 구현상 visible 여부 필터 후 put 하므로 실제 코드 기준으로 수정 가능
+        }
+
+        private DiaryResponse mockDiaryResponse(Long id) {
+            DiaryResponse response = org.mockito.Mockito.mock(DiaryResponse.class);
+            return response;
         }
     }
 

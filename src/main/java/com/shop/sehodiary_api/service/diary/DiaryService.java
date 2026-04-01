@@ -8,6 +8,7 @@ import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryIdRedisRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
+import com.shop.sehodiary_api.repository.follow.FollowRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
@@ -42,6 +43,7 @@ public class DiaryService {
 
     private final DiaryIdRedisRepository diaryIdRedisRepository;
     private final DiaryCacheRepository diaryCacheRepository;
+    private final FollowRepository followRepository;
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic() {
@@ -135,8 +137,6 @@ public class DiaryService {
         List<DiaryResponse> result = diaryIds.stream()
                 .map(cached::get)
                 .filter(Objects::nonNull)
-                .filter(diary -> "PUBLIC".equals(diary.getVisibility())
-                        || "FRIENDS".equals(diary.getVisibility()))
                 .collect(Collectors.toCollection(ArrayList::new));
 
         List<Long> missingIds = diaryIds.stream()
@@ -146,8 +146,6 @@ public class DiaryService {
         if (!missingIds.isEmpty()) {
             List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
                     .map(diaryMapper::toResponse)
-                    .filter(diary -> "PUBLIC".equals(diary.getVisibility())
-                            || "FRIENDS".equals(diary.getVisibility()))
                     .toList();
 
             dbResults.forEach(diaryCacheRepository::put);
@@ -157,6 +155,47 @@ public class DiaryService {
         return result;
     }
 
+    @Transactional(readOnly = true)
+    public List<DiaryResponse> getDiariesPublicAndFriendsByUser(Long userId, Long targetUserId) {
+        Set<Long> diaryIds = diaryIdRedisRepository.findAllUser(targetUserId);
+
+        if (diaryIds.isEmpty()) {
+            List<Long> ids = diaryRepository.findIdsByUserId(targetUserId);
+
+            if (ids.isEmpty()) {
+                return List.of();
+            }
+
+            diaryIdRedisRepository.saveUserIds(targetUserId, ids);
+            diaryIds = new HashSet<>(ids);
+        }
+
+        boolean isFriend = isFriend(userId, targetUserId);
+
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+
+        List<DiaryResponse> result = diaryIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .filter(diary -> isVisibleToUser(diary, isFriend))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        List<Long> missingIds = diaryIds.stream()
+                .filter(id -> !cached.containsKey(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
+                    .map(diaryMapper::toResponse)
+                    .filter(diary -> isVisibleToUser(diary, isFriend))
+                    .toList();
+
+            dbResults.forEach(diaryCacheRepository::put);
+            result.addAll(dbResults);
+        }
+
+        return result;
+    }
 
     @Transactional(readOnly = true)
     public DiaryResponse getOneDiary(Long diaryId) {
@@ -361,5 +400,21 @@ public class DiaryService {
         } catch (RuntimeException e) {
             throw new ConflictException("해당 글을 삭제할 수 없습니다", diaryId);
         }
+    }
+
+    public boolean isVisibleToUser(DiaryResponse diary, boolean isFriend) {
+        String visibility = diary.getVisibility();
+
+        return "PUBLIC".equalsIgnoreCase(visibility)
+                || (isFriend && "FRIENDS".equalsIgnoreCase(visibility));
+    }
+
+    public boolean isFriend(Long userId, Long targetUserId) {
+        if (userId.equals(targetUserId)) {
+            return true;
+        }
+
+        return followRepository.existsByFollowerIdAndFollowingId(userId, targetUserId)
+                || followRepository.existsByFollowerIdAndFollowingId(targetUserId, userId);
     }
 }
