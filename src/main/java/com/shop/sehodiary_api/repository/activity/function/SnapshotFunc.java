@@ -5,6 +5,7 @@ import com.shop.sehodiary_api.repository.diary.Diary;
 import com.shop.sehodiary_api.repository.diaryEmotion.DiaryEmotion;
 import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
 import com.shop.sehodiary_api.repository.emotion.Emotion;
+import com.shop.sehodiary_api.repository.follow.Follow;
 import com.shop.sehodiary_api.repository.like.Like;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.userRoles.Roles;
@@ -119,6 +120,16 @@ public class SnapshotFunc {
             m.put("deletedAt", user.getDeletedAt());
             m.put("createdAt", user.getCreatedAt());
             m.put("updatedAt", user.getUpdatedAt());
+            return m;
+        }
+
+        if (obj instanceof Follow follow) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", follow.getId());
+            m.put("followerId", follow.getFollower().getId());
+            m.put("followingId", follow.getFollowing().getId());
+            m.put("createdAt", follow.getCreatedAt());
+            m.put("updatedAt", follow.getUpdatedAt());
             return m;
         }
 
