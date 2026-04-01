@@ -135,6 +135,8 @@ public class DiaryService {
         List<DiaryResponse> result = diaryIds.stream()
                 .map(cached::get)
                 .filter(Objects::nonNull)
+                .filter(diary -> "PUBLIC".equals(diary.getVisibility())
+                        || "FRIENDS".equals(diary.getVisibility()))
                 .collect(Collectors.toCollection(ArrayList::new));
 
         List<Long> missingIds = diaryIds.stream()
