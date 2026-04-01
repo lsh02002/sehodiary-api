@@ -334,6 +334,9 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
+            when(response1.getVisibility()).thenReturn("PUBLIC");
+            when(response2.getVisibility()).thenReturn("FRIENDS");
+
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, response1,
@@ -361,6 +364,9 @@ class DiaryServiceTest {
 
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
+
+            when(response1.getVisibility()).thenReturn("PUBLIC");
+            when(response2.getVisibility()).thenReturn("FRIENDS");
 
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of());
             when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of(id1, id2));
@@ -410,6 +416,10 @@ class DiaryServiceTest {
             DiaryResponse cachedResponse = mock(DiaryResponse.class);
             DiaryResponse dbResponse1 = mock(DiaryResponse.class);
             DiaryResponse dbResponse2 = mock(DiaryResponse.class);
+
+            when(cachedResponse.getVisibility()).thenReturn("PUBLIC");
+            when(dbResponse1.getVisibility()).thenReturn("PUBLIC");
+            when(dbResponse2.getVisibility()).thenReturn("FRIENDS");
 
             Diary diary2 = mock(Diary.class);
             Diary diary3 = mock(Diary.class);

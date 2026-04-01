@@ -146,6 +146,8 @@ public class DiaryService {
         if (!missingIds.isEmpty()) {
             List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
                     .map(diaryMapper::toResponse)
+                    .filter(diary -> "PUBLIC".equals(diary.getVisibility())
+                            || "FRIENDS".equals(diary.getVisibility()))
                     .toList();
 
             dbResults.forEach(diaryCacheRepository::put);
