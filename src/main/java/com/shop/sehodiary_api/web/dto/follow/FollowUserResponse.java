@@ -14,4 +14,7 @@ public class FollowUserResponse {
     private Long userId;
     private String nickname;
     private String profileImageUrl;
+    private String introduction;
+    private Long followerCounter;
+    private Long followingCounter;
 }

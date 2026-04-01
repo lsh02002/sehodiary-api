@@ -27,6 +27,9 @@ public class FollowMapper {
                                         .getImageUrl()
                                 : null
                 )
+                .introduction(follow.getFollowing().getIntroduction())
+                .followerCounter((long) follow.getFollowing().getFollowerList().size())
+                .followingCounter((long) follow.getFollowing().getFollowingList().size())
                 .build();
     }
 
@@ -44,6 +47,9 @@ public class FollowMapper {
                                         .getImageUrl()
                                 : null
                 )
+                .introduction(follow.getFollower().getIntroduction())
+                .followerCounter((long) follow.getFollower().getFollowerList().size())
+                .followingCounter((long) follow.getFollower().getFollowingList().size())
                 .build();
     }
 }
