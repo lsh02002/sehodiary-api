@@ -33,5 +33,5 @@ public class Follow extends BaseTimeEntity implements Loggable {
     private User following;
 
     @Override
-    public String logMessage() { return "'" + follower.getNickname() + "' 이 '" + following.getNickname() + "' 팔로잉"; }
+    public String logMessage() { return "'" + follower.getNickname() + "' 이(가) '" + following.getNickname() + "' 팔로잉"; }
 }
