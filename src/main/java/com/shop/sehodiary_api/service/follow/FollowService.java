@@ -57,6 +57,8 @@ public class FollowService {
                         .following(following)
                 .build());
 
+        follower.follow(following);
+
         Object afterFollow = snapshotFunc.snapshot(follow);
 
         activityLogService.log(ActivityEntityType.FOLLOW, ActivityAction.CREATE, follow.getId(), follow.logMessage(), follower, null, afterFollow);
@@ -75,6 +77,8 @@ public class FollowService {
 
         try {
             Object beforeFollow = snapshotFunc.snapshot(follow);
+
+            follower.unfollow(follow);
 
             activityLogService.log(
                     ActivityEntityType.FOLLOW,
@@ -128,7 +132,10 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public List<UserInfoResponse> getDiscoverUsers(Long userId) {
+        long followerCount = followRepository.countByFollowingId(userId);
+        long followingCount = followRepository.countByFollowerId(userId);
+
         return followRepository.findUnfollowedUsers(userId)
-                .stream().map(userMapper::toResponse).toList();
+                .stream().map(user->userMapper.toResponse(user, followerCount, followingCount)).toList();
     }
 }

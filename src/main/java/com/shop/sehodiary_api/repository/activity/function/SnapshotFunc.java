@@ -116,6 +116,7 @@ public class SnapshotFunc {
             m.put("password", user.getPassword());
             m.put("nickname", user.getNickname());
             m.put("profileImages", user.getProfileImages() != null ? user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(DiaryImage::getImageUrl).toList() : null);
+            m.put("introduction", user.getIntroduction());
             m.put("userStatus", user.getUserStatus());
             m.put("deletedAt", user.getDeletedAt());
             m.put("createdAt", user.getCreatedAt());

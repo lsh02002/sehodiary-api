@@ -492,8 +492,8 @@ class FollowServiceTest {
             user2.setId(3L);
             user2.setNickname("user2");
 
-            response1 = new UserInfoResponse(2L, "user1@mail.com", "user1", null);
-            response2 = new UserInfoResponse(3L, "user2@mail.com", "user2", null);
+            response1 = new UserInfoResponse(2L, "user1@mail.com", "user1", null, null, 0L, 0L);
+            response2 = new UserInfoResponse(3L, "user2@mail.com", "user2", null, null, 0L, 0L);
         }
 
         @Test
@@ -504,8 +504,8 @@ class FollowServiceTest {
             given(followRepository.findUnfollowedUsers(userId))
                     .willReturn(List.of(user1, user2));
 
-            given(userMapper.toResponse(user1)).willReturn(response1);
-            given(userMapper.toResponse(user2)).willReturn(response2);
+            given(userMapper.toResponse(user1,  0L, 0L)).willReturn(response1);
+            given(userMapper.toResponse(user2,  0L, 0L)).willReturn(response2);
 
             // when
             List<UserInfoResponse> result = followService.getDiscoverUsers(userId);
@@ -515,8 +515,8 @@ class FollowServiceTest {
             assertThat(result).containsExactly(response1, response2);
 
             verify(followRepository, times(1)).findUnfollowedUsers(userId);
-            verify(userMapper, times(1)).toResponse(user1);
-            verify(userMapper, times(1)).toResponse(user2);
+            verify(userMapper, times(1)).toResponse(user1,0L, 0L);
+            verify(userMapper, times(1)).toResponse(user2,0L, 0L);
         }
 
         @Test

@@ -1,6 +1,7 @@
 package com.shop.sehodiary_api.web.mapper.user;
 
 import com.shop.sehodiary_api.config.s3.S3Address;
+import com.shop.sehodiary_api.repository.follow.FollowRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.web.dto.user.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,7 @@ import java.util.Collections;
 public class UserMapper {
     private final S3Address s3Address;
 
-    public UserInfoResponse toResponse(User user) {
+    public UserInfoResponse toResponse(User user, Long followerCount, Long followingCount) {
         return UserInfoResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
@@ -27,6 +28,9 @@ public class UserMapper {
                                         .getImageUrl())
                                 : null
                 )
+                .introduction(user.getIntroduction())
+                .followerCounter(followerCount)
+                .followingCounter(followingCount)
                 .build();
     }
 }

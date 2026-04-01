@@ -14,4 +14,7 @@ public class UserInfoResponse {
     private String email;
     private String nickname;
     private List<String> profileImages;
+    private String introduction;
+    private Long followerCounter;
+    private Long followingCounter;
 }
