@@ -57,8 +57,6 @@ public class FollowService {
                         .following(following)
                 .build());
 
-        follower.follow(following);
-
         Object afterFollow = snapshotFunc.snapshot(follow);
 
         activityLogService.log(ActivityEntityType.FOLLOW, ActivityAction.CREATE, follow.getId(), follow.logMessage(), follower, null, afterFollow);
@@ -77,8 +75,6 @@ public class FollowService {
 
         try {
             Object beforeFollow = snapshotFunc.snapshot(follow);
-
-            follower.unfollow(follow);
 
             activityLogService.log(
                     ActivityEntityType.FOLLOW,
