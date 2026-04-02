@@ -19,13 +19,13 @@ public class UserMapper {
                 .id(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .profileImages(
+                .profileImage(
                         user.getProfileImages() != null &&
                                 !user.getProfileImages().isEmpty()
                                 ? Collections.singletonList(s3Address.siteAddress() +
                                 user.getProfileImages()
                                         .get(user.getProfileImages().size() - 1)
-                                        .getImageUrl())
+                                        .getImageUrl()).toString()
                                 : null
                 )
                 .introduction(user.getIntroduction())

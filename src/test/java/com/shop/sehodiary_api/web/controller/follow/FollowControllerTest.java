@@ -145,12 +145,12 @@ class FollowControllerTest {
                     FollowUserResponse.builder()
                             .userId(2L)
                             .nickname("user2")
-                            .profileImageUrl("https://cdn.com/user2.png")
+                            .profileImage("https://cdn.com/user2.png")
                             .build(),
                     FollowUserResponse.builder()
                             .userId(3L)
                             .nickname("user3")
-                            .profileImageUrl("https://cdn.com/user3.png")
+                            .profileImage("https://cdn.com/user3.png")
                             .build()
             );
 
@@ -162,10 +162,10 @@ class FollowControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$[0].userId").value(2L))
                     .andExpect(jsonPath("$[0].nickname").value("user2"))
-                    .andExpect(jsonPath("$[0].profileImageUrl").value("https://cdn.com/user2.png"))
+                    .andExpect(jsonPath("$[0].profileImage").value("https://cdn.com/user2.png"))
                     .andExpect(jsonPath("$[1].userId").value(3L))
                     .andExpect(jsonPath("$[1].nickname").value("user3"))
-                    .andExpect(jsonPath("$[1].profileImageUrl").value("https://cdn.com/user3.png"));
+                    .andExpect(jsonPath("$[1].profileImage").value("https://cdn.com/user3.png"));
 
             then(followService).should().getFollowingList(loginUserId);
         }
@@ -201,12 +201,12 @@ class FollowControllerTest {
                     FollowUserResponse.builder()
                             .userId(10L)
                             .nickname("follower1")
-                            .profileImageUrl("https://cdn.com/follower1.png")
+                            .profileImage("https://cdn.com/follower1.png")
                             .build(),
                     FollowUserResponse.builder()
                             .userId(11L)
                             .nickname("follower2")
-                            .profileImageUrl("https://cdn.com/follower2.png")
+                            .profileImage("https://cdn.com/follower2.png")
                             .build()
             );
 
@@ -218,10 +218,10 @@ class FollowControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$[0].userId").value(10L))
                     .andExpect(jsonPath("$[0].nickname").value("follower1"))
-                    .andExpect(jsonPath("$[0].profileImageUrl").value("https://cdn.com/follower1.png"))
+                    .andExpect(jsonPath("$[0].profileImage").value("https://cdn.com/follower1.png"))
                     .andExpect(jsonPath("$[1].userId").value(11L))
                     .andExpect(jsonPath("$[1].nickname").value("follower2"))
-                    .andExpect(jsonPath("$[1].profileImageUrl").value("https://cdn.com/follower2.png"));
+                    .andExpect(jsonPath("$[1].profileImage").value("https://cdn.com/follower2.png"));
 
             then(followService).should().getFollowerList(loginUserId);
         }

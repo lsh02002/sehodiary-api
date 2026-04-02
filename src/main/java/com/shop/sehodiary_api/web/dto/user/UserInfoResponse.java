@@ -13,7 +13,7 @@ public class UserInfoResponse {
     private Long id;
     private String email;
     private String nickname;
-    private List<String> profileImages;
+    private String profileImage;
     private String introduction;
     private Long followerCounter;
     private Long followingCounter;

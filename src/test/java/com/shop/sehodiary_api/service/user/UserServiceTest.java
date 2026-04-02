@@ -454,10 +454,9 @@ class UserServiceTest {
             assertThat(response.getId()).isEqualTo(1L);
             assertThat(response.getEmail()).isEqualTo("test001@sample.com");
             assertThat(response.getNickname()).isEqualTo("test001");
-            assertThat(response.getProfileImages()).hasSize(2);
-            assertThat(response.getProfileImages()).containsExactly(
-                    "https://cdn.sample.com/profile/user1.png",
-                    "https://cdn.sample.com/profile/user2.png"
+            assertThat(response.getProfileImage()).hasSize(42);
+            assertThat(response.getProfileImage()).isEqualTo(
+                    "[https://cdn.sample.com/profile/user2.png]"
             );
 
             verify(userRepository).findById(userId);
@@ -487,7 +486,7 @@ class UserServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.getProfileImages()).isEmpty();
+            assertThat(response.getProfileImage()).isNull();
         }
 
         @Test

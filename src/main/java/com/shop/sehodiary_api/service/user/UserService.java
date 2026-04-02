@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -222,7 +223,13 @@ public class UserService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->s3Address.siteAddress() + image.getImageUrl()).toList())
+                .profileImage(user.getProfileImages() != null &&
+                        !user.getProfileImages().isEmpty()
+                        ? Collections.singletonList(s3Address.siteAddress() +
+                        user.getProfileImages()
+                                .get(user.getProfileImages().size() - 1)
+                                .getImageUrl()).toString()
+                        : null)
                 .introduction(user.getIntroduction())
                 .build();
     }
@@ -371,7 +378,13 @@ public class UserService {
                         .id(user.getId())
                         .email(user.getEmail())
                         .nickname(user.getNickname())
-                        .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->s3Address.siteAddress() + image.getImageUrl()).toList())
+                        .profileImage(user.getProfileImages() != null &&
+                                !user.getProfileImages().isEmpty()
+                                ? Collections.singletonList(s3Address.siteAddress() +
+                                user.getProfileImages()
+                                        .get(user.getProfileImages().size() - 1)
+                                        .getImageUrl()).toString()
+                                : null)
                         .build());
     }
 

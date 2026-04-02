@@ -343,13 +343,13 @@ class FollowServiceTest {
             FollowUserResponse response1 = FollowUserResponse.builder()
                     .userId(2L)
                     .nickname("following1")
-                    .profileImageUrl("https://cdn/f1.png")
+                    .profileImage("https://cdn/f1.png")
                     .build();
 
             FollowUserResponse response2 = FollowUserResponse.builder()
                     .userId(3L)
                     .nickname("following2")
-                    .profileImageUrl("https://cdn/f2.png")
+                    .profileImage("https://cdn/f2.png")
                     .build();
 
             given(followRepository.findAllByFollowerIdOrderByIdDesc(userId))
@@ -428,13 +428,13 @@ class FollowServiceTest {
             FollowUserResponse response1 = FollowUserResponse.builder()
                     .userId(2L)
                     .nickname("follower1")
-                    .profileImageUrl("https://cdn/u1.png")
+                    .profileImage("https://cdn/u1.png")
                     .build();
 
             FollowUserResponse response2 = FollowUserResponse.builder()
                     .userId(3L)
                     .nickname("follower2")
-                    .profileImageUrl("https://cdn/u2.png")
+                    .profileImage("https://cdn/u2.png")
                     .build();
 
             given(followRepository.findAllByFollowingIdOrderByIdDesc(userId))

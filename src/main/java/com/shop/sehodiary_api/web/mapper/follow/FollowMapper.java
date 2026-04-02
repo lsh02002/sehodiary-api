@@ -18,7 +18,7 @@ public class FollowMapper {
                 .id(follow.getId())
                 .userId(follow.getFollowing().getId())
                 .nickname(follow.getFollowing().getNickname())
-                .profileImageUrl(
+                .profileImage(
                         follow.getFollowing().getProfileImages() != null &&
                                 !follow.getFollowing().getProfileImages().isEmpty()
                                 ? s3Address.siteAddress() +
@@ -38,7 +38,7 @@ public class FollowMapper {
                 .id(follow.getId())
                 .userId(follow.getFollower().getId())
                 .nickname(follow.getFollower().getNickname())
-                .profileImageUrl(
+                .profileImage(
                         follow.getFollower().getProfileImages() != null &&
                                 !follow.getFollower().getProfileImages().isEmpty()
                                 ? s3Address.siteAddress() +

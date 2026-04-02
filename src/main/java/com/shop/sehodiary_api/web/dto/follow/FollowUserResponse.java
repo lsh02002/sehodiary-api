@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -13,7 +15,7 @@ public class FollowUserResponse {
     private Long id;
     private Long userId;
     private String nickname;
-    private String profileImageUrl;
+    private String profileImage;
     private String introduction;
     private Long followerCounter;
     private Long followingCounter;
