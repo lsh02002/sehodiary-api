@@ -698,6 +698,8 @@ class UserServiceTest {
             // given
             Long userId = 1L;
 
+            String introduction = "소개글 수정";
+
             MultipartFile file1 = org.mockito.Mockito.mock(MultipartFile.class);
             MultipartFile file2 = org.mockito.Mockito.mock(MultipartFile.class);
             List<MultipartFile> files = List.of(file1, file2);
@@ -724,7 +726,7 @@ class UserServiceTest {
             given(snapshotFunc.snapshot(reloadedUser)).willReturn(new HashMap<>());
 
             // when
-            UserResponse response = userService.setProfileImages(userId, files);
+            UserResponse response = userService.setProfileImages(userId, introduction, files);
 
             // then
             assertThat(response).isNotNull();
@@ -756,7 +758,7 @@ class UserServiceTest {
             given(userRepository.findById(userId)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> userService.setProfileImages(userId, files))
+            assertThatThrownBy(() -> userService.setProfileImages(userId, "", files))
                     .isInstanceOf(NotFoundException.class)
                     .extracting("detailMessage")
                     .isEqualTo("해당 사용자를 찾을 수 없습니다.");
@@ -772,6 +774,7 @@ class UserServiceTest {
         void setProfileImages_fail_userNotFoundAtReload() {
             // given
             Long userId = 1L;
+            String introduction = "소개글 수정";
             List<MultipartFile> files = List.of();
 
             User user = User.builder()
@@ -788,7 +791,7 @@ class UserServiceTest {
             given(snapshotFunc.snapshot(user)).willReturn(new HashMap<>());
 
             // when & then
-            assertThatThrownBy(() -> userService.setProfileImages(userId, files))
+            assertThatThrownBy(() -> userService.setProfileImages(userId, introduction, files))
                     .isInstanceOf(NotFoundException.class)
                     .extracting("detailMessage")
                     .isEqualTo("해당 사용자를 찾을 수 없습니다.");

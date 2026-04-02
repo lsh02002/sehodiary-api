@@ -20,10 +20,7 @@ import com.shop.sehodiary_api.repository.user.userRoles.RolesRepository;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRoles;
 import com.shop.sehodiary_api.repository.user.userRoles.UserRolesRepository;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
-import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
-import com.shop.sehodiary_api.service.exceptions.BadRequestException;
-import com.shop.sehodiary_api.service.exceptions.ConflictException;
-import com.shop.sehodiary_api.service.exceptions.NotFoundException;
+import com.shop.sehodiary_api.service.exceptions.*;
 import com.shop.sehodiary_api.service.profileimage.ProfileImageService;
 import com.shop.sehodiary_api.web.dto.user.*;
 import com.shop.sehodiary_api.web.dto.user.userLoginHist.UserLoginHistResponse;
@@ -226,6 +223,7 @@ public class UserService {
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .profileImages(user.getProfileImages().stream().filter(image -> !image.getDeleted()).map(image->s3Address.siteAddress() + image.getImageUrl()).toList())
+                .introduction(user.getIntroduction())
                 .build();
     }
 
@@ -271,11 +269,19 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse setProfileImages(Long userId, List<MultipartFile> files) {
+    public UserResponse setProfileImages(Long userId, String introduction, List<MultipartFile> files) {
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
 
         Object beforeUser = snapshotFunc.snapshot(user);
+
+        if (introduction == null || introduction.isBlank()) {
+            throw new NotAcceptableException("해당 소개글란이 비어있습니다.", null);
+        }
+
+        if(!introduction.equals(user.getIntroduction())) {
+            user.setIntroduction(introduction);
+        }
 
         profileImageService.uploadManyFiles(userId, files);
 

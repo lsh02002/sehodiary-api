@@ -216,7 +216,7 @@ class UserControllerTest {
                     "image-content-2".getBytes()
             );
 
-            given(userService.setProfileImages(eq(USER_ID), any())).willReturn(response);
+            given(userService.setProfileImages(eq(USER_ID), any(), any())).willReturn(response);
 
             mockMvc.perform(multipart("/user/profile")
                             .file(file1)
@@ -229,7 +229,7 @@ class UserControllerTest {
                             .contentType(MediaType.MULTIPART_FORM_DATA).with(csrf()))
                     .andExpect(status().isOk());
 
-            then(userService).should().setProfileImages(eq(USER_ID), any());
+            then(userService).should().setProfileImages(eq(USER_ID), any(), any());
         }
 
         @Test
@@ -237,7 +237,7 @@ class UserControllerTest {
         void setProfileImages_withoutFiles_success() throws Exception {
             UserResponse response = Mockito.mock(UserResponse.class);
 
-            given(userService.setProfileImages(eq(USER_ID), any())).willReturn(response);
+            given(userService.setProfileImages(eq(USER_ID), any(), any())).willReturn(response);
 
             mockMvc.perform(multipart("/user/profile")
                             .with(request -> {
@@ -248,7 +248,7 @@ class UserControllerTest {
                             .contentType(MediaType.MULTIPART_FORM_DATA).with(csrf()))
                     .andExpect(status().isOk());
 
-            then(userService).should().setProfileImages(eq(USER_ID), any());
+            then(userService).should().setProfileImages(eq(USER_ID), any(), any());
         }
     }
 

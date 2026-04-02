@@ -57,8 +57,8 @@ public class UserController {
     }
 
     @PutMapping(path = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserResponse> setProfileImages(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestPart(required = false) List<MultipartFile> files) {
-        return ResponseEntity.ok(userService.setProfileImages(customUserDetails.getId(), files));
+    public ResponseEntity<UserResponse> setProfileImages(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestPart(value = "introduction", required = false) String introduction, @RequestPart(required = false) List<MultipartFile> files) {
+        return ResponseEntity.ok(userService.setProfileImages(customUserDetails.getId(), introduction, files));
     }
 
     @GetMapping("/info")
