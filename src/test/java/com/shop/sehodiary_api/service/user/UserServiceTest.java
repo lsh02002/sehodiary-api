@@ -451,7 +451,7 @@ class UserServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(1L);
+            assertThat(response.getUserId()).isEqualTo(1L);
             assertThat(response.getEmail()).isEqualTo("test001@sample.com");
             assertThat(response.getNickname()).isEqualTo("test001");
             assertThat(response.getProfileImage()).hasSize(42);

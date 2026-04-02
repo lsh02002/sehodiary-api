@@ -266,9 +266,9 @@ class FollowControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(2L))
+                    .andExpect(jsonPath("$[0].userId").value(2L))
                     .andExpect(jsonPath("$[0].nickname").value("user1"))
-                    .andExpect(jsonPath("$[1].id").value(3L))
+                    .andExpect(jsonPath("$[1].userId").value(3L))
                     .andExpect(jsonPath("$[1].nickname").value("user2"));
         }
     }

@@ -10,7 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class UserInfoResponse {
-    private Long id;
+    private Long userId;
     private String email;
     private String nickname;
     private String profileImage;

@@ -16,7 +16,7 @@ public class UserMapper {
 
     public UserInfoResponse toResponse(User user, Long followerCount, Long followingCount) {
         return UserInfoResponse.builder()
-                .id(user.getId())
+                .userId(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .profileImage(

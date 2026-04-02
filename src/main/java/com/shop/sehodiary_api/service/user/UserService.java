@@ -220,7 +220,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", customUserDetails.getId()));
 
         return UserInfoResponse.builder()
-                .id(user.getId())
+                .userId(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .profileImage(user.getProfileImages() != null &&
@@ -375,7 +375,7 @@ public class UserService {
     public Page<UserInfoResponse> getAllUsersInfo(Pageable pageable){
         return userRepository.findAll(pageable)
                 .map(user->UserInfoResponse.builder()
-                        .id(user.getId())
+                        .userId(user.getId())
                         .email(user.getEmail())
                         .nickname(user.getNickname())
                         .profileImage(user.getProfileImages() != null &&
