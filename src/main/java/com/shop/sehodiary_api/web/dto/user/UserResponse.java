@@ -1,15 +1,13 @@
 package com.shop.sehodiary_api.web.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @RequiredArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserResponse {
     private int code;
     private String message;

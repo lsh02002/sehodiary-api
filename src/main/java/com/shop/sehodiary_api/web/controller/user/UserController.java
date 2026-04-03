@@ -66,6 +66,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserInfo(customUserDetails));
     }
 
+    @GetMapping("/othersInfo/{otherId}")
+    public ResponseEntity<UserInfoResponse> getOtherUserInfo(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long otherId) {
+        return ResponseEntity.ok(userService.getOtherUserInfo(customUserDetails.getId(), otherId));
+    }
+
     @GetMapping("/hist")
     public ResponseEntity<Page<UserLoginHistResponse>> getUserLoginHist(@AuthenticationPrincipal CustomUserDetails customUserDetails, Pageable pageable) {
         return ResponseEntity.ok(userService.getUserLoginHist(customUserDetails.getId(), pageable));
@@ -104,13 +109,13 @@ public class UserController {
         return ResponseEntity.ok((UserResponse) accessTokenAndRefreshTokenAndResponse.get(2));
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/all-users-info")
     public ResponseEntity<Page<UserInfoResponse>> getAllUsersInfo(Pageable pageable) {
         return ResponseEntity.ok(userService.getAllUsersInfo(pageable));
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/hist/{userId}")
     public ResponseEntity<Page<UserLoginHistResponse>> getUserLoginHistByAdmin(@PathVariable Long userId, Pageable pageable) {
         return ResponseEntity.ok(userService.getUserLoginHist(userId, pageable));

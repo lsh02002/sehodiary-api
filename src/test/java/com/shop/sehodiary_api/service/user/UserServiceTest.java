@@ -9,6 +9,7 @@ import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.repository.comment.CommentCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.diaryImage.DiaryImage;
+import com.shop.sehodiary_api.repository.follow.Follow;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.repository.user.refreshToken.RefreshToken;
@@ -27,7 +28,9 @@ import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
 import com.shop.sehodiary_api.service.profileimage.ProfileImageService;
 import com.shop.sehodiary_api.web.dto.user.*;
+import com.shop.sehodiary_api.web.mapper.user.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,16 +38,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -67,6 +74,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private UserMapper userMapper;
 
     @Mock
     private SnapshotFunc snapshotFunc;
@@ -443,10 +453,19 @@ class UserServiceTest {
                     .email("test001@sample.com")
                     .nickname("test001")
                     .profileImages(List.of(activeImage1, deletedImage, activeImage2))
+                    .followerList(List.of())
+                    .followingList(List.of())
+                    .build();
+
+            UserInfoResponse userInfoResponse = UserInfoResponse.builder()
+                    .userId(userId)
+                    .email(user.getEmail())
+                    .nickname(user.getNickname())
+                    .profileImage("https://cdn.sample.com/profile/user2.png")
                     .build();
 
             given(userRepository.findById(userId)).willReturn(Optional.of(user));
-            given(s3Address.siteAddress()).willReturn("https://cdn.sample.com");
+            given(userMapper.toResponse(user, 0L, 0L)).willReturn(userInfoResponse);
 
             // when
             UserInfoResponse response = userService.getUserInfo(customUserDetails);
@@ -456,16 +475,14 @@ class UserServiceTest {
             assertThat(response.getUserId()).isEqualTo(1L);
             assertThat(response.getEmail()).isEqualTo("test001@sample.com");
             assertThat(response.getNickname()).isEqualTo("test001");
-            assertThat(response.getProfileImage()).hasSize(40);
-            assertThat(response.getProfileImage()).isEqualTo(
-                    "https://cdn.sample.com/profile/user2.png"
-            );
+            assertThat(response.getProfileImage()).isEqualTo("https://cdn.sample.com/profile/user2.png");
 
             verify(userRepository).findById(userId);
+            verify(userMapper).toResponse(user, 0L, 0L);
         }
 
         @Test
-        @DisplayName("내 정보 조회 성공 - 프로필 이미지가 없으면 빈 리스트를 반환한다")
+        @DisplayName("내 정보 조회 성공 - 프로필 이미지가 없으면 null을 반환한다")
         void getUserInfo_success_emptyProfileImages() {
             // given
             Long userId = 1L;
@@ -479,9 +496,22 @@ class UserServiceTest {
                     .email("test001@sample.com")
                     .nickname("test001")
                     .profileImages(List.of())
+                    .followerList(List.of())
+                    .followingList(List.of())
                     .build();
 
-            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            UserInfoResponse userInfoResponse = UserInfoResponse.builder()
+                    .userId(userId)
+                    .email(user.getEmail())
+                    .nickname(user.getNickname())
+                    .profileImage(null)
+                    .build();
+
+            given(userRepository.findById(userId))
+                    .willReturn(Optional.of(user));
+
+            given(userMapper.toResponse(user, 0L, 0L))
+                    .willReturn(userInfoResponse);
 
             // when
             UserInfoResponse response = userService.getUserInfo(customUserDetails);
@@ -505,6 +535,88 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.getUserInfo(customUserDetails))
+                    .isInstanceOf(NotFoundException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 사용자를 찾을 수 없습니다.");
+        }
+    }
+
+    @Nested
+    class getOtherUserInfoTest {
+        private User loginUser;
+        private User otherUser;
+        private UserInfoResponse userInfoResponse;
+
+        @BeforeEach
+        void setUp() {
+            loginUser = User.builder()
+                    .id(1L)
+                    .followerList(new ArrayList<>())
+                    .followingList(new ArrayList<>())
+                    .build();
+
+            otherUser = User.builder()
+                    .id(2L)
+                    .followerList(new ArrayList<>())
+                    .followingList(new ArrayList<>())
+                    .build();
+
+            otherUser.getFollowerList().add(new Follow());
+            otherUser.getFollowerList().add(new Follow());
+            otherUser.getFollowingList().add(new Follow());
+
+            userInfoResponse = UserInfoResponse.builder()
+                    .userId(2L)
+                    .followerCounter(2L)
+                    .followingCounter(1L)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("다른 사용자 정보 조회 성공")
+        void getOtherUserInfo_success() {
+            // given
+            when(userRepository.findById(1L)).thenReturn(Optional.of(loginUser));
+            when(userRepository.findById(2L)).thenReturn(Optional.of(otherUser));
+            when(userMapper.toResponse(eq(otherUser), eq(2L), eq(1L)))
+                    .thenReturn(userInfoResponse);
+
+            // when
+            UserInfoResponse result = userService.getOtherUserInfo(1L, 2L);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getUserId()).isEqualTo(2L);
+            assertThat(result.getFollowerCounter()).isEqualTo(2L);
+            assertThat(result.getFollowingCounter()).isEqualTo(1L);
+
+            verify(userRepository).findById(1L);
+            verify(userRepository).findById(2L);
+            verify(userMapper).toResponse(otherUser, 2L, 1L);
+        }
+
+        @Test
+        @DisplayName("로그인 사용자가 없으면 예외 발생")
+        void getOtherUserInfo_userNotFound() {
+            // given
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> userService.getOtherUserInfo(1L, 2L))
+                    .isInstanceOf(NotFoundException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 사용자를 찾을 수 없습니다.");
+        }
+
+        @Test
+        @DisplayName("조회 대상 사용자가 없으면 예외 발생")
+        void getOtherUserInfo_otherUserNotFound() {
+            // given
+            when(userRepository.findById(1L)).thenReturn(Optional.of(loginUser));
+            when(userRepository.findById(2L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> userService.getOtherUserInfo(1L, 2L))
                     .isInstanceOf(NotFoundException.class)
                     .extracting("detailMessage")
                     .isEqualTo("해당 사용자를 찾을 수 없습니다.");
@@ -989,6 +1101,63 @@ class UserServiceTest {
                     .isInstanceOf(BadRequestException.class)
                     .extracting("detailMessage")
                     .isEqualTo("관리자 권한이 없습니다.");
+        }
+    }
+
+    @Nested
+    class getAllUsersInfoTest {
+        @Test
+        void getAllUsersInfo_정상동작() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10);
+
+            User user = User.builder()
+                    .id(1L)
+                    .email("test@test.com")
+                    .nickname("tester")
+                    .followerList(Arrays.asList(new Follow(), new Follow())) // 2명
+                    .followingList(List.of(new Follow())) // 1명
+                    .build();
+
+            Page<User> userPage = new PageImpl<>(List.of(user));
+
+            UserInfoResponse mockResponse = UserInfoResponse.builder()
+                    .userId(1L)
+                    .email("test@test.com")
+                    .nickname("tester")
+                    .build();
+
+            when(userRepository.findAll(pageable)).thenReturn(userPage);
+            when(userMapper.toResponse(user, 2L, 1L)).thenReturn(mockResponse);
+
+            // when
+            Page<UserInfoResponse> result = userService.getAllUsersInfo(pageable);
+
+            // then
+            UserInfoResponse response = result.getContent().get(0);
+
+            assertEquals(1L, response.getUserId());
+            assertEquals("test@test.com", response.getEmail());
+            assertEquals("tester", response.getNickname());
+
+            // 🔥 핵심 검증
+            verify(userMapper).toResponse(user, 2L, 1L);
+        }
+
+        @Test
+        void getAllUsersInfo_유저없음() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<User> emptyPage = new PageImpl<>(Collections.emptyList());
+
+            when(userRepository.findAll(pageable)).thenReturn(emptyPage);
+
+            // when
+            Page<UserInfoResponse> result = userService.getAllUsersInfo(pageable);
+
+            // then
+            assertTrue(result.isEmpty());
+            verify(userMapper, never()).toResponse(any(), anyLong(), anyLong());
         }
     }
 }

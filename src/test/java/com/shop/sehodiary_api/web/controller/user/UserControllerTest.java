@@ -10,6 +10,8 @@ import com.shop.sehodiary_api.web.dto.user.SignupRequest;
 import com.shop.sehodiary_api.web.dto.user.UserInfoResponse;
 import com.shop.sehodiary_api.web.dto.user.UserResponse;
 import com.shop.sehodiary_api.web.dto.user.userLoginHist.UserLoginHistResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,27 +19,36 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -57,6 +68,18 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @TestConfiguration
+    @EnableMethodSecurity
+    static class TestSecurityConfig {
+        @Bean
+        SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            return http
+                    .csrf(csrf -> csrf.disable())
+                    .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                    .build();
+        }
+    }
 
     private static final Long USER_ID = 1L;
     private static final String USER_EMAIL = "test@test.com";
@@ -140,8 +163,20 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /user/admin-login 성공")
         void adminLogin_success() throws Exception {
-            LoginRequest request = Mockito.mock(LoginRequest.class);
-            UserResponse response = Mockito.mock(UserResponse.class);
+            // given
+            LoginRequest request = LoginRequest.builder()
+                    .email("admin@test.com")
+                    .password("1234")
+                    .build();
+
+            UserResponse response = new UserResponse();
+            response.setCode(200);
+            response.setMessage("로그인 성공");
+            response.setData(Map.of(
+                    "userId", 1L,
+                    "email", "admin@test.com",
+                    "nickname", "admin"
+            ));
 
             List<Object> serviceResult = List.of(
                     "admin-access-token",
@@ -149,16 +184,25 @@ class UserControllerTest {
                     response
             );
 
-            given(userService.adminLogin(any(LoginRequest.class), any())).willReturn(serviceResult);
+            given(userService.adminLogin(any(LoginRequest.class), any(HttpServletRequest.class)))
+                    .willReturn(serviceResult);
 
+            // when & then
             mockMvc.perform(post("/user/admin-login")
+                            .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)).with(csrf()))
+                            .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(header().string("accessToken", "admin-access-token"))
-                    .andExpect(header().string("refreshToken", "admin-refresh-token"));
+                    .andExpect(header().string("refreshToken", "admin-refresh-token"))
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andExpect(jsonPath("$.message").value("로그인 성공"))
+                    .andExpect(jsonPath("$.data.userId").value(1))
+                    .andExpect(jsonPath("$.data.email").value("admin@test.com"))
+                    .andExpect(jsonPath("$.data.nickname").value("admin"));
 
-            then(userService).should().adminLogin(any(LoginRequest.class), any());
+            then(userService).should(times(1))
+                    .adminLogin(any(LoginRequest.class), any(HttpServletRequest.class));
         }
     }
 
@@ -199,6 +243,11 @@ class UserControllerTest {
     @DisplayName("프로필")
     class ProfileTest {
 
+        @BeforeEach
+        void setUp() {
+            clearInvocations(userService);
+        }
+
         @Test
         @DisplayName("POST /user/profile 성공 - 파일 업로드")
         void setProfileImages_success() throws Exception {
@@ -224,8 +273,8 @@ class UserControllerTest {
                             .file(file1)
                             .file(file2)
                             .with(request -> {
-                              request.setMethod("PUT");
-                              return request;
+                                request.setMethod("PUT");
+                                return request;
                             })
                             .with(authentication(createAuthentication()))
                             .contentType(MediaType.MULTIPART_FORM_DATA).with(csrf()))
@@ -237,26 +286,36 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /user/profile 성공 - 파일 없이 요청")
         void setProfileImages_withoutFiles_success() throws Exception {
-            UserResponse response = Mockito.mock(UserResponse.class);
+            // given
+            UserResponse response = mock(UserResponse.class);
 
-            given(userService.setProfileImages(eq(USER_ID), any(), any())).willReturn(response);
+            given(userService.setProfileImages(eq(USER_ID), any(), any()))
+                    .willReturn(response);
 
+            // when & then
             mockMvc.perform(multipart("/user/profile")
                             .with(request -> {
                                 request.setMethod("PUT");
                                 return request;
                             })
                             .with(authentication(createAuthentication()))
-                            .contentType(MediaType.MULTIPART_FORM_DATA).with(csrf()))
+                            .with(csrf())
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
                     .andExpect(status().isOk());
 
-            then(userService).should().setProfileImages(eq(USER_ID), any(), any());
+            then(userService).should(times(1))
+                    .setProfileImages(eq(USER_ID), any(), any());
         }
     }
 
     @Nested
     @DisplayName("유저 정보 조회")
     class UserInfoTest {
+
+        @BeforeEach
+        void setUp() {
+            clearInvocations(userService);
+        }
 
         @Test
         @DisplayName("GET /user/info 성공")
@@ -270,6 +329,43 @@ class UserControllerTest {
                     .andExpect(status().isOk());
 
             then(userService).should().getUserInfo(any(CustomUserDetails.class));
+        }
+    }
+
+    @Nested
+    class getOtherUserInfoTest {
+        @Test
+        @DisplayName("다른 사용자 정보 조회 성공")
+        void getOtherUserInfo_success() throws Exception {
+            // given
+            Long loginUserId = 1L;
+            Long otherUserId = 2L;
+
+            CustomUserDetails customUserDetails = new CustomUserDetails(
+                    loginUserId,
+                    "test@test.com",
+                    "password",
+                    "test",
+                    List.of(String.valueOf(new SimpleGrantedAuthority("ROLE_USER")))
+            );
+
+            UserInfoResponse response = UserInfoResponse.builder()
+                    .userId(2L)
+                    .followerCounter(10L)
+                    .followingCounter(5L)
+                    .build();
+
+            given(userService.getOtherUserInfo(loginUserId, otherUserId))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/user/othersInfo/{otherId}", otherUserId)
+                            .with(user(customUserDetails))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.userId").value(2L))
+                    .andExpect(jsonPath("$.followerCounter").value(10L))
+                    .andExpect(jsonPath("$.followingCounter").value(5L));
         }
     }
 
@@ -394,22 +490,124 @@ class UserControllerTest {
     class AdminTest {
 
         @Test
-        @DisplayName("GET /user/all-users-info 성공 - 관리자")
-        void getAllUsersInfo_success() throws Exception {
-            UserInfoResponse user1 = Mockito.mock(UserInfoResponse.class);
-            UserInfoResponse user2 = Mockito.mock(UserInfoResponse.class);
-            Page<UserInfoResponse> page = new PageImpl<>(List.of(user1, user2), PageRequest.of(0, 20), 2);
+        @WithMockUser(roles = "ADMIN")
+        void adminLogin_성공() throws Exception {
+            // given
+            LoginRequest loginRequest = LoginRequest.builder()
+                    .email("admin@test.com")
+                    .password("1234")
+                    .build();
 
-            given(userService.getAllUsersInfo(any())).willReturn(page);
+            // 실제 data에 들어갈 값
+            Map<String, Object> data = new HashMap<>();
+            data.put("userId", 1L);
+            data.put("email", "admin@test.com");
+            data.put("nickname", "admin");
 
+            UserResponse userResponse = new UserResponse();
+            userResponse.setCode(200);
+            userResponse.setMessage("로그인 성공");
+            userResponse.setData(data);
+
+            List<Object> result = List.of(
+                    "access-token-value",
+                    "refresh-token-value",
+                    userResponse
+            );
+
+            when(userService.adminLogin(any(LoginRequest.class), any(HttpServletRequest.class)))
+                    .thenReturn(result);
+
+            // when & then
+            mockMvc.perform(post("/user/admin-login")
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(loginRequest)))
+                    .andExpect(status().isOk())
+
+                    // 🔥 헤더 검증
+                    .andExpect(header().string("accessToken", "access-token-value"))
+                    .andExpect(header().string("refreshToken", "refresh-token-value"))
+
+                    // 🔥 wrapper 검증
+                    .andExpect(jsonPath("$.code").value(200))
+                    .andExpect(jsonPath("$.message").value("로그인 성공"))
+
+                    // 🔥 data 내부 검증
+                    .andExpect(jsonPath("$.data.userId").value(1L))
+                    .andExpect(jsonPath("$.data.email").value("admin@test.com"))
+                    .andExpect(jsonPath("$.data.nickname").value("admin"));
+
+//                verify(userService).adminLogin(any(LoginRequest.class), any(HttpServletRequest.class));
+        }
+    }
+
+
+    @Nested
+    class getAllUsersInfoTest {
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        void getAllUsersInfo_관리자는_조회할_수_있다() throws Exception {
+            // given
+            UserInfoResponse user1 = UserInfoResponse.builder()
+                    .userId(1L)
+                    .email("user1@test.com")
+                    .nickname("user1")
+                    .build();
+
+            UserInfoResponse user2 = UserInfoResponse.builder()
+                    .userId(2L)
+                    .email("user2@test.com")
+                    .nickname("user2")
+                    .build();
+
+            Page<UserInfoResponse> page = new PageImpl<>(
+                    List.of(user1, user2),
+                    PageRequest.of(0, 10),
+                    2
+            );
+
+            when(userService.getAllUsersInfo(any(Pageable.class))).thenReturn(page);
+
+            // when & then
             mockMvc.perform(get("/user/all-users-info")
                             .param("page", "0")
-                            .param("size", "20")
-                            .with(authentication(createAdminAuthentication())))
+                            .param("size", "10")
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.content.length()").value(2));
+                    .andExpect(jsonPath("$.content[0].userId").value(1L))
+                    .andExpect(jsonPath("$.content[0].email").value("user1@test.com"))
+                    .andExpect(jsonPath("$.content[0].nickname").value("user1"))
+                    .andExpect(jsonPath("$.content[1].userId").value(2L))
+                    .andExpect(jsonPath("$.content[1].email").value("user2@test.com"))
+                    .andExpect(jsonPath("$.content[1].nickname").value("user2"))
+                    .andExpect(jsonPath("$.size").value(10))
+                    .andExpect(jsonPath("$.number").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(2));
 
-            then(userService).should().getAllUsersInfo(any());
+            verify(userService).getAllUsersInfo(any(Pageable.class));
+        }
+
+        @Test
+        @WithMockUser(roles = "USER")
+        void getAllUsersInfo_관리자가_아니면_403을_반환한다() throws Exception {
+            mockMvc.perform(get("/user/all-users-info")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andExpect(status().isForbidden());
+
+            verify(userService, never()).getAllUsersInfo(any(Pageable.class));
+        }
+
+        @Test
+        void getAllUsersInfo_인증되지_않으면_접근할_수_없다() throws Exception {
+            mockMvc.perform(get("/user/all-users-info")
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andExpect(status().isForbidden()
+                            // Security 설정에 따라 401 대신 403일 수도 있음
+                    );
         }
     }
 }

@@ -24,6 +24,7 @@ import com.shop.sehodiary_api.service.exceptions.*;
 import com.shop.sehodiary_api.service.profileimage.ProfileImageService;
 import com.shop.sehodiary_api.web.dto.user.*;
 import com.shop.sehodiary_api.web.dto.user.userLoginHist.UserLoginHistResponse;
+import com.shop.sehodiary_api.web.mapper.user.UserMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +62,7 @@ public class UserService {
 
     private final DiaryCacheRepository diaryCacheRepository;
     private final CommentCacheRepository commentCacheRepository;
+    private final UserMapper userMapper;
 
     @PostConstruct
     private void insertRoleUserAndRoleAdminToNewDb(){
@@ -216,26 +218,18 @@ public class UserService {
     }
 
     public UserInfoResponse getUserInfo(CustomUserDetails customUserDetails) {
-        User user =userRepository.findById(customUserDetails.getId())
+        return userRepository.findById(customUserDetails.getId())
+                .map(userInfo->userMapper.toResponse(userInfo, (long) userInfo.getFollowerList().size(), (long) userInfo.getFollowingList().size()))
                 .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", customUserDetails.getId()));
+    }
 
-        return UserInfoResponse.builder()
-                .userId(user.getId())
-                .email(user.getEmail())
-                .nickname(user.getNickname())
-                .profileImage(
-                        user.getProfileImages() != null &&
-                                !user.getProfileImages().isEmpty()
-                                ? s3Address.siteAddress() +
-                                user.getProfileImages()
-                                        .get(user.getProfileImages().size() - 1)
-                                        .getImageUrl()
-                                : null
-                )
-                .introduction(user.getIntroduction())
-                .followerCounter((long) user.getFollowerList().size())
-                .followingCounter((long) user.getFollowingList().size())
-                .build();
+    public UserInfoResponse getOtherUserInfo(Long userId, Long otherUserId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", userId));
+
+        return userRepository.findById(otherUserId)
+                .map(userInfo->userMapper.toResponse(userInfo, (long) userInfo.getFollowerList().size(), (long) userInfo.getFollowingList().size()))
+                .orElseThrow(() -> new NotFoundException("해당 사용자를 찾을 수 없습니다.", otherUserId));
     }
 
     @Transactional
@@ -378,18 +372,7 @@ public class UserService {
 
     public Page<UserInfoResponse> getAllUsersInfo(Pageable pageable){
         return userRepository.findAll(pageable)
-                .map(user->UserInfoResponse.builder()
-                        .userId(user.getId())
-                        .email(user.getEmail())
-                        .nickname(user.getNickname())
-                        .profileImage(user.getProfileImages() != null &&
-                                !user.getProfileImages().isEmpty()
-                                ? Collections.singletonList(s3Address.siteAddress() +
-                                user.getProfileImages()
-                                        .get(user.getProfileImages().size() - 1)
-                                        .getImageUrl()).toString()
-                                : null)
-                        .build());
+                .map(user->userMapper.toResponse(user, (long) user.getFollowerList().size(), (long) user.getFollowingList().size()));
     }
 
     private static String getClientIP(HttpServletRequest request) {
