@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -20,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class DiaryIdRedisRepositoryTest {
 
     private static final String PUBLIC_IDS_KEY = "diary:ids:public";
