@@ -72,11 +72,11 @@ public class EmotionService {
             throw new BadRequestException("관리자 권한이 없습니다.", userId);
         }
 
-        if(request.getName().trim().isEmpty()) {
+        if(request.getName() == null || request.getName().trim().isEmpty()) {
             throw new NotAcceptableException("해당 이름란이 비어있습니다", request.getName());
         }
 
-        if(request.getEmoji().trim().isEmpty()) {
+        if(request.getEmoji() == null || request.getEmoji().trim().isEmpty()) {
             throw new NotAcceptableException("해당 이모지란이 비어있습니다", request.getEmoji());
         }
 
