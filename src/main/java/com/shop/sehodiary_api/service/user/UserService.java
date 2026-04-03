@@ -223,13 +223,15 @@ public class UserService {
                 .userId(user.getId())
                 .email(user.getEmail())
                 .nickname(user.getNickname())
-                .profileImage(user.getProfileImages() != null &&
-                        !user.getProfileImages().isEmpty()
-                        ? Collections.singletonList(s3Address.siteAddress() +
-                        user.getProfileImages()
-                                .get(user.getProfileImages().size() - 1)
-                                .getImageUrl()).toString()
-                        : null)
+                .profileImage(
+                        user.getProfileImages() != null &&
+                                !user.getProfileImages().isEmpty()
+                                ? s3Address.siteAddress() +
+                                user.getProfileImages()
+                                        .get(user.getProfileImages().size() - 1)
+                                        .getImageUrl()
+                                : null
+                )
                 .introduction(user.getIntroduction())
                 .build();
     }

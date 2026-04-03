@@ -22,10 +22,10 @@ public class UserMapper {
                 .profileImage(
                         user.getProfileImages() != null &&
                                 !user.getProfileImages().isEmpty()
-                                ? Collections.singletonList(s3Address.siteAddress() +
+                                ? s3Address.siteAddress() +
                                 user.getProfileImages()
                                         .get(user.getProfileImages().size() - 1)
-                                        .getImageUrl()).toString()
+                                        .getImageUrl()
                                 : null
                 )
                 .introduction(user.getIntroduction())

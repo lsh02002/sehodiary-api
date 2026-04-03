@@ -456,9 +456,9 @@ class UserServiceTest {
             assertThat(response.getUserId()).isEqualTo(1L);
             assertThat(response.getEmail()).isEqualTo("test001@sample.com");
             assertThat(response.getNickname()).isEqualTo("test001");
-            assertThat(response.getProfileImage()).hasSize(42);
+            assertThat(response.getProfileImage()).hasSize(40);
             assertThat(response.getProfileImage()).isEqualTo(
-                    "[https://cdn.sample.com/profile/user2.png]"
+                    "https://cdn.sample.com/profile/user2.png"
             );
 
             verify(userRepository).findById(userId);
