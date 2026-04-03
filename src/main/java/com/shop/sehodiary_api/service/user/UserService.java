@@ -233,6 +233,8 @@ public class UserService {
                                 : null
                 )
                 .introduction(user.getIntroduction())
+                .followerCounter((long) user.getFollowerList().size())
+                .followingCounter((long) user.getFollowingList().size())
                 .build();
     }
 
