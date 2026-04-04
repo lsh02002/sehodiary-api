@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Collections;
@@ -32,7 +33,7 @@ class DiaryIdRedisRepositoryTest {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Mock
-    private SetOperations<String, Object> setOperations;
+    private ZSetOperations<String, Object> zSetOperations;
 
     private DiaryIdRedisRepository diaryIdRedisRepository;
 
@@ -48,28 +49,28 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("addPublic()는 공개 diary id를 저장한다")
         void addPublic() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.addPublic(1L);
 
-            verify(setOperations).add(PUBLIC_IDS_KEY, 1L);
+            verify(zSetOperations).add(PUBLIC_IDS_KEY, 1L, 1.0);
         }
 
         @Test
         @DisplayName("addFriends()는 친구공개 diary id를 저장한다")
         void addFriends() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.addFriends(2L);
 
-            verify(setOperations).add(FRIENDS_IDS_KEY, 2L);
+            verify(zSetOperations).add(FRIENDS_IDS_KEY, 2L, 2.0);
         }
 
         @Test
         @DisplayName("addUser()는 사용자별 diary id를 저장한다")
         void addUser() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.addUser(10L, 3L);
 
-            verify(setOperations).add(USER_IDS_KEY_PREFIX + 10L, 3L);
+            verify(zSetOperations).add(USER_IDS_KEY_PREFIX + 10L, 3L, 3.0);
         }
     }
 
@@ -80,47 +81,47 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("removePublic()는 공개 diary id를 삭제한다")
         void removePublic() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removePublic(1L);
 
-            verify(setOperations).remove(PUBLIC_IDS_KEY, 1L);
+            verify(zSetOperations).remove(PUBLIC_IDS_KEY, 1L);
         }
 
         @Test
         @DisplayName("removeFriends()는 친구공개 diary id를 삭제한다")
         void removeFriends() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removeFriends(2L);
 
-            verify(setOperations).remove(FRIENDS_IDS_KEY, 2L);
+            verify(zSetOperations).remove(FRIENDS_IDS_KEY, 2L);
         }
 
         @Test
         @DisplayName("removeUser()는 사용자별 diary id를 삭제한다")
         void removeUser() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removeUser(10L, 3L);
 
-            verify(setOperations).remove(USER_IDS_KEY_PREFIX + 10L, 3L);
+            verify(zSetOperations).remove(USER_IDS_KEY_PREFIX + 10L, 3L);
         }
 
         @Test
         @DisplayName("remove()는 public, friends set 양쪽에서 삭제한다")
         void remove() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.remove(5L);
 
-            verify(setOperations).remove(PUBLIC_IDS_KEY, 5L);
-            verify(setOperations).remove(FRIENDS_IDS_KEY, 5L);
+            verify(zSetOperations).remove(PUBLIC_IDS_KEY, 5L);
+            verify(zSetOperations).remove(FRIENDS_IDS_KEY, 5L);
         }
 
         @Test
         @DisplayName("removeFromUser()는 사용자 set에서 diary id를 삭제한다")
         void removeFromUser() {
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removeFromUser(20L, 7L);
 
-            verify(setOperations).remove(USER_IDS_KEY_PREFIX + 20L, 7L);
+            verify(zSetOperations).remove(USER_IDS_KEY_PREFIX + 20L, 7L);
         }
     }
 
@@ -135,13 +136,13 @@ class DiaryIdRedisRepositoryTest {
             members.add(1L);
             members.add("2");
 
-            when(setOperations.members(PUBLIC_IDS_KEY)).thenReturn(members);
+            when(zSetOperations.reverseRange(PUBLIC_IDS_KEY, 0, -1)).thenReturn(members);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
-            Set<Long> result = diaryIdRedisRepository.findAllPublic();
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            List<Long> result = diaryIdRedisRepository.findAllPublic();
 
             assertThat(result).containsExactlyInAnyOrder(1L, 2L);
-            verify(setOperations).members(PUBLIC_IDS_KEY);
+            verify(zSetOperations).reverseRange(PUBLIC_IDS_KEY, 0, -1);
         }
 
         @Test
@@ -151,13 +152,13 @@ class DiaryIdRedisRepositoryTest {
             members.add("3");
             members.add(4L);
 
-            when(setOperations.members(FRIENDS_IDS_KEY)).thenReturn(members);
+            when(zSetOperations.reverseRange(FRIENDS_IDS_KEY, 0, -1)).thenReturn(members);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
-            Set<Long> result = diaryIdRedisRepository.findAllFriends();
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            List<Long> result = diaryIdRedisRepository.findAllFriends();
 
             assertThat(result).containsExactlyInAnyOrder(3L, 4L);
-            verify(setOperations).members(FRIENDS_IDS_KEY);
+            verify(zSetOperations).reverseRange(FRIENDS_IDS_KEY, 0, -1);
         }
 
         @Test
@@ -168,22 +169,22 @@ class DiaryIdRedisRepositoryTest {
             members.add("10");
             members.add(20L);
 
-            when(setOperations.members(USER_IDS_KEY_PREFIX + userId)).thenReturn(members);
+            when(zSetOperations.reverseRange(USER_IDS_KEY_PREFIX + userId, 0, -1)).thenReturn(members);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
-            Set<Long> result = diaryIdRedisRepository.findAllUser(userId);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            List<Long> result = diaryIdRedisRepository.findAllUser(userId);
 
             assertThat(result).containsExactlyInAnyOrder(10L, 20L);
-            verify(setOperations).members(USER_IDS_KEY_PREFIX + userId);
+            verify(zSetOperations).reverseRange(USER_IDS_KEY_PREFIX + userId, 0, -1);
         }
 
         @Test
         @DisplayName("members가 null이면 빈 Set을 반환한다")
         void returnsEmptySetWhenMembersIsNull() {
-            when(setOperations.members(PUBLIC_IDS_KEY)).thenReturn(null);
+            when(zSetOperations.reverseRange(PUBLIC_IDS_KEY,0, -1)).thenReturn(null);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
-            Set<Long> result = diaryIdRedisRepository.findAllPublic();
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            List<Long> result = diaryIdRedisRepository.findAllPublic();
 
             assertThat(result).isEmpty();
         }
@@ -191,10 +192,10 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("members가 비어있으면 빈 Set을 반환한다")
         void returnsEmptySetWhenMembersIsEmpty() {
-            when(setOperations.members(PUBLIC_IDS_KEY)).thenReturn(Collections.emptySet());
+            when(zSetOperations.reverseRange(PUBLIC_IDS_KEY, 0, -1)).thenReturn(Collections.emptySet());
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
-            Set<Long> result = diaryIdRedisRepository.findAllPublic();
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            List<Long> result = diaryIdRedisRepository.findAllPublic();
 
             assertThat(result).isEmpty();
         }
@@ -209,10 +210,10 @@ class DiaryIdRedisRepositoryTest {
         void savePublicIds() {
             List<Long> ids = List.of(1L, 2L, 3L);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.savePublicIds(ids);
 
-            verify(setOperations).add(PUBLIC_IDS_KEY, 1L, 2L, 3L);
+            verify(zSetOperations).add(eq(PUBLIC_IDS_KEY), anySet());
         }
 
         @Test
@@ -220,7 +221,7 @@ class DiaryIdRedisRepositoryTest {
         void savePublicIdsWithNull() {
             diaryIdRedisRepository.savePublicIds(null);
 
-            verify(setOperations, never()).add(eq(PUBLIC_IDS_KEY), any());
+            verify(zSetOperations, never()).add(eq(PUBLIC_IDS_KEY), any());
         }
 
         @Test
@@ -228,7 +229,7 @@ class DiaryIdRedisRepositoryTest {
         void savePublicIdsWithEmptyList() {
             diaryIdRedisRepository.savePublicIds(Collections.emptyList());
 
-            verify(setOperations, never()).add(eq(PUBLIC_IDS_KEY), any());
+            verify(zSetOperations, never()).add(eq(PUBLIC_IDS_KEY), any());
         }
 
         @Test
@@ -236,10 +237,11 @@ class DiaryIdRedisRepositoryTest {
         void saveFriends() {
             List<Long> ids = List.of(4L, 5L);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
             diaryIdRedisRepository.saveFriends(ids);
 
-            verify(setOperations).add(FRIENDS_IDS_KEY, 4L, 5L);
+            verify(zSetOperations).add(eq(FRIENDS_IDS_KEY), anySet());
         }
 
         @Test
@@ -247,7 +249,7 @@ class DiaryIdRedisRepositoryTest {
         void saveFriendsWithNull() {
             diaryIdRedisRepository.saveFriends(null);
 
-            verify(setOperations, never()).add(eq(FRIENDS_IDS_KEY), any());
+            verify(zSetOperations, never()).add(eq(FRIENDS_IDS_KEY), any());
         }
 
         @Test
@@ -255,7 +257,7 @@ class DiaryIdRedisRepositoryTest {
         void saveFriendsWithEmptyList() {
             diaryIdRedisRepository.saveFriends(Collections.emptyList());
 
-            verify(setOperations, never()).add(eq(FRIENDS_IDS_KEY), any());
+            verify(zSetOperations, never()).add(eq(FRIENDS_IDS_KEY), any());
         }
 
         @Test
@@ -264,10 +266,10 @@ class DiaryIdRedisRepositoryTest {
             Long userId = 30L;
             List<Long> ids = List.of(7L, 8L);
 
-            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.saveUserIds(userId, ids);
 
-            verify(setOperations).add(USER_IDS_KEY_PREFIX + userId, 7L, 8L);
+            verify(zSetOperations).add(eq(USER_IDS_KEY_PREFIX + userId), anySet());
         }
 
         @Test
@@ -275,7 +277,7 @@ class DiaryIdRedisRepositoryTest {
         void saveUserIdsWithNull() {
             diaryIdRedisRepository.saveUserIds(30L, null);
 
-            verify(setOperations, never()).add(startsWith(USER_IDS_KEY_PREFIX), any());
+            verify(zSetOperations, never()).add(startsWith(USER_IDS_KEY_PREFIX), any());
         }
 
         @Test
@@ -283,7 +285,7 @@ class DiaryIdRedisRepositoryTest {
         void saveUserIdsWithEmptyList() {
             diaryIdRedisRepository.saveUserIds(30L, Collections.emptyList());
 
-            verify(setOperations, never()).add(startsWith(USER_IDS_KEY_PREFIX), any());
+            verify(zSetOperations, never()).add(startsWith(USER_IDS_KEY_PREFIX), any());
         }
     }
 }

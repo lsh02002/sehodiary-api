@@ -2,12 +2,13 @@ package com.shop.sehodiary_api.repository.diary;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -20,75 +21,106 @@ public class DiaryIdRedisRepository {
     private static final String USER_IDS_KEY_PREFIX = "diary:ids:user:";
 
     public void addPublic(Long diaryId) {
-        redisTemplate.opsForSet().add(PUBLIC_IDS_KEY, diaryId);
+        if (diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().add(PUBLIC_IDS_KEY, diaryId, diaryId.doubleValue());
     }
 
     public void addFriends(Long diaryId) {
-        redisTemplate.opsForSet().add(FRIENDS_IDS_KEY, diaryId);
+        if (diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().add(FRIENDS_IDS_KEY, diaryId, diaryId.doubleValue());
     }
 
     public void addUser(Long userId, Long diaryId) {
-        redisTemplate.opsForSet().add(getUserIdsKey(userId), diaryId);
+        if (userId == null || diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().add(getUserIdsKey(userId), diaryId, diaryId.doubleValue());
     }
 
     public void removePublic(Long diaryId) {
-        redisTemplate.opsForSet().remove(PUBLIC_IDS_KEY, diaryId);
+        if (diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().remove(PUBLIC_IDS_KEY, diaryId);
     }
 
     public void removeFriends(Long diaryId) {
-        redisTemplate.opsForSet().remove(FRIENDS_IDS_KEY, diaryId);
+        if (diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().remove(FRIENDS_IDS_KEY, diaryId);
     }
 
     public void removeUser(Long userId, Long diaryId) {
-        redisTemplate.opsForSet().remove(getUserIdsKey(userId), diaryId);
+        if (userId == null || diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().remove(getUserIdsKey(userId), diaryId);
     }
 
-    public Set<Long> findAllPublic() {
-        return getLongSet(PUBLIC_IDS_KEY);
+    public List<Long> findAllPublic() {
+        return getLongListDesc(PUBLIC_IDS_KEY);
     }
 
-    public Set<Long> findAllFriends() {
-        return getLongSet(FRIENDS_IDS_KEY);
+    public List<Long> findAllFriends() {
+        return getLongListDesc(FRIENDS_IDS_KEY);
     }
 
-    public Set<Long> findAllUser(Long userId) {
-        return getLongSet(getUserIdsKey(userId));
+    public List<Long> findAllUser(Long userId) {
+        if (userId == null) {
+            return Collections.emptyList();
+        }
+        return getLongListDesc(getUserIdsKey(userId));
     }
 
     public void savePublicIds(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return;
-        }
-
-        redisTemplate.opsForSet().add(PUBLIC_IDS_KEY, ids.toArray(new Long[0]));
+        saveAll(PUBLIC_IDS_KEY, ids);
     }
 
     public void saveFriends(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return;
-        }
-
-        redisTemplate.opsForSet().add(FRIENDS_IDS_KEY, ids.toArray(new Long[0]));
+        saveAll(FRIENDS_IDS_KEY, ids);
     }
 
     public void saveUserIds(Long userId, List<Long> ids) {
+        if (userId == null) {
+            return;
+        }
+        saveAll(getUserIdsKey(userId), ids);
+    }
+
+    private void saveAll(String key, List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
 
-        redisTemplate.opsForSet().add(getUserIdsKey(userId), ids.toArray(new Long[0]));
-    }
-
-    private Set<Long> getLongSet(String key) {
-        Set<Object> members = redisTemplate.opsForSet().members(key);
-
-        if (members == null || members.isEmpty()) {
-            return Collections.emptySet();
+        Set<ZSetOperations.TypedTuple<Object>> tuples = new java.util.LinkedHashSet<>();
+        for (Long id : ids) {
+            if (id != null) {
+                tuples.add(ZSetOperations.TypedTuple.of(id, id.doubleValue()));
+            }
         }
 
-        return members.stream()
-                .map(v -> Long.valueOf(String.valueOf(v)))
-                .collect(Collectors.toSet());
+        if (!tuples.isEmpty()) {
+            redisTemplate.opsForZSet().add(key, tuples);
+        }
+    }
+
+    private List<Long> getLongListDesc(String key) {
+        Set<Object> members = redisTemplate.opsForZSet().reverseRange(key, 0, -1);
+
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> result = new ArrayList<>(members.size());
+        for (Object member : members) {
+            result.add(Long.valueOf(String.valueOf(member)));
+        }
+        return result;
     }
 
     private String getUserIdsKey(Long userId) {
@@ -96,11 +128,17 @@ public class DiaryIdRedisRepository {
     }
 
     public void remove(Long diaryId) {
-        redisTemplate.opsForSet().remove(PUBLIC_IDS_KEY, diaryId);
-        redisTemplate.opsForSet().remove(FRIENDS_IDS_KEY, diaryId);
+        if (diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().remove(PUBLIC_IDS_KEY, diaryId);
+        redisTemplate.opsForZSet().remove(FRIENDS_IDS_KEY, diaryId);
     }
 
     public void removeFromUser(Long userId, Long diaryId) {
-        redisTemplate.opsForSet().remove(getUserIdsKey(userId), diaryId);
+        if (userId == null || diaryId == null) {
+            return;
+        }
+        redisTemplate.opsForZSet().remove(getUserIdsKey(userId), diaryId);
     }
 }

@@ -10,9 +10,9 @@ import java.util.Optional;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findByUserIdAndId(Long userId, Long commentId);
 
-    @Query("select c.id from Comment c where c.diary.id = :diaryId")
-    List<Long> findAllIdsByDiaryId(@Param("diaryId") Long diaryId);
+    @Query("select c.id from Comment c where c.diary.id = :diaryId order by c.id desc")
+    List<Long> findAllIdsByDiaryIdDesc(@Param("diaryId") Long diaryId);
 
-    @Query("select d.id from Comment d where d.user.id = :userId")
-    List<Long> findIdsByUserId(Long userId);
+    @Query("select c.id from Comment c where c.user.id = :userId order by c.id desc")
+    List<Long> findAllIdsByUserIdDesc(@Param("userId") Long userId);
 }

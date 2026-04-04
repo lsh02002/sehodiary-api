@@ -101,7 +101,7 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of(id1, id2));
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, response1,
                     id2, response2
@@ -130,7 +130,7 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of());
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of());
             when(diaryRepository.findAllPublicIds()).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of());
 
@@ -160,7 +160,7 @@ class DiaryServiceTest {
             DiaryResponse publicResponse = mock(DiaryResponse.class);
             DiaryResponse friendsResponse = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of(id1, id2));
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, publicResponse,
                     id2, friendsResponse
@@ -191,7 +191,7 @@ class DiaryServiceTest {
             Map<Long, DiaryResponse> cacheMap = new HashMap<>();
             cacheMap.put(id1, cachedResponse);
 
-            when(diaryIdRedisRepository.findAllPublic()).thenReturn(Set.of(id1, id2, id3));
+            when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of(id1, id2, id3));
             when(diaryCacheRepository.getAll()).thenReturn(cacheMap);
             when(cachedResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
 
@@ -223,7 +223,7 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of(id1, id2));
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, response1,
                     id2, response2
@@ -252,7 +252,7 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of());
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of());
             when(diaryRepository.findAllFriendsIds()).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of());
 
@@ -282,7 +282,7 @@ class DiaryServiceTest {
             DiaryResponse friendsResponse = mock(DiaryResponse.class);
             DiaryResponse publicResponse = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of(id1, id2));
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, friendsResponse,
                     id2, publicResponse
@@ -310,7 +310,7 @@ class DiaryServiceTest {
             Diary friendsDiary = mock(Diary.class);
             Diary publicDiary = mock(Diary.class);
 
-            when(diaryIdRedisRepository.findAllFriends()).thenReturn(Set.of(id1, id2, id3));
+            when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of(id1, id2, id3));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(id1, cachedResponse));
             when(cachedResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
 
@@ -343,7 +343,7 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of(id1, id2));
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(
                     id1, response1,
                     id2, response2
@@ -371,7 +371,7 @@ class DiaryServiceTest {
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
-            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of());
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of());
             when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of(id1, id2));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of());
 
@@ -395,7 +395,7 @@ class DiaryServiceTest {
         void returnsEmptyListWhenRedisAndDbAreEmpty() {
             Long userId = 10L;
 
-            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of());
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of());
             when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of());
 
             List<DiaryResponse> result = diaryService.getDiariesByUser(userId);
@@ -423,7 +423,7 @@ class DiaryServiceTest {
             Diary diary2 = mock(Diary.class);
             Diary diary3 = mock(Diary.class);
 
-            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(Set.of(id1, id2, id3));
+            when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of(id1, id2, id3));
             when(diaryCacheRepository.getAll()).thenReturn(Map.of(id1, cachedResponse));
             when(diaryRepository.findAllById(anyList())).thenReturn(List.of(diary2, diary3));
             when(diaryMapper.toResponse(diary2)).thenReturn(dbResponse1);
@@ -449,7 +449,7 @@ class DiaryServiceTest {
             Long userId = 1L;
             Long targetUserId = 2L;
 
-            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(Set.of());
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(List.of());
             given(diaryRepository.findIdsByUserId(targetUserId)).willReturn(List.of());
 
             // when
@@ -476,7 +476,7 @@ class DiaryServiceTest {
             cachedMap.put(10L, diary1);
             cachedMap.put(20L, diary2);
 
-            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(Set.of());
+            given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(List.of());
             given(diaryRepository.findIdsByUserId(targetUserId)).willReturn(idsFromDb);
             given(diaryCacheRepository.getAll()).willReturn(cachedMap);
 
@@ -502,7 +502,7 @@ class DiaryServiceTest {
             Long userId = 1L;
             Long targetUserId = 2L;
 
-            Set<Long> diaryIds = Set.of(10L, 20L, 30L);
+            List<Long> diaryIds = List.of(10L, 20L, 30L);
 
             DiaryResponse cachedDiary = mockDiaryResponse(10L);
             Map<Long, DiaryResponse> cachedMap = new HashMap<>();
@@ -547,7 +547,7 @@ class DiaryServiceTest {
             Long userId = 1L;
             Long targetUserId = 2L;
 
-            Set<Long> diaryIds = Set.of(10L, 20L);
+            List<Long> diaryIds = List.of(10L, 20L);
 
             DiaryResponse publicDiary = mockDiaryResponse(10L);
             DiaryResponse friendDiary = mockDiaryResponse(20L);
@@ -579,7 +579,7 @@ class DiaryServiceTest {
             Long userId = 1L;
             Long targetUserId = 2L;
 
-            Set<Long> diaryIds = Set.of(10L, 20L);
+            List<Long> diaryIds = List.of(10L, 20L);
 
             DiaryResponse publicDiary = mockDiaryResponse(10L);
             DiaryResponse friendDiary = mockDiaryResponse(20L);
@@ -609,7 +609,7 @@ class DiaryServiceTest {
             Long userId = 1L;
             Long targetUserId = 2L;
 
-            Set<Long> diaryIds = Set.of(10L, 20L, 30L);
+            List<Long> diaryIds = List.of(10L, 20L, 30L);
 
             DiaryResponse visibleCached = mockDiaryResponse(10L);
             Map<Long, DiaryResponse> cachedMap = new HashMap<>();

@@ -80,7 +80,7 @@ public class CommentCacheRepository {
     }
 
     public void evictCommentCacheByUser(Long userId) {
-        List<Long> commentIds = commentRepository.findIdsByUserId(userId);
+        List<Long> commentIds = commentRepository.findAllIdsByUserIdDesc(userId);
 
         List<String> keys = commentIds.stream()
                 .map(this::generateKey)

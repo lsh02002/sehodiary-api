@@ -91,7 +91,7 @@ class CommentRepositoryTest {
         em.clear();
 
         // when
-        List<Long> ids = commentRepository.findAllIdsByDiaryId(diary1.getId());
+        List<Long> ids = commentRepository.findAllIdsByDiaryIdDesc(diary1.getId());
 
         // then
         assertThat(ids).containsExactlyInAnyOrder(c1.getId(), c2.getId());
@@ -116,7 +116,7 @@ class CommentRepositoryTest {
         em.clear();
 
         // when
-        List<Long> ids = commentRepository.findIdsByUserId(user1.getId());
+        List<Long> ids = commentRepository.findAllIdsByUserIdDesc(user1.getId());
 
         // then
         assertThat(ids).containsExactlyInAnyOrder(c1.getId(), c2.getId());

@@ -72,23 +72,29 @@ class CommentServiceTest {
         @Test
         @DisplayName("Redis에 diaryId별 commentIds가 있고, 모두 캐시에 있으면 캐시 데이터만 반환한다")
         void returnsOnlyCachedCommentsWhenRedisIdsExistAndAllCached() {
+            // given
             Long diaryId = 1L;
-            List<Long> commentIds = List.of(10L, 20L);
+            List<Long> commentIds = List.of(20L, 10L);
 
             CommentResponse response1 = mock(CommentResponse.class);
             CommentResponse response2 = mock(CommentResponse.class);
 
-            when(commentIdRedisRepository.findAllByDiaryId(diaryId)).thenReturn(commentIds);
-            when(commentCacheRepository.getAll()).thenReturn(Map.of(
-                    10L, response1,
-                    20L, response2
-            ));
+            Map<Long, CommentResponse> cachedMap = new HashMap<>();
+            cachedMap.put(10L, response1);
+            cachedMap.put(20L, response2);
 
+            when(commentIdRedisRepository.findAllByDiaryIdDesc(diaryId)).thenReturn(commentIds);
+            when(commentCacheRepository.getAll()).thenReturn(cachedMap);
+
+            // when
             List<CommentResponse> result = commentService.getCommentsByDiaryId(diaryId);
 
-            assertThat(result).containsExactly(response1, response2);
+            // then
+            assertThat(result).containsExactly(response2, response1);
 
-            verify(commentRepository, never()).findAllIdsByDiaryId(anyLong());
+            verify(commentIdRedisRepository).findAllByDiaryIdDesc(diaryId);
+            verify(commentRepository, never()).findAllIdsByDiaryIdDesc(anyLong());
+            verify(commentIdRedisRepository, never()).saveAllByDiaryId(anyLong(), anyList());
             verify(commentRepository, never()).findAllById(anyList());
             verify(commentCacheRepository, never()).put(any());
         }
@@ -105,8 +111,10 @@ class CommentServiceTest {
             CommentResponse response1 = mock(CommentResponse.class);
             CommentResponse response2 = mock(CommentResponse.class);
 
-            when(commentIdRedisRepository.findAllByDiaryId(diaryId)).thenReturn(List.of());
-            when(commentRepository.findAllIdsByDiaryId(diaryId)).thenReturn(dbIds);
+            when(response1.getCommentId()).thenReturn(10L);
+            when(response2.getCommentId()).thenReturn(20L);
+
+            when(commentRepository.findAllIdsByDiaryIdDesc(diaryId)).thenReturn(dbIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of());
 
             when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
@@ -117,7 +125,7 @@ class CommentServiceTest {
 
             assertThat(result).containsExactly(response1, response2);
 
-            verify(commentRepository).findAllIdsByDiaryId(diaryId);
+            verify(commentRepository).findAllIdsByDiaryIdDesc(diaryId);
             verify(commentIdRedisRepository).saveAllByDiaryId(diaryId, dbIds);
             verify(commentRepository).findAllById(dbIds);
             verify(commentCacheRepository).put(response1);
@@ -137,7 +145,10 @@ class CommentServiceTest {
             Comment comment20 = mock(Comment.class);
             Comment comment30 = mock(Comment.class);
 
-            when(commentIdRedisRepository.findAllByDiaryId(diaryId)).thenReturn(commentIds);
+            when(dbResponse1.getCommentId()).thenReturn(20L);
+            when(dbResponse2.getCommentId()).thenReturn(30L);
+
+            when(commentIdRedisRepository.findAllByDiaryIdDesc(diaryId)).thenReturn(commentIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of(
                     10L, cachedResponse
             ));
@@ -154,6 +165,8 @@ class CommentServiceTest {
             verify(commentRepository).findAllById(List.of(20L, 30L));
             verify(commentCacheRepository).put(dbResponse1);
             verify(commentCacheRepository).put(dbResponse2);
+            verify(commentRepository, never()).findAllIdsByDiaryIdDesc(anyLong());
+            verify(commentIdRedisRepository, never()).saveAllByDiaryId(anyLong(), anyList());
         }
     }
 
@@ -170,7 +183,7 @@ class CommentServiceTest {
             CommentResponse response1 = mock(CommentResponse.class);
             CommentResponse response2 = mock(CommentResponse.class);
 
-            when(commentIdRedisRepository.findAllByUserId(userId)).thenReturn(commentIds);
+            when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(commentIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of(
                     1L, response1,
                     2L, response2
@@ -180,14 +193,14 @@ class CommentServiceTest {
 
             assertThat(result).containsExactly(response1, response2);
 
-            verify(commentRepository, never()).findIdsByUserId(anyLong());
+            verify(commentRepository, never()).findAllIdsByUserIdDesc(anyLong());
             verify(commentRepository, never()).findAllById(anyList());
             verify(commentCacheRepository, never()).put(any());
         }
 
         @Test
-        @DisplayName("Redis에 userId별 commentIds가 없으면 DB에서 ids 조회 후 Redis에 저장한다")
-        void loadsIdsFromDbAndSavesToRedisWhenRedisIsEmpty() {
+        @DisplayName("commentIds로 comment를 조회해서 응답을 반환한다")
+        void loadsCommentsByIds() {
             Long userId = 100L;
             List<Long> dbIds = List.of(1L, 2L);
 
@@ -197,10 +210,8 @@ class CommentServiceTest {
             CommentResponse response1 = mock(CommentResponse.class);
             CommentResponse response2 = mock(CommentResponse.class);
 
-            when(commentIdRedisRepository.findAllByUserId(userId)).thenReturn(List.of());
-            when(commentRepository.findIdsByUserId(userId)).thenReturn(dbIds);
+            when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(dbIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of());
-
             when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
             when(commentMapper.toResponse(comment1)).thenReturn(response1);
             when(commentMapper.toResponse(comment2)).thenReturn(response2);
@@ -209,8 +220,6 @@ class CommentServiceTest {
 
             assertThat(result).containsExactly(response1, response2);
 
-            verify(commentRepository).findIdsByUserId(userId);
-            verify(commentIdRedisRepository).saveAllByUserId(userId, dbIds);
             verify(commentRepository).findAllById(dbIds);
             verify(commentCacheRepository).put(response1);
             verify(commentCacheRepository).put(response2);
@@ -229,7 +238,7 @@ class CommentServiceTest {
             Comment comment2 = mock(Comment.class);
             Comment comment3 = mock(Comment.class);
 
-            when(commentIdRedisRepository.findAllByUserId(userId)).thenReturn(commentIds);
+            when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(commentIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of(
                     1L, cachedResponse
             ));

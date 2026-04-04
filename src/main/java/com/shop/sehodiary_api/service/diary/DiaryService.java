@@ -47,7 +47,7 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic() {
-        Set<Long> publicIds = diaryIdRedisRepository.findAllPublic();
+        List<Long> publicIds = diaryIdRedisRepository.findAllPublic();
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         // publicIds가 비어있으면 DB에서 채우기
@@ -55,7 +55,7 @@ public class DiaryService {
             List<Long> ids = diaryRepository.findAllPublicIds();
 
             diaryIdRedisRepository.savePublicIds(ids);
-            publicIds = new HashSet<>(ids);
+            publicIds = new ArrayList<>(ids);
         }
 
         List<DiaryResponse> result = publicIds.stream()
@@ -83,14 +83,14 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByFriends() {
-        Set<Long> friendIds = diaryIdRedisRepository.findAllFriends();
+        List<Long> friendIds = diaryIdRedisRepository.findAllFriends();
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         if (friendIds.isEmpty()) {
             List<Long> ids = diaryRepository.findAllFriendsIds();
 
             diaryIdRedisRepository.saveFriends(ids);
-            friendIds = new HashSet<>(ids);
+            friendIds = new ArrayList<>(ids);
         }
 
         List<DiaryResponse> result = friendIds.stream()
@@ -118,7 +118,7 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByUser(Long userId) {
-        Set<Long> diaryIds = diaryIdRedisRepository.findAllUser(userId);
+        List<Long> diaryIds = diaryIdRedisRepository.findAllUser(userId);
 
         // user diaryIds가 비어있으면 DB에서 채우기
         if (diaryIds.isEmpty()) {
@@ -126,7 +126,7 @@ public class DiaryService {
 
             if (!ids.isEmpty()) {
                 diaryIdRedisRepository.saveUserIds(userId, ids);
-                diaryIds = new HashSet<>(ids);
+                diaryIds = new ArrayList<>(ids);
             } else {
                 return List.of();
             }
@@ -157,7 +157,7 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesPublicAndFriendsByUser(Long userId, Long targetUserId) {
-        Set<Long> diaryIds = diaryIdRedisRepository.findAllUser(targetUserId);
+        List<Long> diaryIds = diaryIdRedisRepository.findAllUser(targetUserId);
 
         if (diaryIds.isEmpty()) {
             List<Long> ids = diaryRepository.findIdsByUserId(targetUserId);
@@ -167,7 +167,7 @@ public class DiaryService {
             }
 
             diaryIdRedisRepository.saveUserIds(targetUserId, ids);
-            diaryIds = new HashSet<>(ids);
+            diaryIds = new ArrayList<>(ids);
         }
 
         boolean isFriend = isFriend(userId, targetUserId);

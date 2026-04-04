@@ -210,7 +210,7 @@ class CommentCacheRepositoryTest {
     @DisplayName("evictCommentCacheByUser - 유저의 댓글 캐시들을 삭제한다")
     void evictCommentCacheByUser_success() {
         // given
-        when(commentRepository.findIdsByUserId(10L)).thenReturn(List.of(1L, 2L, 3L));
+        when(commentRepository.findAllIdsByUserIdDesc(10L)).thenReturn(List.of(1L, 2L, 3L));
 
         // when
         commentCacheRepository.evictCommentCacheByUser(10L);
@@ -227,7 +227,7 @@ class CommentCacheRepositoryTest {
     @DisplayName("evictCommentCacheByUser - 댓글이 없으면 빈 리스트로 삭제 호출")
     void evictCommentCacheByUser_noComments() {
         // given
-        when(commentRepository.findIdsByUserId(10L)).thenReturn(List.of());
+        when(commentRepository.findAllIdsByUserIdDesc(10L)).thenReturn(List.of());
 
         // when
         commentCacheRepository.evictCommentCacheByUser(10L);

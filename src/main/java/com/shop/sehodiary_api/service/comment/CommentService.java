@@ -47,74 +47,63 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public List<CommentResponse> getCommentsByDiaryId(Long diaryId) {
-        List<Long> commentIds = commentIdRedisRepository.findAllByDiaryId(diaryId);
-        Map<Long, CommentResponse> cached = commentCacheRepository.getAll();
+        List<Long> commentIds = commentIdRedisRepository.findAllByDiaryIdDesc(diaryId);
 
         if (commentIds.isEmpty()) {
-            List<Long> ids = commentRepository.findAllIdsByDiaryId(diaryId);
-
-            commentIdRedisRepository.saveAllByDiaryId(diaryId, ids);
-            commentIds = ids;
+            commentIds = commentRepository.findAllIdsByDiaryIdDesc(diaryId);
+            commentIdRedisRepository.saveAllByDiaryId(diaryId, commentIds);
         }
 
-        List<CommentResponse> result = commentIds.stream()
-                .map(cached::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(ArrayList::new));
+        Map<Long, CommentResponse> cachedComments = new HashMap<>(commentCacheRepository.getAll());
 
         List<Long> missingIds = commentIds.stream()
-                .filter(id -> !cached.containsKey(id))
+                .filter(id -> !cachedComments.containsKey(id))
                 .toList();
 
         if (!missingIds.isEmpty()) {
-            List<CommentResponse> dbResults = commentRepository.findAllById(missingIds).stream()
+            Map<Long, CommentResponse> dbComments = commentRepository.findAllById(missingIds).stream()
+                    .map(commentMapper::toResponse)
+                    .collect(Collectors.toMap(
+                            CommentResponse::getCommentId,
+                            response -> response
+                    ));
+
+            dbComments.values().forEach(commentCacheRepository::put);
+            cachedComments.putAll(dbComments);
+        }
+
+        return commentIds.stream()
+                .map(cachedComments::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    public List<CommentResponse> getCommentsByUser(Long userId) {
+        List<Long> ids = commentIdRedisRepository.findAllByUserIdDesc(userId);
+        Map<Long, CommentResponse> cache = new HashMap<>(commentCacheRepository.getAll());
+
+        List<Long> missingIds = ids.stream()
+                .filter(id -> !cache.containsKey(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            List<CommentResponse> loaded = commentRepository.findAllById(missingIds).stream()
                     .map(commentMapper::toResponse)
                     .toList();
 
-            dbResults.forEach(commentCacheRepository::put);
-            result.addAll(dbResults);
-        }
+            for (int i = 0; i < missingIds.size(); i++) {
+                Long id = missingIds.get(i);
+                CommentResponse response = loaded.get(i);
 
-        return result;
-    }
-
-    @Transactional(readOnly = true)
-    public List<CommentResponse> getCommentsByUser(Long userId) {
-
-        List<Long> commentIds = commentIdRedisRepository.findAllByUserId(userId);
-        Map<Long, CommentResponse> cached = commentCacheRepository.getAll();
-
-        // Redis에 없으면 DB에서 채우기
-        if (commentIds.isEmpty()) {
-            List<Long> ids = commentRepository.findIdsByUserId(userId);
-
-            commentIdRedisRepository.saveAllByUserId(userId, ids);
-            commentIds = ids;
-        }
-
-        List<CommentResponse> result = new ArrayList<>();
-        List<Long> missingIds = new ArrayList<>();
-
-        for (Long commentId : commentIds) {
-            CommentResponse cachedComment = cached.get(commentId);
-
-            if (cachedComment != null) {
-                result.add(cachedComment);
-            } else {
-                missingIds.add(commentId);
+                commentCacheRepository.put(response);
+                cache.put(id, response);
             }
         }
 
-        if (!missingIds.isEmpty()) {
-            List<CommentResponse> dbResults = commentRepository.findAllById(missingIds).stream()
-                    .map(commentMapper::toResponse)
-                    .toList();
-
-            dbResults.forEach(commentCacheRepository::put);
-            result.addAll(dbResults);
-        }
-
-        return result;
+        return ids.stream()
+                .map(cache::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     @Transactional
