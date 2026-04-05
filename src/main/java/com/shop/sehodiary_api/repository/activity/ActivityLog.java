@@ -30,7 +30,7 @@ public class ActivityLog extends BaseTimeEntity {
     @Column(name = "entity_id", nullable = false)
     private Long entityId;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String message;
 
     @Enumerated(EnumType.STRING)
