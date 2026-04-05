@@ -79,29 +79,33 @@ public class CommentService {
     }
 
     public List<CommentResponse> getCommentsByUser(Long userId) {
-        List<Long> ids = commentIdRedisRepository.findAllByUserIdDesc(userId);
-        Map<Long, CommentResponse> cache = new HashMap<>(commentCacheRepository.getAll());
+        List<Long> commentids = commentIdRedisRepository.findAllByUserIdDesc(userId);
 
-        List<Long> missingIds = ids.stream()
-                .filter(id -> !cache.containsKey(id))
+        if(commentids.isEmpty()) {
+            commentids = commentRepository.findAllIdsByUserIdDesc(userId);
+            commentIdRedisRepository.saveAllByUserId(userId, commentids);
+        }
+
+        Map<Long, CommentResponse> cachedComments = new HashMap<>(commentCacheRepository.getAll());
+
+        List<Long> missingIds = commentids.stream()
+                .filter(id -> !cachedComments.containsKey(id))
                 .toList();
 
         if (!missingIds.isEmpty()) {
-            List<CommentResponse> loaded = commentRepository.findAllById(missingIds).stream()
+            Map<Long, CommentResponse> dbComments = commentRepository.findAllById(missingIds).stream()
                     .map(commentMapper::toResponse)
-                    .toList();
+                    .collect(Collectors.toMap(
+                            CommentResponse::getCommentId,
+                            response->response
+                    ));
 
-            for (int i = 0; i < missingIds.size(); i++) {
-                Long id = missingIds.get(i);
-                CommentResponse response = loaded.get(i);
-
-                commentCacheRepository.put(response);
-                cache.put(id, response);
-            }
+            dbComments.values().forEach(commentCacheRepository::put);
+            cachedComments.putAll(dbComments);
         }
 
-        return ids.stream()
-                .map(cache::get)
+        return commentids.stream()
+                .map(cachedComments::get)
                 .filter(Objects::nonNull)
                 .toList();
     }

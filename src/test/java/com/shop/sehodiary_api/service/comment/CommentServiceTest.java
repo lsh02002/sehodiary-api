@@ -210,6 +210,9 @@ class CommentServiceTest {
             CommentResponse response1 = mock(CommentResponse.class);
             CommentResponse response2 = mock(CommentResponse.class);
 
+            when(response1.getCommentId()).thenReturn(1L);
+            when(response2.getCommentId()).thenReturn(2L);
+
             when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(dbIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of());
             when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
@@ -237,6 +240,9 @@ class CommentServiceTest {
 
             Comment comment2 = mock(Comment.class);
             Comment comment3 = mock(Comment.class);
+
+            when(dbResponse1.getCommentId()).thenReturn(2L);
+            when(dbResponse2.getCommentId()).thenReturn(3L);
 
             when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(commentIds);
             when(commentCacheRepository.getAll()).thenReturn(Map.of(
