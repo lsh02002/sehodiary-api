@@ -11,16 +11,17 @@ import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.follow.FollowRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
-import com.shop.sehodiary_api.service.exceptions.ConflictException;
-import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
-import com.shop.sehodiary_api.service.exceptions.NotFoundException;
+import com.shop.sehodiary_api.service.exceptions.*;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -199,13 +200,29 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public DiaryResponse getOneDiary(Long diaryId) {
+        String currentUserNickname = getCurrentUserNickname();
+
         Optional<DiaryResponse> cached = diaryCacheRepository.get(diaryId);
         if (cached.isPresent()) {
-            return cached.get();
+            DiaryResponse response = cached.get();
+
+            validateDiaryAccess(
+                    Visibility.valueOf(response.getVisibility()),
+                    response.getNickname(),
+                    currentUserNickname
+            );
+
+            return response;
         }
 
         Diary diary = diaryRepository.findById(diaryId)
                 .orElseThrow(() -> new NotFoundException("해당 글을 찾을 수 없습니다.", diaryId));
+
+        validateDiaryAccess(
+                diary.getVisibility(),
+                diary.getUser().getNickname(),
+                currentUserNickname
+        );
 
         DiaryResponse response = diaryMapper.toResponse(diary);
         diaryCacheRepository.put(response);
@@ -416,5 +433,27 @@ public class DiaryService {
 
         return followRepository.existsByFollowerIdAndFollowingId(userId, targetUserId)
                 || followRepository.existsByFollowerIdAndFollowingId(targetUserId, userId);
+    }
+
+    private void validateDiaryAccess(Visibility visibility, String writerNickname, String currentUserNickname) {
+        if (visibility == Visibility.PRIVATE && !writerNickname.equals(currentUserNickname)) {
+            throw new AccessDeniedException("비공개 글은 작성자만 조회할 수 있습니다.", currentUserNickname);
+        }
+    }
+
+    private String getCurrentUserNickname() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new CustomBadCredentialsException("로그인이 필요합니다.", null);
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new CustomBadCredentialsException("인증 정보를 찾을 수 없습니다.", null);
+        }
+
+        return userDetails.getNickname();
     }
 }

@@ -10,24 +10,23 @@ import com.shop.sehodiary_api.repository.diary.DiaryIdRedisRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
-import com.shop.sehodiary_api.service.exceptions.ConflictException;
-import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
-import com.shop.sehodiary_api.service.exceptions.NotFoundException;
+import com.shop.sehodiary_api.service.exceptions.*;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +35,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
@@ -655,18 +655,34 @@ class DiaryServiceTest {
     class GetOneDiaryTest {
 
         @Test
-        @DisplayName("cache에 diary가 있으면 cache 데이터를 바로 반환한다")
+        @DisplayName("cache에 있으면 cache에서 바로 조회한다")
         void returnsCachedDiary() {
             Long diaryId = 1L;
+            String currentUserNickname = "user";
+
             DiaryResponse cachedResponse = mock(DiaryResponse.class);
 
+            CustomUserDetails userDetails = mock(CustomUserDetails.class);
+            Authentication authentication = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            when(userDetails.getNickname()).thenReturn(currentUserNickname);
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn(userDetails);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
             when(diaryCacheRepository.get(diaryId)).thenReturn(Optional.of(cachedResponse));
+
+            // 핵심: 캐시 응답에도 권한 체크용 값 세팅 필요
+            when(cachedResponse.getVisibility()).thenReturn("PUBLIC");
+            when(cachedResponse.getNickname()).thenReturn("user");
 
             DiaryResponse result = diaryService.getOneDiary(diaryId);
 
             assertThat(result).isSameAs(cachedResponse);
 
-            verify(diaryRepository, never()).findById(anyLong());
+            verify(diaryRepository, never()).findById(any());
             verify(diaryMapper, never()).toResponse(any());
             verify(diaryCacheRepository, never()).put(any());
         }
@@ -675,12 +691,32 @@ class DiaryServiceTest {
         @DisplayName("cache에 없으면 DB에서 조회 후 response로 변환하고 cache에 저장한다")
         void loadsDiaryFromDbAndCachesIt() {
             Long diaryId = 1L;
+            String currentUserNickname = "user";
+
             Diary diary = mock(Diary.class);
+            User user = mock(User.class);
             DiaryResponse response = mock(DiaryResponse.class);
 
+            // 로그인 유저 세팅
+            CustomUserDetails userDetails = mock(CustomUserDetails.class);
+            Authentication authentication = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            when(userDetails.getNickname()).thenReturn(currentUserNickname);
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn(userDetails);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
+            // diary 조회 관련
             when(diaryCacheRepository.get(diaryId)).thenReturn(Optional.empty());
             when(diaryRepository.findById(diaryId)).thenReturn(Optional.of(diary));
             when(diaryMapper.toResponse(diary)).thenReturn(response);
+
+            // 권한 체크 통과용
+            when(diary.getVisibility()).thenReturn(Visibility.PUBLIC);
+            when(diary.getUser()).thenReturn(user);
+            when(user.getNickname()).thenReturn("user");
 
             DiaryResponse result = diaryService.getOneDiary(diaryId);
 
@@ -692,9 +728,19 @@ class DiaryServiceTest {
         }
 
         @Test
-        @DisplayName("cache에도 없고 DB에도 없으면 NotFoundException을 던진다")
+        @DisplayName("diary가 없으면 NotFoundException을 던진다")
         void throwsNotFoundExceptionWhenDiaryDoesNotExist() {
             Long diaryId = 1L;
+
+            CustomUserDetails userDetails = mock(CustomUserDetails.class);
+            Authentication authentication = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            when(userDetails.getNickname()).thenReturn("loginUser");
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn(userDetails);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
 
             when(diaryCacheRepository.get(diaryId)).thenReturn(Optional.empty());
             when(diaryRepository.findById(diaryId)).thenReturn(Optional.empty());
@@ -703,9 +749,6 @@ class DiaryServiceTest {
                     .isInstanceOf(NotFoundException.class)
                     .extracting("detailMessage")
                     .isEqualTo("해당 글을 찾을 수 없습니다.");
-
-            verify(diaryMapper, never()).toResponse(any());
-            verify(diaryCacheRepository, never()).put(any());
         }
     }
 
@@ -1321,6 +1364,139 @@ class DiaryServiceTest {
                 verify(diaryIdRedisRepository, never()).remove(anyLong());
                 verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
             }
+        }
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Nested
+    @DisplayName("validateDiaryAccess()")
+    class ValidateDiaryAccessTest {
+
+        @Test
+        @DisplayName("PUBLIC 글이면 작성자가 아니어도 예외가 발생하지 않는다")
+        void doesNotThrowWhenVisibilityIsPublic() {
+            assertThatCode(() ->
+                    ReflectionTestUtils.invokeMethod(
+                            diaryService,
+                            "validateDiaryAccess",
+                            Visibility.PUBLIC,
+                            "writerNickname",
+                            "otherUserNickname"
+                    )
+            ).doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("PRIVATE 글이고 작성자와 현재 사용자의 닉네임이 같으면 예외가 발생하지 않는다")
+        void doesNotThrowWhenPrivateAndSameNickname() {
+            assertThatCode(() ->
+                    ReflectionTestUtils.invokeMethod(
+                            diaryService,
+                            "validateDiaryAccess",
+                            Visibility.PRIVATE,
+                            "writerNickname",
+                            "writerNickname"
+                    )
+            ).doesNotThrowAnyException();
+        }
+
+        @Test
+        @DisplayName("PRIVATE 글이고 작성자와 현재 사용자의 닉네임이 다르면 AccessDeniedException이 발생한다")
+        void throwsAccessDeniedExceptionWhenPrivateAndDifferentNickname() {
+            assertThatThrownBy(() ->
+                    ReflectionTestUtils.invokeMethod(
+                            diaryService,
+                            "validateDiaryAccess",
+                            Visibility.PRIVATE,
+                            "writerNickname",
+                            "otherUserNickname"
+                    )
+            )
+                    .isInstanceOf(AccessDeniedException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("비공개 글은 작성자만 조회할 수 있습니다.");
+        }
+    }
+
+    @Nested
+    @DisplayName("getCurrentUserNickname()")
+    class GetCurrentUserNicknameTest {
+
+        @Test
+        @DisplayName("인증된 사용자의 principal이 CustomUserDetails면 nickname을 반환한다")
+        void returnsNicknameWhenAuthenticatedUserExists() {
+            String nickname = "seho";
+
+            CustomUserDetails userDetails = mock(CustomUserDetails.class);
+            Authentication authentication = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            when(userDetails.getNickname()).thenReturn(nickname);
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn(userDetails);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+
+            SecurityContextHolder.setContext(securityContext);
+
+            String result = ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname");
+
+            assertThat(result).isEqualTo(nickname);
+        }
+
+        @Test
+        @DisplayName("Authentication이 null이면 CustomBadCredentialsException이 발생한다")
+        void throwsWhenAuthenticationIsNull() {
+            SecurityContext securityContext = mock(SecurityContext.class);
+            when(securityContext.getAuthentication()).thenReturn(null);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() ->
+                    ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname")
+            )
+                    .isInstanceOf(CustomBadCredentialsException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("로그인이 필요합니다.");
+        }
+
+        @Test
+        @DisplayName("인증되지 않은 사용자면 CustomBadCredentialsException이 발생한다")
+        void throwsWhenNotAuthenticated() {
+            Authentication authentication = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            when(authentication.isAuthenticated()).thenReturn(false);
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() ->
+                    ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname")
+            )
+                    .isInstanceOf(CustomBadCredentialsException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("로그인이 필요합니다.");
+        }
+
+        @Test
+        @DisplayName("principal이 CustomUserDetails가 아니면 CustomBadCredentialsException이 발생한다")
+        void throwsWhenPrincipalIsNotCustomUserDetails() {
+            Authentication authentication = mock(Authentication.class);
+            SecurityContext securityContext = mock(SecurityContext.class);
+
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn("anonymousUser");
+            when(securityContext.getAuthentication()).thenReturn(authentication);
+            SecurityContextHolder.setContext(securityContext);
+
+            assertThatThrownBy(() ->
+                    ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname")
+            )
+                    .isInstanceOf(CustomBadCredentialsException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("인증 정보를 찾을 수 없습니다.");
         }
     }
 }

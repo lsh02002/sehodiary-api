@@ -2,7 +2,7 @@ package com.shop.sehodiary_api.web.controller.user;
 
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
-import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
+import com.shop.sehodiary_api.service.exceptions.CustomBadCredentialsException;
 import com.shop.sehodiary_api.service.user.UserService;
 import com.shop.sehodiary_api.web.dto.user.LoginRequest;
 import com.shop.sehodiary_api.web.dto.user.SignupRequest;
@@ -78,8 +78,8 @@ public class UserController {
 
     @GetMapping(value = "/entrypoint")
     public void entrypointException(@RequestParam(name = "accessToken", required = false) String token) {
-        if (token==null) throw new NotAcceptableException("로그인(Jwt 토큰)이 필요합니다.", null);
-        else throw new NotAcceptableException("로그인(Jwt 토큰)이 만료 되었습니다. 다시 로그인 하세요", null);
+        if (token==null) throw new CustomBadCredentialsException("로그인(Jwt 토큰)이 필요합니다.", null);
+        else throw new CustomBadCredentialsException("로그인(Jwt 토큰)이 만료 되었습니다. 다시 로그인 하세요", null);
     }
 
     @GetMapping(value = "/access-denied")

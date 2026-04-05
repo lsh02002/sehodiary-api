@@ -3,6 +3,7 @@ package com.shop.sehodiary_api.web.controller.user;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
+import com.shop.sehodiary_api.service.exceptions.CustomBadCredentialsException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.user.UserService;
 import com.shop.sehodiary_api.web.dto.user.LoginRequest;
@@ -422,7 +423,7 @@ class UserControllerTest {
         void entrypointException_withoutToken() throws Exception {
             mockMvc.perform(get("/user/entrypoint"))
                     .andExpect(result ->
-                            assertInstanceOf(NotAcceptableException.class, result.getResolvedException()));
+                            assertInstanceOf(CustomBadCredentialsException.class, result.getResolvedException()));
         }
 
         @Test
@@ -431,7 +432,7 @@ class UserControllerTest {
             mockMvc.perform(get("/user/entrypoint")
                             .param("accessToken", "expired-token"))
                     .andExpect(result ->
-                            assertInstanceOf(NotAcceptableException.class, result.getResolvedException()));
+                            assertInstanceOf(CustomBadCredentialsException.class, result.getResolvedException()));
         }
 
         @Test
