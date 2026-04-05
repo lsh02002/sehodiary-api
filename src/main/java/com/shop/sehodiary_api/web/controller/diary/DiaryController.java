@@ -20,23 +20,39 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @GetMapping("/public")
-    public ResponseEntity<List<DiaryResponse>> getDiariesByPublic() {
-        return ResponseEntity.ok(diaryService.getDiariesByPublic());
+    public ResponseEntity<List<DiaryResponse>> getDiariesByPublic(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
+        return ResponseEntity.ok(diaryService.getDiariesByPublic(loginUserId));
     }
 
     @GetMapping("/friends")
-    public ResponseEntity<List<DiaryResponse>> getDiariesByFriends() {
-        return ResponseEntity.ok(diaryService.getDiariesByFriends());
+    public ResponseEntity<List<DiaryResponse>> getDiariesByFriends(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
+        return ResponseEntity.ok(diaryService.getDiariesByFriends(loginUserId));
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<DiaryResponse>> getDiariesByUser(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        return ResponseEntity.ok(diaryService.getDiariesByUser(customUserDetails.getId()));
+    public ResponseEntity<List<DiaryResponse>> getDiariesByUser(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        return ResponseEntity.ok(
+                diaryService.getDiariesByUser(customUserDetails.getId(), customUserDetails.getId())
+        );
     }
 
     @GetMapping("/{targetUserId}/user")
-    public ResponseEntity<List<DiaryResponse>> getDiariesPublicAndFriendsByUser(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long targetUserId) {
-        return ResponseEntity.ok(diaryService.getDiariesPublicAndFriendsByUser(customUserDetails.getId(), targetUserId));
+    public ResponseEntity<List<DiaryResponse>> getDiariesPublicAndFriendsByUser(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @PathVariable Long targetUserId
+    ) {
+        Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
+        return ResponseEntity.ok(
+                diaryService.getDiariesPublicAndFriendsByUser(loginUserId, targetUserId)
+        );
     }
 
     @GetMapping("/one/{diaryId}")

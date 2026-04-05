@@ -9,6 +9,7 @@ import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryIdRedisRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.follow.FollowRepository;
+import com.shop.sehodiary_api.repository.like.LikeRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 public class DiaryService {
     private final UserRepository userRepository;
     private final DiaryRepository diaryRepository;
+    private final LikeRepository likeRepository;
     private final DiaryMapper diaryMapper;
     private final ActivityLogService activityLogService;
     private final DiaryImageService diaryImageService;
@@ -47,23 +49,15 @@ public class DiaryService {
     private final FollowRepository followRepository;
 
     @Transactional(readOnly = true)
-    public List<DiaryResponse> getDiariesByPublic() {
+    public List<DiaryResponse> getDiariesByPublic(Long userId) {
         List<Long> publicIds = diaryIdRedisRepository.findAllPublic();
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
-        // publicIds가 비어있으면 DB에서 채우기
         if (publicIds.isEmpty()) {
-            List<Long> ids = diaryRepository.findAllPublicIds();
-
-            diaryIdRedisRepository.savePublicIds(ids);
-            publicIds = new ArrayList<>(ids);
+            publicIds = new ArrayList<>(diaryRepository.findAllPublicIds());
+            diaryIdRedisRepository.savePublicIds(publicIds);
         }
 
-        List<DiaryResponse> result = publicIds.stream()
-                .map(cached::get)
-                .filter(Objects::nonNull)
-                .filter(cache -> Objects.equals(cache.getVisibility(), Visibility.PUBLIC.toString()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         List<Long> missingIds = publicIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -75,30 +69,47 @@ public class DiaryService {
                     .map(diaryMapper::toResponse)
                     .toList();
 
-            dbResults.forEach(diaryCacheRepository::put);
-            result.addAll(dbResults);
+            dbResults.forEach(response -> {
+                diaryCacheRepository.put(response);
+                cached.put(response.getId(), response);
+            });
         }
+
+        List<DiaryResponse> result = publicIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .filter(response -> Visibility.PUBLIC.toString().equals(response.getVisibility()))
+                .collect(Collectors.toList());
+
+        if (userId == null || result.isEmpty()) {
+            result.forEach(response -> response.setIsLiked(false));
+            return result;
+        }
+
+        Set<Long> likedDiaryIds = new HashSet<>(
+                likeRepository.findLikedDiaryIds(
+                        userId,
+                        result.stream().map(DiaryResponse::getId).toList()
+                )
+        );
+
+        result.forEach(response ->
+                response.setIsLiked(likedDiaryIds.contains(response.getId()))
+        );
 
         return result;
     }
 
     @Transactional(readOnly = true)
-    public List<DiaryResponse> getDiariesByFriends() {
+    public List<DiaryResponse> getDiariesByFriends(Long userId) {
         List<Long> friendIds = diaryIdRedisRepository.findAllFriends();
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         if (friendIds.isEmpty()) {
-            List<Long> ids = diaryRepository.findAllFriendsIds();
-
-            diaryIdRedisRepository.saveFriends(ids);
-            friendIds = new ArrayList<>(ids);
+            friendIds = new ArrayList<>(diaryRepository.findAllFriendsIds());
+            diaryIdRedisRepository.saveFriends(friendIds);
         }
 
-        List<DiaryResponse> result = friendIds.stream()
-                .map(cached::get)
-                .filter(Objects::nonNull)
-                .filter(cache -> Objects.equals(cache.getVisibility(), Visibility.FRIENDS.toString()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
         List<Long> missingIds = friendIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -110,23 +121,46 @@ public class DiaryService {
                     .map(diaryMapper::toResponse)
                     .toList();
 
-            dbResults.forEach(diaryCacheRepository::put);
-            result.addAll(dbResults);
+            dbResults.forEach(response -> {
+                diaryCacheRepository.put(response);
+                cached.put(response.getId(), response);
+            });
         }
+
+        List<DiaryResponse> result = friendIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .filter(response -> Visibility.FRIENDS.toString().equals(response.getVisibility()))
+                .collect(Collectors.toList());
+
+        if (userId == null || result.isEmpty()) {
+            result.forEach(response -> response.setIsLiked(false));
+            return result;
+        }
+
+        Set<Long> likedDiaryIds = new HashSet<>(
+                likeRepository.findLikedDiaryIds(
+                        userId,
+                        result.stream().map(DiaryResponse::getId).toList()
+                )
+        );
+
+        result.forEach(response ->
+                response.setIsLiked(likedDiaryIds.contains(response.getId()))
+        );
 
         return result;
     }
 
     @Transactional(readOnly = true)
-    public List<DiaryResponse> getDiariesByUser(Long userId) {
-        List<Long> diaryIds = diaryIdRedisRepository.findAllUser(userId);
+    public List<DiaryResponse> getDiariesByUser(Long targetUserId, Long loginUserId) {
+        List<Long> diaryIds = diaryIdRedisRepository.findAllUser(targetUserId);
 
-        // user diaryIds가 비어있으면 DB에서 채우기
         if (diaryIds.isEmpty()) {
-            List<Long> ids = diaryRepository.findIdsByUserId(userId);
+            List<Long> ids = diaryRepository.findIdsByUserId(targetUserId);
 
             if (!ids.isEmpty()) {
-                diaryIdRedisRepository.saveUserIds(userId, ids);
+                diaryIdRedisRepository.saveUserIds(targetUserId, ids);
                 diaryIds = new ArrayList<>(ids);
             } else {
                 return List.of();
@@ -134,11 +168,6 @@ public class DiaryService {
         }
 
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
-
-        List<DiaryResponse> result = diaryIds.stream()
-                .map(cached::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(ArrayList::new));
 
         List<Long> missingIds = diaryIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -149,9 +178,32 @@ public class DiaryService {
                     .map(diaryMapper::toResponse)
                     .toList();
 
-            dbResults.forEach(diaryCacheRepository::put);
-            result.addAll(dbResults);
+            dbResults.forEach(response -> {
+                diaryCacheRepository.put(response);
+                cached.put(response.getId(), response);
+            });
         }
+
+        List<DiaryResponse> result = diaryIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (loginUserId == null || result.isEmpty()) {
+            result.forEach(response -> response.setIsLiked(false));
+            return result;
+        }
+
+        Set<Long> likedDiaryIds = new HashSet<>(
+                likeRepository.findLikedDiaryIds(
+                        loginUserId,
+                        result.stream().map(DiaryResponse::getId).toList()
+                )
+        );
+
+        result.forEach(response ->
+                response.setIsLiked(likedDiaryIds.contains(response.getId()))
+        );
 
         return result;
     }
@@ -175,12 +227,6 @@ public class DiaryService {
 
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
 
-        List<DiaryResponse> result = diaryIds.stream()
-                .map(cached::get)
-                .filter(Objects::nonNull)
-                .filter(diary -> isVisibleToUser(diary, isFriend))
-                .collect(Collectors.toCollection(ArrayList::new));
-
         List<Long> missingIds = diaryIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
@@ -188,12 +234,35 @@ public class DiaryService {
         if (!missingIds.isEmpty()) {
             List<DiaryResponse> dbResults = diaryRepository.findAllById(missingIds).stream()
                     .map(diaryMapper::toResponse)
-                    .filter(diary -> isVisibleToUser(diary, isFriend))
                     .toList();
 
-            dbResults.forEach(diaryCacheRepository::put);
-            result.addAll(dbResults);
+            dbResults.forEach(response -> {
+                diaryCacheRepository.put(response);
+                cached.put(response.getId(), response);
+            });
         }
+
+        List<DiaryResponse> result = diaryIds.stream()
+                .map(cached::get)
+                .filter(Objects::nonNull)
+                .filter(diary -> isVisibleToUser(diary, isFriend))
+                .collect(Collectors.toList());
+
+        if (userId == null || result.isEmpty()) {
+            result.forEach(diary -> diary.setIsLiked(false));
+            return result;
+        }
+
+        Set<Long> likedDiaryIds = new HashSet<>(
+                likeRepository.findLikedDiaryIds(
+                        userId,
+                        result.stream().map(DiaryResponse::getId).toList()
+                )
+        );
+
+        result.forEach(diary ->
+                diary.setIsLiked(likedDiaryIds.contains(diary.getId()))
+        );
 
         return result;
     }

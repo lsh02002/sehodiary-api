@@ -43,13 +43,11 @@ public class LikeService {
     }
 
     @Transactional
-    @Cacheable(value = "like", key = "#userId + ':' + #diaryId")
     public Boolean isLiked(Long userId, Long diaryId){
         return likeRepository.existsByUserIdAndDiaryId(userId, diaryId);
     }
 
     @Transactional
-    @CachePut(value = "like", key = "#userId + ':' + #diaryId")
     public Boolean insert(Long userId, Long diaryId) {
 
         User user =userRepository.findById(userId)
@@ -82,7 +80,6 @@ public class LikeService {
     }
 
     @Transactional
-    @CacheEvict(value = "like", key = "#userId + ':' + #diaryId")
     public Boolean delete(Long userId, Long diaryId) {
 
         User user =userRepository.findById(userId)

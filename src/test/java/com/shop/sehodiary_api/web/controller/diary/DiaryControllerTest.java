@@ -75,7 +75,7 @@ class DiaryControllerTest {
                     createDiaryResponse(2L, "public diary 2")
             );
 
-            given(diaryService.getDiariesByPublic()).willReturn(response);
+            given(diaryService.getDiariesByPublic(any())).willReturn(response);
 
             mockMvc.perform(get("/diary/public").with(csrf()))
                     .andExpect(status().isOk())
@@ -99,7 +99,7 @@ class DiaryControllerTest {
                     createDiaryResponse(3L, "friend diary 1")
             );
 
-            given(diaryService.getDiariesByFriends()).willReturn(response);
+            given(diaryService.getDiariesByFriends(any())).willReturn(response);
 
             mockMvc.perform(get("/diary/friends").with(csrf()))
                     .andExpect(status().isOk())
@@ -124,7 +124,7 @@ class DiaryControllerTest {
                     createDiaryResponse(10L, "my diary 1")
             );
 
-            given(diaryService.getDiariesByUser(userId)).willReturn(response);
+            given(diaryService.getDiariesByUser(userId, userId)).willReturn(response);
 
             mockMvc.perform(get("/diary/user")
                             .with(authentication(
