@@ -16,6 +16,9 @@ import com.shop.sehodiary_api.service.exceptions.NotFoundException;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,11 +43,13 @@ public class LikeService {
     }
 
     @Transactional
+    @Cacheable(value = "like", key = "#userId + ':' + #diaryId")
     public Boolean isLiked(Long userId, Long diaryId){
         return likeRepository.existsByUserIdAndDiaryId(userId, diaryId);
     }
 
     @Transactional
+    @CachePut(value = "like", key = "#userId + ':' + #diaryId")
     public Boolean insert(Long userId, Long diaryId) {
 
         User user =userRepository.findById(userId)
@@ -77,6 +82,7 @@ public class LikeService {
     }
 
     @Transactional
+    @CacheEvict(value = "like", key = "#userId + ':' + #diaryId")
     public Boolean delete(Long userId, Long diaryId) {
 
         User user =userRepository.findById(userId)

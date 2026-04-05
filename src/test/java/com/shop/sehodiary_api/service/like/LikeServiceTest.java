@@ -384,4 +384,6 @@ class LikeServiceTest {
             verify(diaryMapper, never()).toResponse(any());
         }
     }
+
+    //Redis Cache Test는 생략하기로 함 SpringBootTest가 필요하다고 해서 SpringBootTest는 설정을 전부 해줘야 됨!!!
 }
