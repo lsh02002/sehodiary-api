@@ -1258,112 +1258,135 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository).remove(diaryId);
             verify(diaryIdRedisRepository).removeFromUser(userId, diaryId);
         }
+    }
 
-        @Nested
-        @DisplayName("예외 케이스")
-        class ExceptionTest {
+    @Nested
+    @DisplayName("예외 케이스")
+    class ExceptionTest {
 
-            @Test
-            @DisplayName("사용자가 없으면 ConflictException 발생")
-            void deleteDiary_fail_userNotFound() {
-                // given
-                Long userId = 1L;
-                Long diaryId = 10L;
+        @Test
+        @DisplayName("사용자가 없으면 ConflictException 발생")
+        void deleteDiary_fail_userNotFound() {
+            // given
+            Long userId = 1L;
+            Long diaryId = 10L;
 
-                given(userRepository.findById(userId)).willReturn(Optional.empty());
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
-                        .isInstanceOf(ConflictException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 글을 삭제할 수 없습니다");
+            // when & then
+            assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
+                    .isInstanceOf(ConflictException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 글을 삭제할 수 없습니다");
 
-                verify(userRepository).findById(userId);
-                verify(diaryRepository, never()).findByUserIdAndId(anyLong(), anyLong());
-                verify(diaryImageService, never()).deleteManyFiles(any());
-                verify(diaryRepository, never()).deleteByUserIdAndId(anyLong(), anyLong());
-                verify(diaryCacheRepository, never()).delete(anyLong());
-                verify(diaryIdRedisRepository, never()).remove(anyLong());
-                verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
-            }
+            verify(userRepository).findById(userId);
+            verify(diaryRepository, never()).findByUserIdAndId(anyLong(), anyLong());
+            verify(diaryImageService, never()).deleteManyFiles(any());
+            verify(diaryRepository, never()).deleteByUserIdAndId(anyLong(), anyLong());
+            verify(diaryCacheRepository, never()).delete(anyLong());
+            verify(diaryIdRedisRepository, never()).remove(anyLong());
+            verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
+        }
 
-            @Test
-            @DisplayName("해당 유저의 일기가 아니면 ConflictException 발생")
-            void deleteDiary_fail_diaryNotFound() {
-                given(userRepository.findById(userId)).willReturn(Optional.of(user));
-                given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
-                given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.empty());
+        @Test
+        @DisplayName("해당 유저의 일기가 아니면 ConflictException 발생")
+        void deleteDiary_fail_diaryNotFound() {
+            // given
+            Long userId = 1L;
+            Long diaryId = 10L;
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
-                        .isInstanceOf(ConflictException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 글을 삭제할 수 없습니다");
+            User user = mock(User.class);
+            Diary diary = mock(Diary.class);
 
-                verify(diaryImageService, never()).deleteManyFiles(any());
-                verify(diaryRepository, never()).deleteByUserIdAndId(anyLong(), anyLong());
-                verify(diaryCacheRepository, never()).delete(anyLong());
-                verify(diaryIdRedisRepository, never()).remove(anyLong());
-                verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
-            }
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
+            given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.empty());
 
-            @Test
-            @DisplayName("이미지 삭제 중 예외 발생 시 ConflictException 발생")
-            void deleteDiary_fail_deleteFiles() {
+            // when & then
+            assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
+                    .isInstanceOf(ConflictException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 글을 삭제할 수 없습니다");
 
-                given(userRepository.findById(userId)).willReturn(Optional.of(user));
-                given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
-                given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
-                doThrow(new RuntimeException("S3 삭제 실패"))
-                        .when(diaryImageService).deleteManyFiles(diary);
+            verify(diaryImageService, never()).deleteManyFiles(any());
+            verify(diaryRepository, never()).deleteByUserIdAndId(anyLong(), anyLong());
+            verify(diaryCacheRepository, never()).delete(anyLong());
+            verify(diaryIdRedisRepository, never()).remove(anyLong());
+            verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
+        }
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
-                        .isInstanceOf(ConflictException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 글을 삭제할 수 없습니다");
+        @Test
+        @DisplayName("이미지 삭제 중 예외 발생 시 ConflictException 발생")
+        void deleteDiary_fail_deleteFiles() {
+            // given
+            Long userId = 1L;
+            Long diaryId = 10L;
 
-                verify(diaryImageService).deleteManyFiles(diary);
-                verify(activityLogService, never()).log(any(), any(), anyLong(), anyString(), any(), any(), any());
-                verify(diaryRepository, never()).deleteByUserIdAndId(anyLong(), anyLong());
-                verify(diaryCacheRepository, never()).delete(anyLong());
-                verify(diaryIdRedisRepository, never()).remove(anyLong());
-                verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
-            }
+            User user = mock(User.class);
+            Diary diary = mock(Diary.class);
 
-            @Test
-            @DisplayName("DB 삭제 중 예외 발생 시 ConflictException 발생")
-            void deleteDiary_fail_deleteRepository() {
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
+            given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
+            doThrow(new RuntimeException("S3 삭제 실패"))
+                    .when(diaryImageService).deleteManyFiles(diary);
 
-                given(userRepository.findById(userId)).willReturn(Optional.of(user));
-                given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
-                given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
-                given(snapshotFunc.snapshot(diary)).willReturn(new HashMap<>());
+            // when & then
+            assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
+                    .isInstanceOf(ConflictException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 글을 삭제할 수 없습니다");
 
-                doThrow(new RuntimeException("DB 삭제 실패"))
-                        .when(diaryRepository).deleteByUserIdAndId(userId, diaryId);
+            verify(diaryImageService).deleteManyFiles(diary);
+            verify(activityLogService, never()).log(any(), any(), anyLong(), anyString(), any(), any(), any());
+            verify(diaryRepository, never()).deleteByUserIdAndId(anyLong(), anyLong());
+            verify(diaryCacheRepository, never()).delete(anyLong());
+            verify(diaryIdRedisRepository, never()).remove(anyLong());
+            verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
+        }
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
-                        .isInstanceOf(ConflictException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 글을 삭제할 수 없습니다");
+        @Test
+        @DisplayName("DB 삭제 중 예외 발생 시 ConflictException 발생")
+        void deleteDiary_fail_deleteRepository() {
+            // given
+            Long userId = 1L;
+            Long diaryId = 10L;
 
-                verify(diaryImageService).deleteManyFiles(diary);
-                verify(activityLogService).log(
-                        eq(ActivityEntityType.DIARY),
-                        eq(ActivityAction.DELETE),
-                        eq(diaryId),
-                        anyString(),
-                        eq(user),
-                        eq(beforeSnapshot),
-                        isNull()
-                );
-                verify(diaryRepository).deleteByUserIdAndId(userId, diaryId);
-                verify(diaryCacheRepository, never()).delete(anyLong());
-                verify(diaryIdRedisRepository, never()).remove(anyLong());
-                verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
-            }
+            User user = mock(User.class);
+            Diary diary = mock(Diary.class);
+
+            Map<String, Object> beforeSnapshot = new HashMap<>();
+
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(diaryId)).willReturn(Optional.of(diary));
+            given(diaryRepository.findByUserIdAndId(userId, diaryId)).willReturn(Optional.of(diary));
+
+            given(diary.getId()).willReturn(diaryId);
+            given(snapshotFunc.snapshot(diary)).willReturn(beforeSnapshot);
+
+            doThrow(new RuntimeException("DB 삭제 실패"))
+                    .when(diaryRepository).deleteByUserIdAndId(userId, diaryId);
+
+            // when & then
+            assertThatThrownBy(() -> diaryService.deleteDiary(userId, diaryId))
+                    .isInstanceOf(ConflictException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 글을 삭제할 수 없습니다");
+
+            verify(diaryImageService).deleteManyFiles(diary);
+            verify(activityLogService).log(
+                    eq(ActivityEntityType.DIARY),
+                    eq(ActivityAction.DELETE),
+                    eq(diaryId),
+                    nullable(String.class),
+                    eq(user),
+                    eq(beforeSnapshot),
+                    isNull()
+            );
+            verify(diaryRepository).deleteByUserIdAndId(userId, diaryId);
+            verify(diaryCacheRepository, never()).delete(anyLong());
+            verify(diaryIdRedisRepository, never()).remove(anyLong());
+            verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
         }
     }
 
