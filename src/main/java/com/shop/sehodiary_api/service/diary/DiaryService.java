@@ -436,22 +436,26 @@ public class DiaryService {
     }
 
     private void validateDiaryAccess(Visibility visibility, String writerNickname, String currentUserNickname) {
-        if (visibility == Visibility.PRIVATE && !writerNickname.equals(currentUserNickname)) {
-            throw new AccessDeniedException("비공개 글은 작성자만 조회할 수 있습니다.", currentUserNickname);
+        if (visibility == Visibility.PRIVATE) {
+            if (currentUserNickname == null || !writerNickname.equals(currentUserNickname)) {
+                throw new AccessDeniedException("비공개 글은 작성자만 조회할 수 있습니다.", currentUserNickname);
+            }
         }
     }
 
     private String getCurrentUserNickname() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        // 인증 정보 자체가 없거나 인증 안 된 경우 → 비로그인으로 간주
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new CustomBadCredentialsException("로그인이 필요합니다.", null);
+            return null;
         }
 
         Object principal = authentication.getPrincipal();
 
+        // 익명 사용자 (anonymousUser) 등 처리
         if (!(principal instanceof CustomUserDetails userDetails)) {
-            throw new CustomBadCredentialsException("인증 정보를 찾을 수 없습니다.", null);
+            return null;
         }
 
         return userDetails.getNickname();

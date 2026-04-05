@@ -1448,22 +1448,19 @@ class DiaryServiceTest {
         }
 
         @Test
-        @DisplayName("Authentication이 null이면 CustomBadCredentialsException이 발생한다")
+        @DisplayName("Authentication이 null이면 null이 리턴다")
         void throwsWhenAuthenticationIsNull() {
             SecurityContext securityContext = mock(SecurityContext.class);
             when(securityContext.getAuthentication()).thenReturn(null);
             SecurityContextHolder.setContext(securityContext);
 
-            assertThatThrownBy(() ->
-                    ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname")
-            )
-                    .isInstanceOf(CustomBadCredentialsException.class)
-                    .extracting("detailMessage")
-                    .isEqualTo("로그인이 필요합니다.");
+            String result = ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname");
+
+            assertThat(result).isNull();
         }
 
         @Test
-        @DisplayName("인증되지 않은 사용자면 CustomBadCredentialsException이 발생한다")
+        @DisplayName("인증되지 않은 사용자면 null이 리턴된다")
         void throwsWhenNotAuthenticated() {
             Authentication authentication = mock(Authentication.class);
             SecurityContext securityContext = mock(SecurityContext.class);
@@ -1472,17 +1469,14 @@ class DiaryServiceTest {
             when(securityContext.getAuthentication()).thenReturn(authentication);
             SecurityContextHolder.setContext(securityContext);
 
-            assertThatThrownBy(() ->
-                    ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname")
-            )
-                    .isInstanceOf(CustomBadCredentialsException.class)
-                    .extracting("detailMessage")
-                    .isEqualTo("로그인이 필요합니다.");
+            String result = ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname");
+
+            assertThat(result).isNull();
         }
 
         @Test
-        @DisplayName("principal이 CustomUserDetails가 아니면 CustomBadCredentialsException이 발생한다")
-        void throwsWhenPrincipalIsNotCustomUserDetails() {
+        @DisplayName("principal이 CustomUserDetails가 아니면 null을 반환한다")
+        void returnsNullWhenPrincipalIsNotCustomUserDetails() {
             Authentication authentication = mock(Authentication.class);
             SecurityContext securityContext = mock(SecurityContext.class);
 
@@ -1491,12 +1485,9 @@ class DiaryServiceTest {
             when(securityContext.getAuthentication()).thenReturn(authentication);
             SecurityContextHolder.setContext(securityContext);
 
-            assertThatThrownBy(() ->
-                    ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname")
-            )
-                    .isInstanceOf(CustomBadCredentialsException.class)
-                    .extracting("detailMessage")
-                    .isEqualTo("인증 정보를 찾을 수 없습니다.");
+            String result = ReflectionTestUtils.invokeMethod(diaryService, "getCurrentUserNickname");
+
+            assertThat(result).isNull();
         }
     }
 }
