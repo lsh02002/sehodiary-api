@@ -108,7 +108,7 @@ class DiaryServiceTest {
             DiaryResponse response2 = mock(DiaryResponse.class);
 
             when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(Map.of(
                     id1, response1,
                     id2, response2
             ));
@@ -139,7 +139,7 @@ class DiaryServiceTest {
 
             when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of());
             when(diaryRepository.findAllPublicIds()).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(new HashMap<>());
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(new HashMap<>());
 
             when(diaryRepository.findAllById(anyIterable())).thenReturn(List.of(diary1, diary2));
 
@@ -178,7 +178,7 @@ class DiaryServiceTest {
             DiaryResponse friendsResponse = mock(DiaryResponse.class);
 
             when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(Map.of(
                     id1, publicResponse,
                     id2, friendsResponse
             ));
@@ -215,7 +215,7 @@ class DiaryServiceTest {
             when(dbResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
 
             when(diaryIdRedisRepository.findAllPublic()).thenReturn(List.of(id1, id2, id3));
-            when(diaryCacheRepository.getAll()).thenReturn(cacheMap);
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2, id3))).thenReturn(cacheMap);
 
             when(diaryRepository.findAllById(any())).thenReturn(List.of(publicDiary, friendsDiary));
             when(publicDiary.getVisibility()).thenReturn(Visibility.PUBLIC);
@@ -247,7 +247,7 @@ class DiaryServiceTest {
             DiaryResponse response2 = mock(DiaryResponse.class);
 
             when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(Map.of(
                     id1, response1,
                     id2, response2
             ));
@@ -278,7 +278,7 @@ class DiaryServiceTest {
 
             when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of());
             when(diaryRepository.findAllFriendsIds()).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(new HashMap<>());
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(new HashMap<>());
 
             when(diaryRepository.findAllById(anyIterable())).thenReturn(List.of(diary1, diary2));
 
@@ -317,7 +317,7 @@ class DiaryServiceTest {
             DiaryResponse publicResponse = mock(DiaryResponse.class);
 
             when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(Map.of(
                     id1, friendsResponse,
                     id2, publicResponse
             ));
@@ -349,7 +349,7 @@ class DiaryServiceTest {
             cachedMap.put(id1, cachedResponse);
 
             when(diaryIdRedisRepository.findAllFriends()).thenReturn(List.of(id1, id2, id3));
-            when(diaryCacheRepository.getAll()).thenReturn(cachedMap);
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2, id3))).thenReturn(cachedMap);
 
             when(cachedResponse.getId()).thenReturn(id1);
             when(cachedResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
@@ -390,7 +390,7 @@ class DiaryServiceTest {
             DiaryResponse response2 = mock(DiaryResponse.class);
 
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(Map.of(
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(Map.of(
                     id1, response1,
                     id2, response2
             ));
@@ -422,7 +422,7 @@ class DiaryServiceTest {
 
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of());
             when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of(id1, id2));
-            when(diaryCacheRepository.getAll()).thenReturn(new HashMap<>());
+            when(diaryCacheRepository.getAllByIds(List.of(id1, id2))).thenReturn(new HashMap<>());
 
             when(diaryRepository.findAllById(List.of(id1, id2))).thenReturn(List.of(diary1, diary2));
             when(diaryMapper.toResponse(diary1)).thenReturn(response1);
@@ -481,7 +481,7 @@ class DiaryServiceTest {
             given(dbResponse2.getId()).willReturn(id3);
 
             given(diaryIdRedisRepository.findAllUser(userId)).willReturn(List.of(id1, id2, id3));
-            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryCacheRepository.getAllByIds(List.of(id1, id2, id3))).willReturn(cachedMap);
             given(diaryRepository.findAllById(anyIterable())).willReturn(List.of(diary2, diary3));
             given(diaryMapper.toResponse(diary2)).willReturn(dbResponse1);
             given(diaryMapper.toResponse(diary3)).willReturn(dbResponse2);
@@ -536,7 +536,7 @@ class DiaryServiceTest {
 
             given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(List.of());
             given(diaryRepository.findIdsByUserId(targetUserId)).willReturn(idsFromDb);
-            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryCacheRepository.getAllByIds(idsFromDb)).willReturn(cachedMap);
 
             doReturn(true).when(spyService).isFriend(userId, targetUserId);
             doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(true));
@@ -549,7 +549,7 @@ class DiaryServiceTest {
             assertThat(result).containsExactlyInAnyOrder(diary1, diary2);
 
             verify(diaryIdRedisRepository).saveUserIds(targetUserId, idsFromDb);
-            verify(diaryCacheRepository).getAll();
+            verify(diaryCacheRepository).getAllByIds(idsFromDb);
             verify(diaryRepository, never()).findAllById(any());
         }
 
@@ -573,7 +573,7 @@ class DiaryServiceTest {
             cachedMap.put(10L, cachedDiary);
 
             given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
-            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryCacheRepository.getAllByIds(diaryIds)).willReturn(cachedMap);
             given(diaryRepository.findAllById(anyList())).willReturn(List.of(dbDiary20, dbDiary30));
             given(diaryMapper.toResponse(dbDiary20)).willReturn(response20);
             given(diaryMapper.toResponse(dbDiary30)).willReturn(response30);
@@ -615,7 +615,7 @@ class DiaryServiceTest {
             cachedMap.put(20L, friendDiary);
 
             given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
-            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryCacheRepository.getAllByIds(diaryIds)).willReturn(cachedMap);
             given(likeRepository.findLikedDiaryIds(eq(userId), anyList())).willReturn(List.of());
 
             doReturn(false).when(spyService).isFriend(userId, targetUserId);
@@ -648,7 +648,7 @@ class DiaryServiceTest {
             cachedMap.put(20L, friendDiary);
 
             given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
-            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryCacheRepository.getAllByIds(diaryIds)).willReturn(cachedMap);
 
             doReturn(true).when(spyService).isFriend(userId, targetUserId);
             doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(true));
@@ -681,7 +681,7 @@ class DiaryServiceTest {
             cachedMap.put(10L, visibleCached);
 
             given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(diaryIds);
-            given(diaryCacheRepository.getAll()).willReturn(cachedMap);
+            given(diaryCacheRepository.getAllByIds(diaryIds)).willReturn(cachedMap);
             given(diaryRepository.findAllById(any())).willReturn(List.of(diary20, diary30));
             given(diaryMapper.toResponse(diary20)).willReturn(visibleDb);
             given(diaryMapper.toResponse(diary30)).willReturn(invisibleDb);

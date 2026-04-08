@@ -57,7 +57,7 @@ public class DiaryService {
             diaryIdRedisRepository.savePublicIds(publicIds);
         }
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(publicIds);
 
         List<Long> missingIds = publicIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -109,7 +109,7 @@ public class DiaryService {
             diaryIdRedisRepository.saveFriends(friendIds);
         }
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(friendIds);
 
         List<Long> missingIds = friendIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -167,7 +167,7 @@ public class DiaryService {
             }
         }
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(diaryIds);
 
         List<Long> missingIds = diaryIds.stream()
                 .filter(id -> !cached.containsKey(id))
@@ -225,7 +225,7 @@ public class DiaryService {
 
         boolean isFriend = isFriend(userId, targetUserId);
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAll();
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(diaryIds);
 
         List<Long> missingIds = diaryIds.stream()
                 .filter(id -> !cached.containsKey(id))

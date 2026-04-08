@@ -61,4 +61,28 @@ public class DiaryCacheRepository {
             );
         }
     }
+
+    public Map<Long, DiaryResponse> getAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Object> keys = ids.stream()
+                .map(id -> (Object) id)
+                .toList();
+
+        List<Object> values = redisTemplate.opsForHash()
+                .multiGet(DIARY_CACHE_KEY, keys);
+
+        Map<Long, DiaryResponse> result = new HashMap<>();
+
+        for (int i = 0; i < ids.size(); i++) {
+            DiaryResponse value = (DiaryResponse) values.get(i);
+            if (value != null) {
+                result.put(ids.get(i), value);
+            }
+        }
+
+        return result;
+    }
 }

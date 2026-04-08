@@ -3,11 +3,7 @@ package com.shop.sehodiary_api.repository.diary;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,9 +35,7 @@ class DiaryCacheRepositoryTest {
     private DiaryCacheRepository diaryCacheRepository;
 
     @BeforeEach
-    void setUp() {
-        diaryCacheRepository = new DiaryCacheRepository(diaryRepository, redisTemplate);
-    }
+    void setUp() { diaryCacheRepository = new DiaryCacheRepository(diaryRepository, redisTemplate); }
 
     @Nested
     @DisplayName("get()")
@@ -192,6 +186,81 @@ class DiaryCacheRepositoryTest {
 
             verify(diaryRepository).findIdsByUserId(userId);
             verify(hashOperations, never()).delete(anyString(), any());
+        }
+    }
+
+    @Nested
+    class GetAllByIdsTest {
+        @Test
+        @DisplayName("ids가 null이면 빈 Map을 반환한다")
+        void getAllByIds_nullIds_returnsEmptyMap() {
+            Map<Long, DiaryResponse> result = diaryCacheRepository.getAllByIds(null);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("ids가 비어있으면 빈 Map을 반환한다")
+        void getAllByIds_emptyIds_returnsEmptyMap() {
+            Map<Long, DiaryResponse> result = diaryCacheRepository.getAllByIds(Collections.emptyList());
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("redis에서 조회한 값들을 id 기준 Map으로 반환한다")
+        void getAllByIds_returnsMappedResult() {
+            // given
+            List<Long> ids = List.of(1L, 2L, 3L);
+
+            DiaryResponse diary1 = DiaryResponse.builder()
+                    .id(1L)
+                    .title("title1")
+                    .content("content1")
+                    .build();
+            DiaryResponse diary3 = DiaryResponse.builder()
+                    .id(3L)
+                    .title("title3")
+                    .content("content3")
+                    .build();
+
+            List<Object> redisValues = Arrays.asList(diary1, null, diary3);
+
+            when(redisTemplate.opsForHash()).thenReturn(hashOperations);
+            when(hashOperations.multiGet(
+                    eq(DIARY_CACHE_KEY),
+                    eq(List.of(1L, 2L, 3L))
+            )).thenReturn(redisValues);
+
+            // when
+            Map<Long, DiaryResponse> result = diaryCacheRepository.getAllByIds(ids);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).containsEntry(1L, diary1);
+            assertThat(result).containsEntry(3L, diary3);
+            assertThat(result).doesNotContainKey(2L);
+
+            verify(hashOperations).multiGet(eq(DIARY_CACHE_KEY), eq(List.of(1L, 2L, 3L)));
+        }
+
+        @Test
+        @DisplayName("redis 조회값이 모두 null이면 빈 Map을 반환한다")
+        void getAllByIds_allNullValues_returnsEmptyMap() {
+            // given
+            List<Long> ids = List.of(1L, 2L);
+
+            when(redisTemplate.opsForHash()).thenReturn(hashOperations);
+            when(hashOperations.multiGet(
+                    eq(DIARY_CACHE_KEY),
+                    eq(List.of(1L, 2L))
+            )).thenReturn(Arrays.asList(null, null));
+
+            // when
+            Map<Long, DiaryResponse> result = diaryCacheRepository.getAllByIds(ids);
+
+            // then
+            assertThat(result).isEmpty();
         }
     }
 }
