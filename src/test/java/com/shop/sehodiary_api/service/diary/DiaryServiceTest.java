@@ -16,6 +16,7 @@ import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
 import com.shop.sehodiary_api.service.exceptions.*;
+import com.shop.sehodiary_api.web.controller.diary.DiarySseController;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
@@ -78,6 +79,9 @@ class DiaryServiceTest {
 
     @Mock
     private DiaryIdRedisRepository diaryIdRedisRepository;
+
+    @Mock
+    private DiarySseController diarySseController;
 
     @Mock
     private SnapshotFunc snapshotFunc;
@@ -881,6 +885,8 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository).addUser(1L, 100L);
 
             verify(diaryIdRedisRepository, never()).addFriends(anyLong());
+
+            verify(diarySseController).notifyNewPost(100L, "오늘 일기");
         }
 
         @Test
@@ -906,6 +912,8 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository).addFriends(200L);
             verify(diaryIdRedisRepository).addUser(1L, 200L);
             verify(diaryIdRedisRepository, never()).addPublic(anyLong());
+
+            verify(diarySseController).notifyNewPost(anyLong(), anyString());
         }
 
         @Test
@@ -923,6 +931,8 @@ class DiaryServiceTest {
             verify(diaryRepository, never()).save(any());
             verify(diaryImageService, never()).uploadManyFiles(anyLong(), anyLong(), anyList());
             verify(diaryEmotionService, never()).createDiaryEmotion(anyLong(), anyLong(), anyString());
+
+            verify(diarySseController, never()).notifyNewPost(anyLong(), anyString());
         }
 
         @Nested

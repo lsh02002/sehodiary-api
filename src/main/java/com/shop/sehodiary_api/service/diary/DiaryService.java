@@ -17,6 +17,7 @@ import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
 import com.shop.sehodiary_api.service.exceptions.*;
+import com.shop.sehodiary_api.web.controller.diary.DiarySseController;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
@@ -47,6 +48,8 @@ public class DiaryService {
     private final DiaryIdRedisRepository diaryIdRedisRepository;
     private final DiaryCacheRepository diaryCacheRepository;
     private final FollowRepository followRepository;
+
+    private final DiarySseController diarySseController;
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic(Long userId) {
@@ -358,6 +361,8 @@ public class DiaryService {
             diaryIdRedisRepository.addFriends(diary.getId());
         }
         diaryIdRedisRepository.addUser(userId, diary.getId());
+
+        diarySseController.notifyNewPost(diary.getId(), diary.getTitle());
 
         return response;
     }
