@@ -454,7 +454,7 @@ class DiaryServiceTest {
 
             verify(diaryRepository).findIdsByUserId(userId);
             verify(diaryIdRedisRepository, never()).saveUserIds(anyLong(), anyList());
-            verify(diaryCacheRepository, never()).getAll();
+            verify(diaryCacheRepository, never()).getAllByIds(anyList());
             verify(diaryRepository, never()).findAllById(anyList());
         }
 
@@ -517,7 +517,7 @@ class DiaryServiceTest {
             assertThat(result).isEmpty();
             verify(diaryRepository).findIdsByUserId(targetUserId);
             verify(diaryIdRedisRepository, never()).saveUserIds(eq(targetUserId), any());
-            verify(diaryCacheRepository, never()).getAll();
+            verify(diaryCacheRepository, never()).getAllByIds(anyList());
         }
 
         @Test
