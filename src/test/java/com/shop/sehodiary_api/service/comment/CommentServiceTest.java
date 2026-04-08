@@ -84,7 +84,7 @@ class CommentServiceTest {
             cachedMap.put(20L, response2);
 
             when(commentIdRedisRepository.findAllByDiaryIdDesc(diaryId)).thenReturn(commentIds);
-            when(commentCacheRepository.getAll()).thenReturn(cachedMap);
+            when(commentCacheRepository.getAllByIds(commentIds)).thenReturn(cachedMap);
 
             // when
             List<CommentResponse> result = commentService.getCommentsByDiaryId(diaryId);
@@ -115,7 +115,7 @@ class CommentServiceTest {
             when(response2.getCommentId()).thenReturn(20L);
 
             when(commentRepository.findAllIdsByDiaryIdDesc(diaryId)).thenReturn(dbIds);
-            when(commentCacheRepository.getAll()).thenReturn(Map.of());
+            when(commentCacheRepository.getAllByIds(dbIds)).thenReturn(Map.of());
 
             when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
             when(commentMapper.toResponse(comment1)).thenReturn(response1);
@@ -149,7 +149,7 @@ class CommentServiceTest {
             when(dbResponse2.getCommentId()).thenReturn(30L);
 
             when(commentIdRedisRepository.findAllByDiaryIdDesc(diaryId)).thenReturn(commentIds);
-            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+            when(commentCacheRepository.getAllByIds(commentIds)).thenReturn(Map.of(
                     10L, cachedResponse
             ));
 
@@ -184,7 +184,7 @@ class CommentServiceTest {
             CommentResponse response2 = mock(CommentResponse.class);
 
             when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(commentIds);
-            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+            when(commentCacheRepository.getAllByIds(commentIds)).thenReturn(Map.of(
                     1L, response1,
                     2L, response2
             ));
@@ -214,7 +214,7 @@ class CommentServiceTest {
             when(response2.getCommentId()).thenReturn(2L);
 
             when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(dbIds);
-            when(commentCacheRepository.getAll()).thenReturn(Map.of());
+            when(commentCacheRepository.getAllByIds(dbIds)).thenReturn(Map.of());
             when(commentRepository.findAllById(dbIds)).thenReturn(List.of(comment1, comment2));
             when(commentMapper.toResponse(comment1)).thenReturn(response1);
             when(commentMapper.toResponse(comment2)).thenReturn(response2);
@@ -245,7 +245,7 @@ class CommentServiceTest {
             when(dbResponse2.getCommentId()).thenReturn(3L);
 
             when(commentIdRedisRepository.findAllByUserIdDesc(userId)).thenReturn(commentIds);
-            when(commentCacheRepository.getAll()).thenReturn(Map.of(
+            when(commentCacheRepository.getAllByIds(commentIds)).thenReturn(Map.of(
                     1L, cachedResponse
             ));
 

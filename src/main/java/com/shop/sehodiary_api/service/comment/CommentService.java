@@ -54,7 +54,7 @@ public class CommentService {
             commentIdRedisRepository.saveAllByDiaryId(diaryId, commentIds);
         }
 
-        Map<Long, CommentResponse> cachedComments = new HashMap<>(commentCacheRepository.getAll());
+        Map<Long, CommentResponse> cachedComments = new HashMap<>(commentCacheRepository.getAllByIds(commentIds));
 
         List<Long> missingIds = commentIds.stream()
                 .filter(id -> !cachedComments.containsKey(id))
@@ -79,16 +79,16 @@ public class CommentService {
     }
 
     public List<CommentResponse> getCommentsByUser(Long userId) {
-        List<Long> commentids = commentIdRedisRepository.findAllByUserIdDesc(userId);
+        List<Long> commentIds = commentIdRedisRepository.findAllByUserIdDesc(userId);
 
-        if(commentids.isEmpty()) {
-            commentids = commentRepository.findAllIdsByUserIdDesc(userId);
-            commentIdRedisRepository.saveAllByUserId(userId, commentids);
+        if(commentIds.isEmpty()) {
+            commentIds = commentRepository.findAllIdsByUserIdDesc(userId);
+            commentIdRedisRepository.saveAllByUserId(userId, commentIds);
         }
 
-        Map<Long, CommentResponse> cachedComments = new HashMap<>(commentCacheRepository.getAll());
+        Map<Long, CommentResponse> cachedComments = new HashMap<>(commentCacheRepository.getAllByIds(commentIds));
 
-        List<Long> missingIds = commentids.stream()
+        List<Long> missingIds = commentIds.stream()
                 .filter(id -> !cachedComments.containsKey(id))
                 .toList();
 
@@ -104,7 +104,7 @@ public class CommentService {
             cachedComments.putAll(dbComments);
         }
 
-        return commentids.stream()
+        return commentIds.stream()
                 .map(cachedComments::get)
                 .filter(Objects::nonNull)
                 .toList();

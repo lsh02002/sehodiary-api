@@ -88,4 +88,22 @@ public class CommentCacheRepository {
 
         redisTemplate.delete(keys);
     }
+
+    public Map<Long, CommentResponse> getAllByIds(List<Long> ids) {
+        List<String> keys = ids.stream()
+                .map(id -> "comment:" + id)
+                .toList();
+
+        List<CommentResponse> values = redisTemplate.opsForValue().multiGet(keys);
+
+        Map<Long, CommentResponse> result = new HashMap<>();
+
+        for (int i = 0; i < ids.size(); i++) {
+            if (values.get(i) != null) {
+                result.put(ids.get(i), values.get(i));
+            }
+        }
+
+        return result;
+    }
 }

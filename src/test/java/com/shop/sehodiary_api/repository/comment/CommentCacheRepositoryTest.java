@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
@@ -237,5 +238,73 @@ class CommentCacheRepositoryTest {
         verify(redisTemplate).delete(captor.capture());
 
         assertThat(captor.getValue()).isEmpty();
+    }
+
+    @Test
+    void getAllByIds_정상조회() {
+        // given
+        List<Long> ids = List.of(1L, 2L, 3L);
+        List<String> keys = List.of("comment:1", "comment:2", "comment:3");
+
+        CommentResponse comment1 = mock(CommentResponse.class);
+        CommentResponse comment3 = mock(CommentResponse.class);
+
+        List<CommentResponse> values = Arrays.asList(
+                comment1,
+                null,
+                comment3
+        );
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.multiGet(keys)).thenReturn(values);
+
+        // when
+        Map<Long, CommentResponse> result = commentCacheRepository.getAllByIds(ids);
+
+        // then
+        assertEquals(2, result.size());
+        assertEquals(comment1, result.get(1L));
+        assertEquals(comment3, result.get(3L));
+        assertFalse(result.containsKey(2L));
+
+        verify(redisTemplate).opsForValue();
+        verify(valueOperations).multiGet(keys);
+    }
+
+    @Test
+    void getAllByIds_빈리스트면_빈맵반환() {
+        // given
+        List<Long> ids = List.of();
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.multiGet(List.of())).thenReturn(List.of());
+
+        // when
+        Map<Long, CommentResponse> result = commentCacheRepository.getAllByIds(ids);
+
+        // then
+        assertTrue(result.isEmpty());
+
+        verify(redisTemplate).opsForValue();
+        verify(valueOperations).multiGet(List.of());
+    }
+
+    @Test
+    void getAllByIds_모두null이면_빈맵반환() {
+        // given
+        List<Long> ids = List.of(10L, 20L);
+        List<String> keys = List.of("comment:10", "comment:20");
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.multiGet(keys)).thenReturn(Arrays.asList(null, null));
+
+        // when
+        Map<Long, CommentResponse> result = commentCacheRepository.getAllByIds(ids);
+
+        // then
+        assertTrue(result.isEmpty());
+
+        verify(redisTemplate).opsForValue();
+        verify(valueOperations).multiGet(keys);
     }
 }
