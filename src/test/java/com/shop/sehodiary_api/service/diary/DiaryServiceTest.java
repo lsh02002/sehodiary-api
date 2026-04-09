@@ -886,7 +886,7 @@ class DiaryServiceTest {
 
             verify(diaryIdRedisRepository, never()).addFriends(anyLong());
 
-            verify(diarySseController).notifyNewPost(100L, "오늘 일기", user.getNickname());
+            verify(diarySseController).notifyNewPost(100L, "오늘 일기", user.getId(), user.getNickname());
         }
 
         @Test
@@ -913,7 +913,7 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository).addUser(1L, 200L);
             verify(diaryIdRedisRepository, never()).addPublic(anyLong());
 
-            verify(diarySseController).notifyNewPost(anyLong(), anyString(), isNull());
+            verify(diarySseController).notifyNewPost(anyLong(), anyString(), anyLong(), isNull());
         }
 
         @Test
@@ -932,7 +932,7 @@ class DiaryServiceTest {
             verify(diaryImageService, never()).uploadManyFiles(anyLong(), anyLong(), anyList());
             verify(diaryEmotionService, never()).createDiaryEmotion(anyLong(), anyLong(), anyString());
 
-            verify(diarySseController, never()).notifyNewPost(anyLong(), anyString(), anyString());
+            verify(diarySseController, never()).notifyNewPost(anyLong(), anyString(), anyLong(), anyString());
         }
 
         @Nested
