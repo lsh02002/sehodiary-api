@@ -45,6 +45,7 @@ public class DiaryMapper {
                                 .orElse(null)
                 )
                 .createdAt(diary.getCreatedAt().toString())
+                .updatedAt(diary.getUpdatedAt().toString())
                 .build();
     }
 }

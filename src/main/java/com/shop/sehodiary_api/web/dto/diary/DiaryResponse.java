@@ -26,4 +26,5 @@ public class DiaryResponse implements Serializable {
     private String profileImage;
     private String emoji;
     private String createdAt;
+    private String updatedAt;
 }
