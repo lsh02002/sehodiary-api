@@ -52,7 +52,7 @@ class DiarySseControllerTest {
         controller.subscribe();
 
         // when
-        controller.notifyNewPost(1L, "테스트 제목");
+        controller.notifyNewPost(1L, "테스트 제목", "user1");
 
         // then
         List<?> emitters = getEmitters(controller);

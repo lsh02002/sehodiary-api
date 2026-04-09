@@ -362,7 +362,7 @@ public class DiaryService {
         }
         diaryIdRedisRepository.addUser(userId, diary.getId());
 
-        diarySseController.notifyNewPost(diary.getId(), diary.getTitle());
+        diarySseController.notifyNewPost(diary.getId(), diary.getTitle(), diary.getUser().getNickname());
 
         return response;
     }

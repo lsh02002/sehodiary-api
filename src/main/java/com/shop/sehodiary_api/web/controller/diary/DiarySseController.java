@@ -38,7 +38,7 @@ public class DiarySseController {
         return emitter;
     }
 
-    public void notifyNewPost(Long postId, String title) {
+    public void notifyNewPost(Long postId, String title, String nickname) {
         List<SseEmitter> deadEmitters = new ArrayList<>();
 
         for (SseEmitter emitter : emitters) {
@@ -47,7 +47,8 @@ public class DiarySseController {
                         .name("new-post")
                         .data(Map.of(
                                 "postId", postId,
-                                "title", title
+                                "title", title,
+                                "nickname", nickname
                         )));
             } catch (IOException e) {
                 deadEmitters.add(emitter);
