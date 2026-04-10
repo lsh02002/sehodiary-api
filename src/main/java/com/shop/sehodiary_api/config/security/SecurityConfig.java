@@ -49,8 +49,9 @@ public class SecurityConfig {
                 })
                 .authorizeHttpRequests(a->
                         a
-                                .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/public/**", "/diary/all/**", "/diary/one/**", "/like/nicknames/**", "/emotion/all/**", "/sse/posts/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/logout/**", "/user/admin-login/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/public/**", "/diary/all/**", "/diary/one/**", "/like/nicknames/**", "/emotion/all/**", "/sse/posts/**", "/api/push/public-key/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/logout/**", "/user/admin-login/**", "/api/push/subscribe/**").permitAll()
+                                .requestMatchers(HttpMethod.DELETE, "/api/push/unsubscribe/**").permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
