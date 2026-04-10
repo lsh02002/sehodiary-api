@@ -54,12 +54,14 @@ public class WebPushService {
             {
               "title": "%s",
               "body": "%s",
-              "url": "%s"
+              "url": "%s",
+              "userId": "%s"
             }
             """.formatted(
                 escape(title),
                 escape(body),
-                escape(url)
+                escape(url),
+                escape(sub.getUserId().toString())
         );
 
         Subscription subscription = new Subscription(
