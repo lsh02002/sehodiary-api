@@ -16,6 +16,7 @@ import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
 import com.shop.sehodiary_api.service.exceptions.*;
+import com.shop.sehodiary_api.service.webpush.WebPushService;
 import com.shop.sehodiary_api.web.controller.diary.DiarySseController;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
@@ -70,6 +71,9 @@ class DiaryServiceTest {
 
     @Mock
     private ActivityLogService activityLogService;
+
+    @Mock
+    private WebPushService webPushService;
 
     @Mock
     private DiaryMapper diaryMapper;
@@ -887,6 +891,11 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository, never()).addFriends(anyLong());
 
             verify(diarySseController).notifyNewPost(100L, "오늘 일기", user.getId(), user.getNickname());
+            verify(webPushService).broadcast(
+                    anyString(),
+                    anyString(),
+                    anyString()
+            );
         }
 
         @Test
@@ -913,7 +922,7 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository).addUser(1L, 200L);
             verify(diaryIdRedisRepository, never()).addPublic(anyLong());
 
-            verify(diarySseController).notifyNewPost(anyLong(), anyString(), anyLong(), isNull());
+            verify(diarySseController, never()).notifyNewPost(anyLong(), anyString(), anyLong(), isNull());
         }
 
         @Test
