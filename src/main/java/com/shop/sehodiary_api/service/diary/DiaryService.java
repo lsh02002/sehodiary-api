@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -435,6 +436,8 @@ public class DiaryService {
         if (request.getEmoji() != null && !request.getEmoji().isBlank()) {
             diaryEmotionService.editDiaryEmotion(userId, diaryId, request.getEmoji());
         }
+
+        diary.setUpdatedAt(LocalDateTime.now());
 
         diaryRepository.flush();
 
