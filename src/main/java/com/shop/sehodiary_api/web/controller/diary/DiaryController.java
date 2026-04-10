@@ -1,10 +1,12 @@
 package com.shop.sehodiary_api.web.controller.diary;
 
+import com.shop.sehodiary_api.config.restpage.RestPage;
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.diary.DiaryService;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,39 +22,36 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @GetMapping("/public")
-    public ResponseEntity<List<DiaryResponse>> getDiariesByPublic(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    public ResponseEntity<RestPage<DiaryResponse>> getDiariesByPublic(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails, Pageable pageable
     ) {
         Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
-        return ResponseEntity.ok(diaryService.getDiariesByPublic(loginUserId));
+        return ResponseEntity.ok(new RestPage<>(diaryService.getDiariesByPublic(loginUserId, pageable)));
     }
 
     @GetMapping("/friends")
-    public ResponseEntity<List<DiaryResponse>> getDiariesByFriends(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    public ResponseEntity<RestPage<DiaryResponse>> getDiariesByFriends(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails, Pageable pageable
     ) {
         Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
-        return ResponseEntity.ok(diaryService.getDiariesByFriends(loginUserId));
+        return ResponseEntity.ok(new RestPage<>(diaryService.getDiariesByFriends(loginUserId, pageable)));
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<DiaryResponse>> getDiariesByUser(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    public ResponseEntity<RestPage<DiaryResponse>> getDiariesByUser(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails, Pageable pageable
     ) {
-        return ResponseEntity.ok(
-                diaryService.getDiariesByUser(customUserDetails.getId(), customUserDetails.getId())
-        );
+        return ResponseEntity.ok(new RestPage<>(diaryService.getDiariesByUser(customUserDetails.getId(), customUserDetails.getId(), pageable)));
     }
 
     @GetMapping("/{targetUserId}/user")
-    public ResponseEntity<List<DiaryResponse>> getDiariesPublicAndFriendsByUser(
+    public ResponseEntity<RestPage<DiaryResponse>> getDiariesPublicAndFriendsByUser(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @PathVariable Long targetUserId
+            @PathVariable Long targetUserId,
+            Pageable pageable
     ) {
         Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
-        return ResponseEntity.ok(
-                diaryService.getDiariesPublicAndFriendsByUser(loginUserId, targetUserId)
-        );
+        return ResponseEntity.ok(new RestPage<>(diaryService.getDiariesPublicAndFriendsByUser(loginUserId, targetUserId, pageable)));
     }
 
     @GetMapping("/one/{diaryId}")

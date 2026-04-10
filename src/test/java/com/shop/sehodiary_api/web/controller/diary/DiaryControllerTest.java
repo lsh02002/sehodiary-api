@@ -12,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -70,20 +73,22 @@ class DiaryControllerTest {
         @Test
         @DisplayName("성공")
         void getDiariesByPublic_success() throws Exception {
-            List<DiaryResponse> response = List.of(
+            List<DiaryResponse> content = List.of(
                     createDiaryResponse(1L, "public diary 1"),
                     createDiaryResponse(2L, "public diary 2")
             );
 
-            given(diaryService.getDiariesByPublic(any())).willReturn(response);
+            Page<DiaryResponse> response = new PageImpl<>(content);
+
+            given(diaryService.getDiariesByPublic(any(), any())).willReturn(response);
 
             mockMvc.perform(get("/diary/public").with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(2))
-                    .andExpect(jsonPath("$[0].id").value(1))
-                    .andExpect(jsonPath("$[0].title").value("public diary 1"))
-                    .andExpect(jsonPath("$[1].id").value(2))
-                    .andExpect(jsonPath("$[1].title").value("public diary 2"));
+                    .andExpect(jsonPath("$.content.length()").value(2))
+                    .andExpect(jsonPath("$.content[0].id").value(1))
+                    .andExpect(jsonPath("$.content[0].title").value("public diary 1"))
+                    .andExpect(jsonPath("$.content[1].id").value(2))
+                    .andExpect(jsonPath("$.content[1].title").value("public diary 2"));
         }
     }
 
@@ -95,17 +100,19 @@ class DiaryControllerTest {
         @Test
         @DisplayName("성공")
         void getDiariesByFriends_success() throws Exception {
-            List<DiaryResponse> response = List.of(
+            List<DiaryResponse> content = List.of(
                     createDiaryResponse(3L, "friend diary 1")
             );
 
-            given(diaryService.getDiariesByFriends(any())).willReturn(response);
+            Page<DiaryResponse> response = new PageImpl<>(content);
+
+            given(diaryService.getDiariesByFriends(any(), any())).willReturn(response);
 
             mockMvc.perform(get("/diary/friends").with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].id").value(3))
-                    .andExpect(jsonPath("$[0].title").value("friend diary 1"));
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(3))
+                    .andExpect(jsonPath("$.content[0].title").value("friend diary 1"));
         }
     }
 
@@ -120,11 +127,13 @@ class DiaryControllerTest {
             Long userId = 1L;
             CustomUserDetails userDetails = createCustomUserDetails(userId);
 
-            List<DiaryResponse> response = List.of(
+            List<DiaryResponse> content = List.of(
                     createDiaryResponse(10L, "my diary 1")
             );
 
-            given(diaryService.getDiariesByUser(userId, userId)).willReturn(response);
+            Page<DiaryResponse> response = new PageImpl<>(content);
+
+            given(diaryService.getDiariesByUser(eq(userId), eq(userId), any(Pageable.class))).willReturn(response);
 
             mockMvc.perform(get("/diary/user")
                             .with(authentication(
@@ -133,9 +142,9 @@ class DiaryControllerTest {
                                     )
                             )).with(csrf()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.length()").value(1))
-                    .andExpect(jsonPath("$[0].id").value(10))
-                    .andExpect(jsonPath("$[0].title").value("my diary 1"));
+                    .andExpect(jsonPath("$.content.length()").value(1))
+                    .andExpect(jsonPath("$.content[0].id").value(10))
+                    .andExpect(jsonPath("$.content[0].title").value("my diary 1"));
         }
     }
 
@@ -155,9 +164,11 @@ class DiaryControllerTest {
             DiaryResponse diary1 = createDiaryResponse(101L, "첫 번째 일기");
             DiaryResponse diary2 = createDiaryResponse(102L, "두 번째 일기");
 
-            List<DiaryResponse> response = List.of(diary1, diary2);
+            List<DiaryResponse> content = List.of(diary1, diary2);
 
-            given(diaryService.getDiariesPublicAndFriendsByUser(eq(loginUserId), eq(targetUserId)))
+            Page<DiaryResponse> response = new PageImpl<>(content);
+
+            given(diaryService.getDiariesPublicAndFriendsByUser(eq(loginUserId), eq(targetUserId), any()))
                     .willReturn(response);
 
             // when & then
@@ -171,10 +182,10 @@ class DiaryControllerTest {
                             ))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$[0].id").value(101L))
-                    .andExpect(jsonPath("$[0].title").value("첫 번째 일기"))
-                    .andExpect(jsonPath("$[1].id").value(102L))
-                    .andExpect(jsonPath("$[1].title").value("두 번째 일기"));
+                    .andExpect(jsonPath("$.content[0].id").value(101L))
+                    .andExpect(jsonPath("$.content[0].title").value("첫 번째 일기"))
+                    .andExpect(jsonPath("$.content[1].id").value(102L))
+                    .andExpect(jsonPath("$.content[1].title").value("두 번째 일기"));
         }
 
         @Test
@@ -186,8 +197,8 @@ class DiaryControllerTest {
 
             CustomUserDetails customUserDetails = createCustomUserDetails(loginUserId);
 
-            given(diaryService.getDiariesPublicAndFriendsByUser(eq(loginUserId), eq(targetUserId)))
-                    .willReturn(List.of());
+            given(diaryService.getDiariesPublicAndFriendsByUser(eq(loginUserId), eq(targetUserId), any()))
+                    .willReturn(Page.empty());
 
             // when & then
             mockMvc.perform(get("/diary/{targetUserId}/user", targetUserId)
@@ -200,7 +211,7 @@ class DiaryControllerTest {
                             ))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
-                    .andExpect(content().json("[]"));
+                    .andExpect(jsonPath("$.content").isEmpty());
         }
 
         private CustomUserDetails createCustomUserDetails(Long userId) {

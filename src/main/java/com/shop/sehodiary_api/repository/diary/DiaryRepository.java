@@ -1,5 +1,7 @@
 package com.shop.sehodiary_api.repository.diary;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +17,7 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
        select d.id
        from Diary d
        where d.visibility = 'PUBLIC'
+       order by d.id desc
        """)
     List<Long> findAllPublicIds();
 
@@ -22,9 +25,15 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
        select d.id
        from Diary d
        where d.visibility = 'FRIENDS'
+       order by d.id desc
        """)
     List<Long> findAllFriendsIds();
 
-    @Query("select d.id from Diary d where d.user.id = :userId")
+    @Query("""
+       select d.id
+       from Diary d
+       where d.user.id = :userId
+       order by d.id desc
+       """)
     List<Long> findIdsByUserId(@Param("userId") Long userId);
 }

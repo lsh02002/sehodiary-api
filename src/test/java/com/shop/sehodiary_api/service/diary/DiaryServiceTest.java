@@ -26,6 +26,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -112,6 +115,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
@@ -123,7 +128,7 @@ class DiaryServiceTest {
             when(response1.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
             when(response2.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
 
-            List<DiaryResponse> result = diaryService.getDiariesByPublic(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByPublic(userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(response1, response2);
 
@@ -141,6 +146,8 @@ class DiaryServiceTest {
 
             Diary diary1 = mock(Diary.class);
             Diary diary2 = mock(Diary.class);
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
@@ -164,7 +171,7 @@ class DiaryServiceTest {
 
             when(likeRepository.findLikedDiaryIds(eq(userId), anyList())).thenReturn(List.of());
 
-            List<DiaryResponse> result = diaryService.getDiariesByPublic(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByPublic(userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(response1, response2);
 
@@ -182,6 +189,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse publicResponse = mock(DiaryResponse.class);
             DiaryResponse friendsResponse = mock(DiaryResponse.class);
 
@@ -193,7 +202,7 @@ class DiaryServiceTest {
             when(publicResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
             when(friendsResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
 
-            List<DiaryResponse> result = diaryService.getDiariesByPublic(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByPublic(userId, pageable);
 
             assertThat(result).containsExactly(publicResponse);
 
@@ -207,6 +216,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
             Long id3 = 3L;
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             DiaryResponse cachedResponse = mock(DiaryResponse.class);
             DiaryResponse dbResponse = mock(DiaryResponse.class);
@@ -230,7 +241,7 @@ class DiaryServiceTest {
             when(friendsDiary.getVisibility()).thenReturn(Visibility.FRIENDS);
             when(diaryMapper.toResponse(publicDiary)).thenReturn(dbResponse);
 
-            List<DiaryResponse> result = diaryService.getDiariesByPublic(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByPublic(userId, pageable);
 
             assertThat(result).hasSize(2);
             assertThat(result).containsExactlyInAnyOrder(cachedResponse, dbResponse);
@@ -251,6 +262,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
@@ -262,7 +275,7 @@ class DiaryServiceTest {
             when(response1.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
             when(response2.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
 
-            List<DiaryResponse> result = diaryService.getDiariesByFriends(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByFriends(userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(response1, response2);
 
@@ -277,6 +290,8 @@ class DiaryServiceTest {
             Long userId = 10L;
             Long id1 = 1L;
             Long id2 = 2L;
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             Diary diary1 = mock(Diary.class);
             Diary diary2 = mock(Diary.class);
@@ -303,7 +318,7 @@ class DiaryServiceTest {
 
             when(likeRepository.findLikedDiaryIds(eq(userId), anyList())).thenReturn(List.of());
 
-            List<DiaryResponse> result = diaryService.getDiariesByFriends(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByFriends(userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(response1, response2);
 
@@ -321,6 +336,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse friendsResponse = mock(DiaryResponse.class);
             DiaryResponse publicResponse = mock(DiaryResponse.class);
 
@@ -332,7 +349,7 @@ class DiaryServiceTest {
             when(friendsResponse.getVisibility()).thenReturn(Visibility.FRIENDS.toString());
             when(publicResponse.getVisibility()).thenReturn(Visibility.PUBLIC.toString());
 
-            List<DiaryResponse> result = diaryService.getDiariesByFriends(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByFriends(userId, pageable);
 
             assertThat(result).containsExactly(friendsResponse);
 
@@ -346,6 +363,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
             Long id3 = 3L;
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             DiaryResponse cachedResponse = mock(DiaryResponse.class);
             DiaryResponse dbResponse = mock(DiaryResponse.class);
@@ -373,7 +392,7 @@ class DiaryServiceTest {
 
             when(likeRepository.findLikedDiaryIds(eq(userId), anyList())).thenReturn(List.of());
 
-            List<DiaryResponse> result = diaryService.getDiariesByFriends(userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByFriends(userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(cachedResponse, dbResponse);
 
@@ -394,6 +413,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse response1 = mock(DiaryResponse.class);
             DiaryResponse response2 = mock(DiaryResponse.class);
 
@@ -403,7 +424,7 @@ class DiaryServiceTest {
                     id2, response2
             ));
 
-            List<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(response1, response2);
 
@@ -418,6 +439,8 @@ class DiaryServiceTest {
             Long userId = 10L;
             Long id1 = 1L;
             Long id2 = 2L;
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             Diary diary1 = mock(Diary.class);
             Diary diary2 = mock(Diary.class);
@@ -437,7 +460,7 @@ class DiaryServiceTest {
             when(diaryMapper.toResponse(diary2)).thenReturn(response2);
             when(likeRepository.findLikedDiaryIds(eq(userId), anyList())).thenReturn(List.of());
 
-            List<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(response1, response2);
 
@@ -453,10 +476,12 @@ class DiaryServiceTest {
         void returnsEmptyListWhenRedisAndDbAreEmpty() {
             Long userId = 10L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             when(diaryIdRedisRepository.findAllUser(userId)).thenReturn(List.of());
             when(diaryRepository.findIdsByUserId(userId)).thenReturn(List.of());
 
-            List<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId, pageable);
 
             assertThat(result).isEmpty();
 
@@ -473,6 +498,8 @@ class DiaryServiceTest {
             Long id1 = 1L;
             Long id2 = 2L;
             Long id3 = 3L;
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             DiaryResponse cachedResponse = mock(DiaryResponse.class);
             DiaryResponse dbResponse1 = mock(DiaryResponse.class);
@@ -495,7 +522,7 @@ class DiaryServiceTest {
             given(diaryMapper.toResponse(diary3)).willReturn(dbResponse2);
             given(likeRepository.findLikedDiaryIds(eq(userId), anyList())).willReturn(List.of());
 
-            List<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId);
+            Page<DiaryResponse> result = diaryService.getDiariesByUser(userId, userId, pageable);
 
             assertThat(result).containsExactlyInAnyOrder(cachedResponse, dbResponse1, dbResponse2);
 
@@ -515,11 +542,13 @@ class DiaryServiceTest {
             Long userId = 1L;
             Long targetUserId = 2L;
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             given(diaryIdRedisRepository.findAllUser(targetUserId)).willReturn(List.of());
             given(diaryRepository.findIdsByUserId(targetUserId)).willReturn(List.of());
 
             // when
-            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+            Page<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId, pageable);
 
             // then
             assertThat(result).isEmpty();
@@ -534,6 +563,8 @@ class DiaryServiceTest {
             // given
             Long userId = 1L;
             Long targetUserId = 2L;
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             List<Long> idsFromDb = List.of(10L, 20L);
             Map<Long, DiaryResponse> cachedMap = new HashMap<>();
@@ -550,7 +581,7 @@ class DiaryServiceTest {
             doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(true));
 
             // when
-            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+            Page<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId, pageable);
 
             // then
             assertThat(result).hasSize(2);
@@ -569,6 +600,8 @@ class DiaryServiceTest {
             Long targetUserId = 2L;
 
             List<Long> diaryIds = List.of(10L, 20L, 30L);
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             DiaryResponse cachedDiary = mockDiaryResponseWithId(10L);
             DiaryResponse response20 = mockDiaryResponseWithId(20L);
@@ -592,7 +625,7 @@ class DiaryServiceTest {
             doReturn(true).when(spyService).isVisibleToUser(response30, false);
 
             // when
-            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+            Page<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId, pageable);
 
             // then
             assertThat(result).hasSize(3);
@@ -615,6 +648,8 @@ class DiaryServiceTest {
 
             List<Long> diaryIds = List.of(10L, 20L);
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse publicDiary = mockDiaryResponse();
             DiaryResponse friendDiary = mockDiaryResponse();
 
@@ -631,7 +666,7 @@ class DiaryServiceTest {
             doReturn(false).when(spyService).isVisibleToUser(friendDiary, false);
 
             // when
-            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+            Page<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId, pageable);
 
             // then
             assertThat(result).hasSize(1);
@@ -648,6 +683,8 @@ class DiaryServiceTest {
 
             List<Long> diaryIds = List.of(10L, 20L);
 
+            Pageable pageable = PageRequest.of(0, 10);
+
             DiaryResponse publicDiary = mockDiaryResponseWithId(10L);
             DiaryResponse friendDiary = mockDiaryResponseWithId(20L);
 
@@ -662,7 +699,7 @@ class DiaryServiceTest {
             doReturn(true).when(spyService).isVisibleToUser(any(DiaryResponse.class), eq(true));
 
             // when
-            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+            Page<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId, pageable);
 
             // then
             assertThat(result).hasSize(2);
@@ -677,6 +714,8 @@ class DiaryServiceTest {
             Long targetUserId = 2L;
 
             List<Long> diaryIds = List.of(10L, 20L, 30L);
+
+            Pageable pageable = PageRequest.of(0, 10);
 
             DiaryResponse visibleCached = mockDiaryResponseWithId(10L);
             DiaryResponse visibleDb = mockDiaryResponseWithId(20L);
@@ -700,7 +739,7 @@ class DiaryServiceTest {
             doReturn(false).when(spyService).isVisibleToUser(invisibleDb, false);
 
             // when
-            List<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId);
+            Page<DiaryResponse> result = spyService.getDiariesPublicAndFriendsByUser(userId, targetUserId, pageable);
 
             // then
             assertThat(result).hasSize(2);
