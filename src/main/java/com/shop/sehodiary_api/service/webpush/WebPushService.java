@@ -24,10 +24,10 @@ public class WebPushService {
         for (PushSubscription sub : subscriptions) {
             try {
                 send(sub, title, body, url);
-                System.out.println("adsfasdfasdfasdfasdfasdfasdfasdf");
             } catch (Exception e) {
                 // 죽은 구독 제거
-                pushSubscriptionRepository.delete(sub);
+//                pushSubscriptionRepository.delete(sub);
+                e.printStackTrace();
             }
         }
     }
