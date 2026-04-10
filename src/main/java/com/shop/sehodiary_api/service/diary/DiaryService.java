@@ -17,6 +17,7 @@ import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
 import com.shop.sehodiary_api.service.exceptions.*;
+import com.shop.sehodiary_api.service.webpush.WebPushService;
 import com.shop.sehodiary_api.web.controller.diary.DiarySseController;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
@@ -51,6 +52,7 @@ public class DiaryService {
     private final FollowRepository followRepository;
 
     private final DiarySseController diarySseController;
+    private final WebPushService webPushService;
 
     @Transactional(readOnly = true)
     public List<DiaryResponse> getDiariesByPublic(Long userId) {
@@ -358,12 +360,19 @@ public class DiaryService {
 
         if (diary.getVisibility() == Visibility.PUBLIC) {
             diaryIdRedisRepository.addPublic(diary.getId());
+
+            diarySseController.notifyNewPost(diary.getId(), diary.getTitle(), diary.getUser().getId(), diary.getUser().getNickname());
+
+            webPushService.broadcast(
+                    "새 글이 등록됐어요",
+                    "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
+                    "/diaries/" + diary.getId()
+            );
+
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
             diaryIdRedisRepository.addFriends(diary.getId());
         }
         diaryIdRedisRepository.addUser(userId, diary.getId());
-
-        diarySseController.notifyNewPost(diary.getId(), diary.getTitle(), diary.getUser().getId(), diary.getUser().getNickname());
 
         return response;
     }

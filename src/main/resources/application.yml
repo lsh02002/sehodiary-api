@@ -47,3 +47,8 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
+webpush:
+  public-key: ${WEBPUSH_PUBLIC_KEY}
+  private-key: ${WEBPUSH_PRIVATE_KEY}
+  subject: ${WEBPUSH_SUBJECT}
