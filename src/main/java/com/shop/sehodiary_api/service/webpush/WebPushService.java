@@ -43,6 +43,7 @@ public class WebPushService {
     }
 
     private void send(PushSubscription sub, String title, String body, String url) throws Exception {
+        Long userId = sub.getUserId();
 
         PushService pushService = new PushService(
                 properties.getPublicKey(),
@@ -61,7 +62,7 @@ public class WebPushService {
                 escape(title),
                 escape(body),
                 escape(url),
-                escape(sub.getUserId().toString())
+                userId != null ? userId.toString() : "null"
         );
 
         Subscription subscription = new Subscription(
