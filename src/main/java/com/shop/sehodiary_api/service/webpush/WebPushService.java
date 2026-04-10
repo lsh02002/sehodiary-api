@@ -3,12 +3,15 @@ package com.shop.sehodiary_api.service.webpush;
 import com.shop.sehodiary_api.repository.webpush.PushSubscription;
 import com.shop.sehodiary_api.repository.webpush.PushSubscriptionRepository;
 import com.shop.sehodiary_api.web.dto.webpush.WebPushProperties;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.stereotype.Service;
 
+import java.security.Security;
 import java.util.List;
 
 @Service
@@ -17,6 +20,13 @@ public class WebPushService {
 
     private final PushSubscriptionRepository pushSubscriptionRepository;
     private final WebPushProperties properties;
+
+    @PostConstruct
+    public void init() {
+        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
 
     public void broadcast(String title, String body, String url) {
         List<PushSubscription> subscriptions = pushSubscriptionRepository.findAll();
