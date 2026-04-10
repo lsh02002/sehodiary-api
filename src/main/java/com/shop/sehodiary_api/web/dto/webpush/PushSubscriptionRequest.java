@@ -6,7 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PushSubscriptionRequest {
-    private Long userId;
     private String endpoint;
     private Keys keys;
 
