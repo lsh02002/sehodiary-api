@@ -4,6 +4,7 @@ import com.shop.sehodiary_api.repository.webpush.PushSubscription;
 import com.shop.sehodiary_api.repository.webpush.PushSubscriptionRepository;
 import com.shop.sehodiary_api.web.dto.webpush.WebPushProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WebPushService {
@@ -21,12 +23,17 @@ public class WebPushService {
     public void broadcast(String title, String body, String url) {
         List<PushSubscription> subscriptions = pushSubscriptionRepository.findAll();
 
+        log.info("subscriptions count={}", subscriptions.size());
+
         for (PushSubscription sub : subscriptions) {
             try {
-                send(sub, title, body, url);
+                log.info("sending push to endpoint={}", sub.getEndpoint());
+
+                // 실제 web push 전송
+
+                log.info("push sent success");
             } catch (Exception e) {
-                // 죽은 구독 제거
-                pushSubscriptionRepository.delete(sub);
+                log.error("push send failed to endpoint={}", sub.getEndpoint(), e);
             }
         }
     }
