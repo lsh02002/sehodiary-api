@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -92,6 +93,9 @@ class DiaryServiceTest {
 
     @Mock
     private SnapshotFunc snapshotFunc;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private User user;
     private Diary diary;

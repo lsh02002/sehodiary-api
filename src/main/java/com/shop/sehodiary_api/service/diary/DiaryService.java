@@ -21,8 +21,10 @@ import com.shop.sehodiary_api.service.webpush.WebPushService;
 import com.shop.sehodiary_api.web.controller.diary.DiarySseController;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
+import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -56,6 +58,7 @@ public class DiaryService {
 
     private final DiarySseController diarySseController;
     private final WebPushService webPushService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<DiaryResponse> getDiariesByPublic(Long userId, Pageable pageable) {
@@ -424,6 +427,16 @@ public class DiaryService {
                     "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
                     "/diaries/" + diary.getId()
             );
+
+            eventPublisher.publishEvent(
+                    new PostCreatedEvent(
+                            diary.getId(),
+                            diary.getUser().getId().toString(),
+                            diary.getTitle(),
+                            diary.getContent()
+                    )
+            );
+
 
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
             diaryIdRedisRepository.addFriends(diary.getId());

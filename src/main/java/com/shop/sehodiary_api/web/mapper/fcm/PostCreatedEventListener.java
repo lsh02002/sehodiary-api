@@ -1,0 +1,47 @@
+package com.shop.sehodiary_api.web.mapper.fcm;
+
+import com.shop.sehodiary_api.service.fcm.FcmService;
+import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
+import com.shop.sehodiary_api.web.dto.fcm.PushSendRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+import java.util.Map;
+
+@Component
+public class PostCreatedEventListener {
+
+    private final TokenStore tokenStore;
+    private final FcmService fcmService;
+
+    public PostCreatedEventListener(TokenStore tokenStore, FcmService fcmService) {
+        this.tokenStore = tokenStore;
+        this.fcmService = fcmService;
+    }
+
+    @TransactionalEventListener
+    public void handle(PostCreatedEvent event) {
+        try {
+            // 예시: 작성자 본인에게 보내기
+            String token = tokenStore.findByUserId(event.authorId());
+
+            if (token == null || token.isBlank()) {
+                return;
+            }
+
+            fcmService.sendToToken(new PushSendRequest(
+                    token,
+                    "게시글 등록 완료",
+                    event.title(),
+                    Map.of(
+                            "type", "POST_CREATED",
+                            "postId", String.valueOf(event.postId()),
+                            "screen", "post_detail"
+                    )
+            ));
+        } catch (Exception e) {
+            // 실무에서는 로깅/재시도 큐 처리 권장
+            System.err.println("FCM send failed: " + e.getMessage());
+        }
+    }
+}
