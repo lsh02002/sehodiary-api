@@ -20,6 +20,7 @@ import com.shop.sehodiary_api.service.webpush.WebPushService;
 import com.shop.sehodiary_api.web.controller.diary.DiarySseController;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
+import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -933,12 +934,12 @@ class DiaryServiceTest {
 
             verify(diaryIdRedisRepository, never()).addFriends(anyLong());
 
-            verify(diarySseController).notifyNewPost(100L, "오늘 일기", user.getId(), user.getNickname());
             verify(webPushService).broadcast(
                     anyString(),
                     anyString(),
                     anyString()
             );
+            verify(eventPublisher).publishEvent(any(PostCreatedEvent.class));
         }
 
         @Test
