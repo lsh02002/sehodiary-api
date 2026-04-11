@@ -1,5 +1,6 @@
 package com.shop.sehodiary_api.web.controller.fcm;
 
+import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.fcm.FcmService;
 import com.shop.sehodiary_api.web.dto.fcm.PushSendRequest;
 import com.shop.sehodiary_api.web.dto.fcm.PushSendToUserRequest;
@@ -7,6 +8,7 @@ import com.shop.sehodiary_api.web.dto.fcm.TokenRegisterRequest;
 import com.shop.sehodiary_api.web.mapper.fcm.TokenStore;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -25,8 +27,8 @@ public class FcmController {
     }
 
     @PostMapping("/register-token")
-    public ResponseEntity<?> registerToken(@Valid @RequestBody TokenRegisterRequest request) {
-        tokenStore.save(request.userId(), request.token());
+    public ResponseEntity<?> registerToken(@AuthenticationPrincipal CustomUserDetails customUserDetails, @Valid @RequestBody TokenRegisterRequest request) {
+        tokenStore.save(customUserDetails.getId().toString(), request.token());
         return ResponseEntity.ok(Map.of("message", "token saved"));
     }
 

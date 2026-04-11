@@ -52,7 +52,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/user/entrypoint/**", "/user/access-denied/**", "/user/test2/**", "/comment/diary/**", "/diary/public/**", "/diary/all/**", "/diary/one/**", "/like/nicknames/**", "/emotion/all/**", "/sse/posts/**", "/api/push/public-key/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/user/sign-up/**", "/user/login/**", "/user/logout/**", "/user/admin-login/**", "/api/push/subscribe/**").permitAll()
                                 .requestMatchers(HttpMethod.DELETE, "/api/push/unsubscribe/**").permitAll()
-                                .requestMatchers("/push/register-token").permitAll()
+                                .requestMatchers("/push/register-token").authenticated()
                                 .requestMatchers("/push/send-to-user").authenticated()
                                 .requestMatchers("/push/send").hasRole("ADMIN")
                                 .anyRequest().authenticated())
