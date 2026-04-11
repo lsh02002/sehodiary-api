@@ -59,7 +59,7 @@ public class SnapshotFunc {
                             .toList()
             );
             m.put("createdAt", diary.getCreatedAt());
-            m.put("updatedAt", diary.getUpdatedAt());
+//            m.put("updatedAt", diary.getUpdatedAt());
             return m;
         }
 
