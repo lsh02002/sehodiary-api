@@ -52,3 +52,4 @@ public class Comment extends BaseTimeEntity implements Loggable, Serializable {
         return "글 '" + diary.getTitle() + "'의 COMMENT '" + content + "' ";
     }
 }
+
