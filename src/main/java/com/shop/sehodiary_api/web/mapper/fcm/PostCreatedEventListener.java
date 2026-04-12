@@ -24,44 +24,31 @@ public class PostCreatedEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleAfterCommit(PostCreatedEvent event) {
-        log.info("AFTER_COMMIT invoked: {}", event);
-    }
+    public void handle(PostCreatedEvent event) {
+        try {
+            // 예시: 작성자 본인에게 보내기
+            String token = tokenStore.findByUserId(event.authorId());
+            log.info("authorId={}, token={}", event.authorId(), token);
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
-    public void handleAfterRollback(PostCreatedEvent event) {
-        log.info("AFTER_ROLLBACK invoked: {}", event);
-    }
+            if (token == null || token.isBlank()) {
+                log.warn("FCM token not found for userId={}", event.authorId());
+                return;
+            }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
-    public void handleAfterCompletion(PostCreatedEvent event) {
-        log.info("AFTER_COMPLETION invoked: {}", event);
+            fcmService.sendToToken(new PushSendRequest(
+                    token,
+                    "게시글 등록 완료",
+                    event.title(),
+                    Map.of(
+                            "type", "POST_CREATED",
+                            "postId", String.valueOf(event.postId()),
+                            "screen", "post_detail"
+                    )
+            ));
+            log.info("FCM send successfully");
+        } catch (Exception e) {
+            // 실무에서는 로깅/재시도 큐 처리 권장
+            log.error("FCM send failed: {}", e.getMessage());
+        }
     }
-
-//    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-//    public void handle(PostCreatedEvent event) {
-//        try {
-//            // 예시: 작성자 본인에게 보내기
-//            String token = tokenStore.findByUserId(event.authorId());
-//
-//            if (token == null || token.isBlank()) {
-//                return;
-//            }
-//
-//            fcmService.sendToToken(new PushSendRequest(
-//                    token,
-//                    "게시글 등록 완료",
-//                    event.title(),
-//                    Map.of(
-//                            "type", "POST_CREATED",
-//                            "postId", String.valueOf(event.postId()),
-//                            "screen", "post_detail"
-//                    )
-//            ));
-//            log.info("FCM send successfully");
-//        } catch (Exception e) {
-//            // 실무에서는 로깅/재시도 큐 처리 권장
-//            log.error("FCM send failed: {}", e.getMessage());
-//        }
-//    }
 }
