@@ -427,9 +427,6 @@ public class DiaryService {
 //                    "/diaries/" + diary.getId()
 //            );
 
-            log.info("before publish - tx active={}",
-                    TransactionSynchronizationManager.isActualTransactionActive());
-
             eventPublisher.publishEvent(
                     new PostCreatedEvent(
                             diary.getId(),
@@ -438,8 +435,6 @@ public class DiaryService {
                             diary.getContent()
                     )
             );
-
-            log.info("after publish");
 
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
             diaryIdRedisRepository.addFriends(diary.getId());

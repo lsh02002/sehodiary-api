@@ -13,7 +13,6 @@ public class TokenStore {
     private final Map<String, String> userTokenMap = new ConcurrentHashMap<>();
 
     public void save(String userId, String token) {
-        log.info("Save Token UserId = {}", userId);
         userTokenMap.put(userId, token);
     }
 

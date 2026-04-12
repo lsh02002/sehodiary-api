@@ -18,7 +18,6 @@ public class PushSendController {
 
     @PostMapping("/broadcast")
     public ResponseEntity<Void> broadcast(@RequestBody Map<String, String> body) {
-        log.info("broadcast request: {}", body);
 
         webPushService.broadcast(
                 body.getOrDefault("title", "알림"),

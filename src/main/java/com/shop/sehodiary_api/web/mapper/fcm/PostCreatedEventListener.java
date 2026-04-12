@@ -28,10 +28,8 @@ public class PostCreatedEventListener {
         try {
             // 예시: 작성자 본인에게 보내기
             String token = tokenStore.findByUserId(event.authorId());
-            log.info("authorId={}, token={}", event.authorId(), token);
 
             if (token == null || token.isBlank()) {
-                log.warn("FCM token not found for userId={}", event.authorId());
                 return;
             }
 
@@ -45,7 +43,6 @@ public class PostCreatedEventListener {
                             "screen", "post_detail"
                     )
             ));
-            log.info("FCM send successfully");
         } catch (Exception e) {
             // 실무에서는 로깅/재시도 큐 처리 권장
             log.error("FCM send failed: {}", e.getMessage());
