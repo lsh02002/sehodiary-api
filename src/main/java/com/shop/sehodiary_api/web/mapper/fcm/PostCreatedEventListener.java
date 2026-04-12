@@ -23,9 +23,19 @@ public class PostCreatedEventListener {
         this.fcmService = fcmService;
     }
 
-    @EventListener
-    public void debug(PostCreatedEvent event) {
-        log.info("debug event received: {}", event);
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleAfterCommit(PostCreatedEvent event) {
+        log.info("AFTER_COMMIT invoked: {}", event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+    public void handleAfterRollback(PostCreatedEvent event) {
+        log.info("AFTER_ROLLBACK invoked: {}", event);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    public void handleAfterCompletion(PostCreatedEvent event) {
+        log.info("AFTER_COMPLETION invoked: {}", event);
     }
 
 //    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
