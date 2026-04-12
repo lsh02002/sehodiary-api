@@ -4,6 +4,7 @@ import com.shop.sehodiary_api.service.fcm.FcmService;
 import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
 import com.shop.sehodiary_api.web.dto.fcm.PushSendRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
@@ -19,7 +20,7 @@ public class PostCreatedEventListener {
         this.fcmService = fcmService;
     }
 
-    @TransactionalEventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PostCreatedEvent event) {
         try {
             // 예시: 작성자 본인에게 보내기
@@ -39,6 +40,7 @@ public class PostCreatedEventListener {
                             "screen", "post_detail"
                     )
             ));
+            System.out.println("FCM send successfully");
         } catch (Exception e) {
             // 실무에서는 로깅/재시도 큐 처리 권장
             System.err.println("FCM send failed: " + e.getMessage());
