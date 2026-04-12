@@ -1,16 +1,19 @@
 package com.shop.sehodiary_api.web.mapper.fcm;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Component
 public class TokenStore {
 
     private final Map<String, String> userTokenMap = new ConcurrentHashMap<>();
 
     public void save(String userId, String token) {
+        log.info("Save Token UserId = {}", userId);
         userTokenMap.put(userId, token);
     }
 

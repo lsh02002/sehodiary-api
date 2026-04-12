@@ -421,11 +421,11 @@ public class DiaryService {
         if (diary.getVisibility() == Visibility.PUBLIC) {
             diaryIdRedisRepository.addPublic(diary.getId());
 
-            webPushService.broadcast(
-                    "새 글이 등록됐어요",
-                    "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
-                    "/diaries/" + diary.getId()
-            );
+//            webPushService.broadcast(
+//                    "새 글이 등록됐어요",
+//                    "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
+//                    "/diaries/" + diary.getId()
+//            );
 
             log.info("before publish - tx active={}",
                     TransactionSynchronizationManager.isActualTransactionActive());
