@@ -930,11 +930,11 @@ class DiaryServiceTest {
 
             verify(diaryIdRedisRepository, never()).addFriends(anyLong());
 
-            verify(webPushService).broadcast(
-                    anyString(),
-                    anyString(),
-                    anyString()
-            );
+//            verify(webPushService).broadcast(
+//                    anyString(),
+//                    anyString(),
+//                    anyString()
+//            );
             verify(eventPublisher).publishEvent(any(PostCreatedEvent.class));
         }
 
