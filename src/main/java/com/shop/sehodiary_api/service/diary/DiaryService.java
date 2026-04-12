@@ -23,6 +23,7 @@ import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -31,6 +32,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -39,6 +41,7 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiaryService {
@@ -424,6 +427,9 @@ public class DiaryService {
                     "/diaries/" + diary.getId()
             );
 
+            log.info("before publish - tx active={}",
+                    TransactionSynchronizationManager.isActualTransactionActive());
+
             eventPublisher.publishEvent(
                     new PostCreatedEvent(
                             diary.getId(),
@@ -432,6 +438,8 @@ public class DiaryService {
                             diary.getContent()
                     )
             );
+
+            log.info("after publish");
 
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
             diaryIdRedisRepository.addFriends(diary.getId());

@@ -3,12 +3,14 @@ package com.shop.sehodiary_api.web.mapper.fcm;
 import com.shop.sehodiary_api.service.fcm.FcmService;
 import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
 import com.shop.sehodiary_api.web.dto.fcm.PushSendRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class PostCreatedEventListener {
 
@@ -40,10 +42,10 @@ public class PostCreatedEventListener {
                             "screen", "post_detail"
                     )
             ));
-            System.out.println("FCM send successfully");
+            log.info("FCM send successfully");
         } catch (Exception e) {
             // 실무에서는 로깅/재시도 큐 처리 권장
-            System.err.println("FCM send failed: " + e.getMessage());
+            log.error("FCM send failed: {}", e.getMessage());
         }
     }
 }
