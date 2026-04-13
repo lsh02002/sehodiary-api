@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -27,8 +29,18 @@ public class FcmController {
     }
 
     @PostMapping("/register-token")
-    public ResponseEntity<?> registerToken(@AuthenticationPrincipal CustomUserDetails customUserDetails, @Valid @RequestBody TokenRegisterRequest request) {
-        tokenStore.save(customUserDetails.getId().toString(), request.token());
+    public ResponseEntity<?> registerToken(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Valid @RequestBody TokenRegisterRequest request
+    ) {
+        Long userId = (customUserDetails != null) ? customUserDetails.getId() : null;
+
+        tokenStore.save(
+                request.token(),
+                request.deviceId(),
+                userId
+        );
+
         return ResponseEntity.ok(Map.of("message", "token saved"));
     }
 
@@ -40,20 +52,29 @@ public class FcmController {
 
     @PostMapping("/send-to-user")
     public ResponseEntity<?> sendToUser(@Valid @RequestBody PushSendToUserRequest request) throws Exception {
-        String token = tokenStore.findByUserId(request.userId());
-        if (token == null) {
+        List<String> tokens = tokenStore.findAllByUserId(Long.valueOf(request.userId()));
+
+        if (tokens == null || tokens.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "token not found"));
         }
 
-        String messageId = fcmService.sendToToken(
-                new PushSendRequest(
-                        token,
-                        request.title(),
-                        request.body(),
-                        request.data()
-                )
-        );
+        List<String> messageIds = new ArrayList<>();
 
-        return ResponseEntity.ok(Map.of("messageId", messageId));
+        for (String token : tokens) {
+            String messageId = fcmService.sendToToken(
+                    new PushSendRequest(
+                            token,
+                            request.title(),
+                            request.body(),
+                            request.data()
+                    )
+            );
+            messageIds.add(messageId);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "successCount", messageIds.size(),
+                "messageIds", messageIds
+        ));
     }
 }

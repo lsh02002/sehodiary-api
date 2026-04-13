@@ -4,11 +4,11 @@ import com.shop.sehodiary_api.service.fcm.FcmService;
 import com.shop.sehodiary_api.web.dto.fcm.PostCreatedEvent;
 import com.shop.sehodiary_api.web.dto.fcm.PushSendRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -26,26 +26,32 @@ public class PostCreatedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PostCreatedEvent event) {
         try {
-            // 예시: 작성자 본인에게 보내기
-            String token = tokenStore.findByUserId(event.authorId());
+            Long authorId = Long.valueOf(event.authorId());
+            List<String> tokens = tokenStore.findAllByUserId(authorId);
 
-            if (token == null || token.isBlank()) {
+            if (tokens == null || tokens.isEmpty()) {
                 return;
             }
 
-            fcmService.sendToToken(new PushSendRequest(
-                    token,
-                    "게시글 등록 완료",
-                    event.title(),
-                    Map.of(
-                            "type", "POST_CREATED",
-                            "postId", String.valueOf(event.postId()),
-                            "screen", "post_detail"
-                    )
-            ));
+            for (String token : tokens) {
+                if (token == null || token.isBlank()) {
+                    continue;
+                }
+
+                fcmService.sendToToken(new PushSendRequest(
+                        token,
+                        "게시글 등록 완료",
+                        event.title(),
+                        Map.of(
+                                "type", "POST_CREATED",
+                                "postId", String.valueOf(event.postId()),
+                                "screen", "post_detail"
+                        )
+                ));
+            }
         } catch (Exception e) {
-            // 실무에서는 로깅/재시도 큐 처리 권장
-            log.error("FCM send failed: {}", e.getMessage());
+            log.error("FCM send failed. authorId={}, postId={}, error={}",
+                    event.authorId(), event.postId(), e.getMessage(), e);
         }
     }
 }
