@@ -4,11 +4,13 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.shop.sehodiary_api.web.dto.fcm.PushSendRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class FcmService {
 
@@ -24,6 +26,8 @@ public class FcmService {
                 .putAllData(data)
                 .build();
 
-        return FirebaseMessaging.getInstance().send(message);
+        String response = FirebaseMessaging.getInstance().send(message);
+        log.error("FCM send success. response={}", response);
+        return response;
     }
 }

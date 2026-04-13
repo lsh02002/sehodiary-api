@@ -38,8 +38,6 @@ public class PostCreatedEventListener {
                     continue;
                 }
 
-                System.out.println(token);
-
                 fcmService.sendToToken(new PushSendRequest(
                         token,
                         "게시글 등록 완료",
