@@ -424,7 +424,7 @@ public class DiaryService {
             webPushService.broadcast(
                     "새 글이 등록됐어요",
                     "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
-                    "/diaries/" + diary.getId()
+                    "/edit/" + diary.getId()
             );
 
             eventPublisher.publishEvent(
