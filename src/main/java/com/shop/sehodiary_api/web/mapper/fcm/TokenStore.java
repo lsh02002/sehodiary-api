@@ -38,5 +38,13 @@ public class TokenStore {
         return info != null ? info.token() : null;
     }
 
+    public List<String> findAllTokens() {
+        return deviceTokenMap.values().stream()
+                .map(TokenInfo::token)
+                .filter(token -> token != null && !token.isBlank())
+                .distinct()
+                .toList();
+    }
+
     record TokenInfo(String token, Long userId) {}
 }

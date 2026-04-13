@@ -26,8 +26,8 @@ public class PostCreatedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PostCreatedEvent event) {
         try {
-            Long authorId = Long.valueOf(event.authorId());
-            List<String> tokens = tokenStore.findAllByUserId(authorId);
+//            Long authorId = Long.valueOf(event.authorId());
+            List<String> tokens = tokenStore.findAllTokens();
 
             if (tokens == null || tokens.isEmpty()) {
                 return;
