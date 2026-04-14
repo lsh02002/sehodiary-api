@@ -130,31 +130,11 @@ public class FollowService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserInfoResponse> getDiscoverUsers() {
-        Long userId = getCurrentUserId();
-
+    public List<UserInfoResponse> getDiscoverUsers(Long userId) {
         long followerCount = followRepository.countByFollowingId(userId);
         long followingCount = followRepository.countByFollowerId(userId);
 
         return followRepository.findUnfollowedUsers(userId)
                 .stream().map(user->userMapper.toResponse(user, followerCount, followingCount)).toList();
-    }
-
-    private Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        // 인증 정보 자체가 없거나 인증 안 된 경우 → 비로그인으로 간주
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
-        }
-
-        Object principal = authentication.getPrincipal();
-
-        // 익명 사용자 (anonymousUser) 등 처리
-        if (!(principal instanceof CustomUserDetails userDetails)) {
-            return null;
-        }
-
-        return userDetails.getId();
     }
 }

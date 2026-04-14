@@ -510,23 +510,11 @@ class FollowServiceTest {
             given(followRepository.findUnfollowedUsers(userId))
                     .willReturn(List.of(user1, user2));
 
-            CustomUserDetails userDetails = mock(CustomUserDetails.class);
-            when(userDetails.getId()).thenReturn(1L);
-
-            Authentication authentication = mock(Authentication.class);
-            when(authentication.isAuthenticated()).thenReturn(true);
-            when(authentication.getPrincipal()).thenReturn(userDetails);
-
-            SecurityContext context = mock(SecurityContext.class);
-            when(context.getAuthentication()).thenReturn(authentication);
-
-            SecurityContextHolder.setContext(context);
-
             given(userMapper.toResponse(user1,  0L, 0L)).willReturn(response1);
             given(userMapper.toResponse(user2,  0L, 0L)).willReturn(response2);
 
             // when
-            List<UserInfoResponse> result = followService.getDiscoverUsers();
+            List<UserInfoResponse> result = followService.getDiscoverUsers(userId);
 
             // then
             assertThat(result).hasSize(2);
@@ -546,7 +534,7 @@ class FollowServiceTest {
                     .willReturn(List.of());
 
             // when
-            List<UserInfoResponse> result = followService.getDiscoverUsers();
+            List<UserInfoResponse> result = followService.getDiscoverUsers(userId);
 
             // then
             assertThat(result).isEmpty();

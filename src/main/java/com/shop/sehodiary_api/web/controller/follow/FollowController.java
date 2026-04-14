@@ -51,7 +51,7 @@ public class FollowController {
     }
 
     @GetMapping("/discover")
-    public ResponseEntity<List<UserInfoResponse>> getDiscoverUsers() {
-        return ResponseEntity.ok(followService.getDiscoverUsers());
+    public ResponseEntity<List<UserInfoResponse>> getDiscoverUsers(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        return ResponseEntity.ok(followService.getDiscoverUsers(customUserDetails.getId()));
     }
 }
