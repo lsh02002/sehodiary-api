@@ -7,6 +7,7 @@ import com.shop.sehodiary_api.repository.follow.Follow;
 import com.shop.sehodiary_api.repository.follow.FollowRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
@@ -19,6 +20,8 @@ import com.shop.sehodiary_api.web.mapper.follow.FollowMapper;
 import com.shop.sehodiary_api.web.mapper.user.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -127,11 +130,31 @@ public class FollowService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserInfoResponse> getDiscoverUsers(Long userId) {
+    public List<UserInfoResponse> getDiscoverUsers() {
+        Long userId = getCurrentUserId();
+
         long followerCount = followRepository.countByFollowingId(userId);
         long followingCount = followRepository.countByFollowerId(userId);
 
         return followRepository.findUnfollowedUsers(userId)
                 .stream().map(user->userMapper.toResponse(user, followerCount, followingCount)).toList();
+    }
+
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // 인증 정보 자체가 없거나 인증 안 된 경우 → 비로그인으로 간주
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        // 익명 사용자 (anonymousUser) 등 처리
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            return null;
+        }
+
+        return userDetails.getId();
     }
 }

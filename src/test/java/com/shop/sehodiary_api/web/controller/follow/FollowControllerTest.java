@@ -256,7 +256,7 @@ class FollowControllerTest {
             UserInfoResponse user1 = new UserInfoResponse(2L, "user1@mail.com", "user1", null, null, 0L, 0L);
             UserInfoResponse user2 = new UserInfoResponse(3L, "user2@mail.com", "user2", null, null, 0L, 0L);
 
-            given(followService.getDiscoverUsers(userId))
+            given(followService.getDiscoverUsers())
                     .willReturn(List.of(user1, user2));
 
             // CustomUserDetails mock 주입

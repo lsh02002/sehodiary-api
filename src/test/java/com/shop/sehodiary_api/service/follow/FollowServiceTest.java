@@ -14,6 +14,7 @@ import com.shop.sehodiary_api.repository.follow.Follow;
 import com.shop.sehodiary_api.repository.follow.FollowRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.repository.user.UserRepository;
+import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
@@ -31,6 +32,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ExtendWith(MockitoExtension.class)
@@ -506,11 +510,23 @@ class FollowServiceTest {
             given(followRepository.findUnfollowedUsers(userId))
                     .willReturn(List.of(user1, user2));
 
+            CustomUserDetails userDetails = mock(CustomUserDetails.class);
+            when(userDetails.getId()).thenReturn(1L);
+
+            Authentication authentication = mock(Authentication.class);
+            when(authentication.isAuthenticated()).thenReturn(true);
+            when(authentication.getPrincipal()).thenReturn(userDetails);
+
+            SecurityContext context = mock(SecurityContext.class);
+            when(context.getAuthentication()).thenReturn(authentication);
+
+            SecurityContextHolder.setContext(context);
+
             given(userMapper.toResponse(user1,  0L, 0L)).willReturn(response1);
             given(userMapper.toResponse(user2,  0L, 0L)).willReturn(response2);
 
             // when
-            List<UserInfoResponse> result = followService.getDiscoverUsers(userId);
+            List<UserInfoResponse> result = followService.getDiscoverUsers();
 
             // then
             assertThat(result).hasSize(2);
@@ -530,7 +546,7 @@ class FollowServiceTest {
                     .willReturn(List.of());
 
             // when
-            List<UserInfoResponse> result = followService.getDiscoverUsers(userId);
+            List<UserInfoResponse> result = followService.getDiscoverUsers();
 
             // then
             assertThat(result).isEmpty();
