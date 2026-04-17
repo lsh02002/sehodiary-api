@@ -63,30 +63,33 @@ public class DiaryService {
 
     @Transactional(readOnly = true)
     public Page<DiaryResponse> getDiariesByPublic(Long userId, Pageable pageable) {
-        List<Long> publicIds = diaryIdRedisRepository.findAllPublic();
+        int start = (int) pageable.getOffset();
+        int end = start + pageable.getPageSize() - 1;
 
-        if (publicIds.isEmpty()) {
-            publicIds = new ArrayList<>(diaryRepository.findAllPublicIds());
-            diaryIdRedisRepository.savePublicIds(publicIds);
+        boolean exists = diaryIdRedisRepository.existsPublicKey();
+        List<Long> publicIds = diaryIdRedisRepository.findPublicPage(start, end);
+
+        if (!exists) {
+            synchronized (this) {
+                exists = diaryIdRedisRepository.existsPublicKey();
+                if (!exists) {
+                    List<Long> allIds = diaryRepository.findAllPublicIds();
+                    if (!allIds.isEmpty()) {
+                        diaryIdRedisRepository.savePublicIds(allIds);
+                    }
+                }
+            }
+
+            publicIds = diaryIdRedisRepository.findPublicPage(start, end);
         }
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), publicIds.size());
-
-        if (start >= publicIds.size()) {
+        if (publicIds.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        Page<Long> pagecIds = new PageImpl<>(
-                publicIds.subList(start, end),
-                pageable,
-                publicIds.size()
-        );
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(publicIds);
 
-
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(pagecIds.getContent());
-
-        List<Long> missingIds = pagecIds.stream()
+        List<Long> missingIds = publicIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
 
@@ -102,15 +105,17 @@ public class DiaryService {
             });
         }
 
-        List<DiaryResponse> result = pagecIds.stream()
+        List<DiaryResponse> result = publicIds.stream()
                 .map(cached::get)
                 .filter(Objects::nonNull)
                 .filter(response -> Visibility.PUBLIC.toString().equals(response.getVisibility()))
                 .collect(Collectors.toList());
 
+        long total = diaryIdRedisRepository.countPublicIds();
+
         if (userId == null || result.isEmpty()) {
             result.forEach(response -> response.setIsLiked(false));
-            return new PageImpl<>(result, pageable, publicIds.size());
+            return new PageImpl<>(result, pageable, total);
         }
 
         Set<Long> likedDiaryIds = new HashSet<>(
@@ -124,34 +129,38 @@ public class DiaryService {
                 response.setIsLiked(likedDiaryIds.contains(response.getId()))
         );
 
-        return new PageImpl<>(result, pageable, publicIds.size());
+        return new PageImpl<>(result, pageable, total);
     }
 
     @Transactional(readOnly = true)
     public Page<DiaryResponse> getDiariesByFriends(Long userId, Pageable pageable) {
-        List<Long> friendIds = diaryIdRedisRepository.findAllFriends();
+        int start = (int) pageable.getOffset();
+        int end = start + pageable.getPageSize() - 1;
 
-        if (friendIds.isEmpty()) {
-            friendIds = new ArrayList<>(diaryRepository.findAllFriendsIds());
-            diaryIdRedisRepository.saveFriends(friendIds);
+        boolean exists = diaryIdRedisRepository.existsFriendsKey();
+        List<Long> friendsIds = diaryIdRedisRepository.findFriendsPage(start, end);
+
+        if (!exists) {
+            synchronized (this) {
+                exists = diaryIdRedisRepository.existsFriendsKey();
+                if (!exists) {
+                    List<Long> allIds = diaryRepository.findAllFriendsIds();
+                    if (!allIds.isEmpty()) {
+                        diaryIdRedisRepository.saveFriends(allIds);
+                    }
+                }
+            }
+
+            friendsIds = diaryIdRedisRepository.findFriendsPage(start, end);
         }
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), friendIds.size());
-
-        if (start >= friendIds.size()) {
+        if (friendsIds.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        Page<Long> pageIds = new PageImpl<>(
-                friendIds.subList(start, end),
-                pageable,
-                friendIds.size()
-        );
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(friendsIds);
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(pageIds.getContent());
-
-        List<Long> missingIds = pageIds.stream()
+        List<Long> missingIds = friendsIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
 
@@ -167,15 +176,17 @@ public class DiaryService {
             });
         }
 
-        List<DiaryResponse> result = pageIds.stream()
+        List<DiaryResponse> result = friendsIds.stream()
                 .map(cached::get)
                 .filter(Objects::nonNull)
                 .filter(response -> Visibility.FRIENDS.toString().equals(response.getVisibility()))
                 .collect(Collectors.toList());
 
+        long total = diaryIdRedisRepository.countFriendsIds();
+
         if (userId == null || result.isEmpty()) {
             result.forEach(response -> response.setIsLiked(false));
-            return new PageImpl<>(result, pageable, friendIds.size());
+            return new PageImpl<>(result, pageable, total);
         }
 
         Set<Long> likedDiaryIds = new HashSet<>(
@@ -189,40 +200,38 @@ public class DiaryService {
                 response.setIsLiked(likedDiaryIds.contains(response.getId()))
         );
 
-        return new PageImpl<>(result, pageable, friendIds.size());
+        return new PageImpl<>(result, pageable, total);
     }
 
     @Transactional(readOnly = true)
     public Page<DiaryResponse> getDiariesByUser(Long targetUserId, Long loginUserId, Pageable pageable) {
-        List<Long> diaryIds = diaryIdRedisRepository.findAllUser(targetUserId);
+        int start = (int) pageable.getOffset();
+        int end = start + pageable.getPageSize() - 1;
 
-        if (diaryIds.isEmpty()) {
-            List<Long> ids = diaryRepository.findIdsByUserId(targetUserId);
+        boolean exists = diaryIdRedisRepository.existsUserKey(targetUserId);
+        List<Long> diaryIds = diaryIdRedisRepository.findUserPage(targetUserId, start, end);
 
-            if (!ids.isEmpty()) {
-                diaryIdRedisRepository.saveUserIds(targetUserId, ids);
-                diaryIds = new ArrayList<>(ids);
-            } else {
-                return Page.empty(pageable);
+        if (!exists) {
+            synchronized (this) {
+                exists = diaryIdRedisRepository.existsUserKey(targetUserId);
+                if (!exists) {
+                    List<Long> allIds = diaryRepository.findIdsByUserId(targetUserId);
+                    if (!allIds.isEmpty()) {
+                        diaryIdRedisRepository.saveUserIds(targetUserId, allIds);
+                    }
+                }
             }
+
+            diaryIds = diaryIdRedisRepository.findUserPage(targetUserId, start, end);
         }
 
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), diaryIds.size());
-
-        if (start >= diaryIds.size()) {
+        if (diaryIds.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        Page<Long> pageIds = new PageImpl<>(
-                diaryIds.subList(start, end),
-                pageable,
-                diaryIds.size()
-        );
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(diaryIds);
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(pageIds.getContent());
-
-        List<Long> missingIds = pageIds.stream()
+        List<Long> missingIds = diaryIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
 
@@ -237,14 +246,16 @@ public class DiaryService {
             });
         }
 
-        List<DiaryResponse> result = pageIds.stream()
+        List<DiaryResponse> result = diaryIds.stream()
                 .map(cached::get)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
+        long total = diaryIdRedisRepository.countUserIds(targetUserId);
+
         if (loginUserId == null || result.isEmpty()) {
             result.forEach(response -> response.setIsLiked(false));
-            return new PageImpl<>(result, pageable, diaryIds.size());
+            return new PageImpl<>(result, pageable, total);
         }
 
         Set<Long> likedDiaryIds = new HashSet<>(
@@ -258,42 +269,44 @@ public class DiaryService {
                 response.setIsLiked(likedDiaryIds.contains(response.getId()))
         );
 
-        return new PageImpl<>(result, pageable, diaryIds.size());
+        return new PageImpl<>(result, pageable, total);
     }
 
     @Transactional(readOnly = true)
     public Page<DiaryResponse> getDiariesPublicAndFriendsByUser(Long userId, Long targetUserId, Pageable pageable) {
-        List<Long> diaryIds = diaryIdRedisRepository.findAllUser(targetUserId);
+        int start = (int) pageable.getOffset();
+        int end = start + pageable.getPageSize() - 1;
 
-        if (diaryIds.isEmpty()) {
-            List<Long> ids = diaryRepository.findIdsByUserId(targetUserId);
+        boolean exists = diaryIdRedisRepository.existsUserKey(targetUserId);
+        List<Long> diaryIds = diaryIdRedisRepository.findUserPage(targetUserId, start, end);
 
-            if (ids.isEmpty()) {
-                return Page.empty(pageable);
+        if (!exists) {
+            synchronized (this) {
+                exists = diaryIdRedisRepository.existsUserKey(targetUserId);
+                if (!exists) {
+                    List<Long> allIds = diaryRepository.findIdsByUserId(targetUserId);
+                    if (!allIds.isEmpty()) {
+                        diaryIdRedisRepository.saveUserIds(targetUserId, allIds);
+                    }
+                }
             }
 
-            diaryIdRedisRepository.saveUserIds(targetUserId, ids);
-            diaryIds = new ArrayList<>(ids);
+            diaryIds = diaryIdRedisRepository.findUserPage(targetUserId, start, end);
+        }
+
+        if (diaryIds.isEmpty()) {
+            return Page.empty(pageable);
         }
 
         boolean isFriend = isFriend(userId, targetUserId);
-
-        int start = (int) pageable.getOffset();
-        int end = Math.min(start + pageable.getPageSize(), diaryIds.size());
 
         if (start >= diaryIds.size()) {
             return Page.empty(pageable);
         }
 
-        Page<Long> pageIds = new PageImpl<>(
-                diaryIds.subList(start, end),
-                pageable,
-                diaryIds.size()
-        );
+        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(diaryIds);
 
-        Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(pageIds.getContent());
-
-        List<Long> missingIds = pageIds.stream()
+        List<Long> missingIds = diaryIds.stream()
                 .filter(id -> !cached.containsKey(id))
                 .toList();
 
@@ -308,15 +321,17 @@ public class DiaryService {
             });
         }
 
-        List<DiaryResponse> result = pageIds.stream()
+        List<DiaryResponse> result = diaryIds.stream()
                 .map(cached::get)
                 .filter(Objects::nonNull)
                 .filter(diary -> isVisibleToUser(diary, isFriend))
                 .collect(Collectors.toList());
 
+        long total = diaryIdRedisRepository.countUserIds(targetUserId);
+
         if (userId == null || result.isEmpty()) {
             result.forEach(diary -> diary.setIsLiked(false));
-            return new PageImpl<>(result, pageable, diaryIds.size());
+            return new PageImpl<>(result, pageable, total);
         }
 
         Set<Long> likedDiaryIds = new HashSet<>(
@@ -330,7 +345,7 @@ public class DiaryService {
                 diary.setIsLiked(likedDiaryIds.contains(diary.getId()))
         );
 
-        return new PageImpl<>(result, pageable, diaryIds.size());
+        return new PageImpl<>(result, pageable, total);
     }
 
     @Transactional(readOnly = true)

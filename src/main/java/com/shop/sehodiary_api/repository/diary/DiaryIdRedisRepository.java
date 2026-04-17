@@ -141,4 +141,74 @@ public class DiaryIdRedisRepository {
         }
         redisTemplate.opsForZSet().remove(getUserIdsKey(userId), diaryId);
     }
+
+    //테스트 여기부터
+    public boolean existsPublicKey() {
+        return redisTemplate.hasKey(PUBLIC_IDS_KEY);
+    }
+
+    public List<Long> findPublicPage(int start, int end) {
+        Set<Object> members = redisTemplate.opsForZSet().reverseRange(PUBLIC_IDS_KEY, start, end);
+
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> result = new ArrayList<>(members.size());
+        for (Object member : members) {
+            result.add(Long.valueOf(String.valueOf(member)));
+        }
+        return result;
+    }
+
+    public long countPublicIds() {
+        Long size = redisTemplate.opsForZSet().zCard(PUBLIC_IDS_KEY);
+        return size == null ? 0L : size;
+    }
+
+    public boolean existsFriendsKey() {
+        return redisTemplate.hasKey(FRIENDS_IDS_KEY);
+    }
+
+    public List<Long> findFriendsPage(int start, int end) {
+        Set<Object> members = redisTemplate.opsForZSet().reverseRange(FRIENDS_IDS_KEY, start, end);
+
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> result = new ArrayList<>(members.size());
+        for (Object member : members) {
+            result.add(Long.valueOf(String.valueOf(member)));
+        }
+        return result;
+    }
+
+    public long countFriendsIds() {
+        Long size = redisTemplate.opsForZSet().zCard(FRIENDS_IDS_KEY);
+        return size == null ? 0L : size;
+    }
+
+    public boolean existsUserKey(Long userId) {
+        return redisTemplate.hasKey(USER_IDS_KEY_PREFIX + userId);
+    }
+
+    public List<Long> findUserPage(Long userId, int start, int end) {
+        Set<Object> members = redisTemplate.opsForZSet().reverseRange(USER_IDS_KEY_PREFIX + userId, start, end);
+
+        if (members == null || members.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> result = new ArrayList<>(members.size());
+        for (Object member : members) {
+            result.add(Long.valueOf(String.valueOf(member)));
+        }
+        return result;
+    }
+
+    public long countUserIds(Long userId) {
+        Long size = redisTemplate.opsForZSet().zCard(USER_IDS_KEY_PREFIX + userId);
+        return size == null ? 0L : size;
+    }
 }
