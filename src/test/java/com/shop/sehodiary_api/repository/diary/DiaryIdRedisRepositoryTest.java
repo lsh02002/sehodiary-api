@@ -28,6 +28,7 @@ class DiaryIdRedisRepositoryTest {
     private static final String PUBLIC_IDS_KEY = "diary:ids:public";
     private static final String FRIENDS_IDS_KEY = "diary:ids:friends";
     private static final String USER_IDS_KEY_PREFIX = "diary:ids:user:";
+    private static final Long USER_ID = 10L;
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
@@ -286,6 +287,294 @@ class DiaryIdRedisRepositoryTest {
             diaryIdRedisRepository.saveUserIds(30L, Collections.emptyList());
 
             verify(zSetOperations, never()).add(startsWith(USER_IDS_KEY_PREFIX), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("existsPublicKey()")
+    class ExistsPublicKeyTest {
+
+        @Test
+        @DisplayName("public key가 존재하면 true를 반환한다")
+        void returnsTrueWhenPublicKeyExists() {
+            when(redisTemplate.hasKey(PUBLIC_IDS_KEY)).thenReturn(true);
+
+            boolean result = diaryIdRedisRepository.existsPublicKey();
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("public key가 존재하지 않으면 false를 반환한다")
+        void returnsFalseWhenPublicKeyDoesNotExist() {
+            when(redisTemplate.hasKey(PUBLIC_IDS_KEY)).thenReturn(false);
+
+            boolean result = diaryIdRedisRepository.existsPublicKey();
+
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("findPublicPage()")
+    class FindPublicPageTest {
+
+        @Test
+        @DisplayName("조회 결과가 null이면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenMembersIsNull() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(PUBLIC_IDS_KEY, 0, 9)).thenReturn(null);
+
+            List<Long> result = diaryIdRedisRepository.findPublicPage(0, 9);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("조회 결과가 비어 있으면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenMembersIsEmpty() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(PUBLIC_IDS_KEY, 0, 9))
+                    .thenReturn(Collections.emptySet());
+
+            List<Long> result = diaryIdRedisRepository.findPublicPage(0, 9);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("조회한 member들을 Long 리스트로 변환해 반환한다")
+        void returnsConvertedLongList() {
+            Set<Object> members = new LinkedHashSet<>();
+            members.add("300");
+            members.add("200");
+            members.add("100");
+
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(PUBLIC_IDS_KEY, 0, 2)).thenReturn(members);
+
+            List<Long> result = diaryIdRedisRepository.findPublicPage(0, 2);
+
+            assertThat(result).containsExactly(300L, 200L, 100L);
+        }
+    }
+
+    @Nested
+    @DisplayName("countPublicIds()")
+    class CountPublicIdsTest {
+
+        @Test
+        @DisplayName("zCard 결과가 null이면 0을 반환한다")
+        void returnsZeroWhenSizeIsNull() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.zCard(PUBLIC_IDS_KEY)).thenReturn(null);
+
+            long result = diaryIdRedisRepository.countPublicIds();
+
+            assertThat(result).isZero();
+        }
+
+        @Test
+        @DisplayName("zCard 결과가 존재하면 해당 개수를 반환한다")
+        void returnsSize() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.zCard(PUBLIC_IDS_KEY)).thenReturn(5L);
+
+            long result = diaryIdRedisRepository.countPublicIds();
+
+            assertThat(result).isEqualTo(5L);
+        }
+    }
+
+    @Nested
+    @DisplayName("existsFriendsKey()")
+    class ExistsFriendsKeyTest {
+
+        @Test
+        @DisplayName("friends key가 존재하면 true를 반환한다")
+        void returnsTrueWhenFriendsKeyExists() {
+            when(redisTemplate.hasKey(FRIENDS_IDS_KEY)).thenReturn(true);
+
+            boolean result = diaryIdRedisRepository.existsFriendsKey();
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("friends key가 존재하지 않으면 false를 반환한다")
+        void returnsFalseWhenFriendsKeyDoesNotExist() {
+            when(redisTemplate.hasKey(FRIENDS_IDS_KEY)).thenReturn(false);
+
+            boolean result = diaryIdRedisRepository.existsFriendsKey();
+
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("findFriendsPage()")
+    class FindFriendsPageTest {
+
+        @Test
+        @DisplayName("조회 결과가 null이면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenMembersIsNull() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(FRIENDS_IDS_KEY, 0, 9)).thenReturn(null);
+
+            List<Long> result = diaryIdRedisRepository.findFriendsPage(0, 9);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("조회 결과가 비어 있으면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenMembersIsEmpty() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(FRIENDS_IDS_KEY, 0, 9))
+                    .thenReturn(Collections.emptySet());
+
+            List<Long> result = diaryIdRedisRepository.findFriendsPage(0, 9);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("조회한 member들을 Long 리스트로 변환해 반환한다")
+        void returnsConvertedLongList() {
+            Set<Object> members = new LinkedHashSet<>();
+            members.add("30");
+            members.add("20");
+            members.add("10");
+
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(FRIENDS_IDS_KEY, 0, 2)).thenReturn(members);
+
+            List<Long> result = diaryIdRedisRepository.findFriendsPage(0, 2);
+
+            assertThat(result).containsExactly(30L, 20L, 10L);
+        }
+    }
+
+    @Nested
+    @DisplayName("countFriendsIds()")
+    class CountFriendsIdsTest {
+
+        @Test
+        @DisplayName("zCard 결과가 null이면 0을 반환한다")
+        void returnsZeroWhenSizeIsNull() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.zCard(FRIENDS_IDS_KEY)).thenReturn(null);
+
+            long result = diaryIdRedisRepository.countFriendsIds();
+
+            assertThat(result).isZero();
+        }
+
+        @Test
+        @DisplayName("zCard 결과가 존재하면 해당 개수를 반환한다")
+        void returnsSize() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.zCard(FRIENDS_IDS_KEY)).thenReturn(7L);
+
+            long result = diaryIdRedisRepository.countFriendsIds();
+
+            assertThat(result).isEqualTo(7L);
+        }
+    }
+
+    @Nested
+    @DisplayName("existsUserKey()")
+    class ExistsUserKeyTest {
+
+        @Test
+        @DisplayName("user key가 존재하면 true를 반환한다")
+        void returnsTrueWhenUserKeyExists() {
+            when(redisTemplate.hasKey(USER_IDS_KEY_PREFIX + USER_ID)).thenReturn(true);
+
+            boolean result = diaryIdRedisRepository.existsUserKey(USER_ID);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("user key가 존재하지 않으면 false를 반환한다")
+        void returnsFalseWhenUserKeyDoesNotExist() {
+            when(redisTemplate.hasKey(USER_IDS_KEY_PREFIX + USER_ID)).thenReturn(false);
+
+            boolean result = diaryIdRedisRepository.existsUserKey(USER_ID);
+
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("findUserPage()")
+    class FindUserPageTest {
+
+        @Test
+        @DisplayName("조회 결과가 null이면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenMembersIsNull() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(USER_IDS_KEY_PREFIX + USER_ID, 0, 9)).thenReturn(null);
+
+            List<Long> result = diaryIdRedisRepository.findUserPage(USER_ID, 0, 9);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("조회 결과가 비어 있으면 빈 리스트를 반환한다")
+        void returnsEmptyListWhenMembersIsEmpty() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(USER_IDS_KEY_PREFIX + USER_ID, 0, 9))
+                    .thenReturn(Collections.emptySet());
+
+            List<Long> result = diaryIdRedisRepository.findUserPage(USER_ID, 0, 9);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("조회한 member들을 Long 리스트로 변환해 반환한다")
+        void returnsConvertedLongList() {
+            Set<Object> members = new LinkedHashSet<>();
+            members.add("1000");
+            members.add("999");
+            members.add("998");
+
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.reverseRange(USER_IDS_KEY_PREFIX + USER_ID, 0, 2)).thenReturn(members);
+
+            List<Long> result = diaryIdRedisRepository.findUserPage(USER_ID, 0, 2);
+
+            assertThat(result).containsExactly(1000L, 999L, 998L);
+        }
+    }
+
+    @Nested
+    @DisplayName("countUserIds()")
+    class CountUserIdsTest {
+
+        @Test
+        @DisplayName("zCard 결과가 null이면 0을 반환한다")
+        void returnsZeroWhenSizeIsNull() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.zCard(USER_IDS_KEY_PREFIX + USER_ID)).thenReturn(null);
+
+            long result = diaryIdRedisRepository.countUserIds(USER_ID);
+
+            assertThat(result).isZero();
+        }
+
+        @Test
+        @DisplayName("zCard 결과가 존재하면 해당 개수를 반환한다")
+        void returnsSize() {
+            when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+            when(zSetOperations.zCard(USER_IDS_KEY_PREFIX + USER_ID)).thenReturn(11L);
+
+            long result = diaryIdRedisRepository.countUserIds(USER_ID);
+
+            assertThat(result).isEqualTo(11L);
         }
     }
 }
