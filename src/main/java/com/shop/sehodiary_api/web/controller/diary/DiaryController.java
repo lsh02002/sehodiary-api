@@ -50,8 +50,7 @@ public class DiaryController {
             @PathVariable Long targetUserId,
             Pageable pageable
     ) {
-        Long loginUserId = customUserDetails != null ? customUserDetails.getId() : null;
-        return ResponseEntity.ok(new RestPage<>(diaryService.getDiariesPublicAndFriendsByUser(loginUserId, targetUserId, pageable)));
+        return ResponseEntity.ok(new RestPage<>(diaryService.getDiariesPublicAndFriendsByUser(customUserDetails.getId(), targetUserId, pageable)));
     }
 
     @GetMapping("/one/{diaryId}")

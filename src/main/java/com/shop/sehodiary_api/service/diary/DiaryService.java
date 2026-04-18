@@ -301,10 +301,6 @@ public class DiaryService {
 
         boolean isFriend = isFriend(userId, targetUserId);
 
-        if (start >= diaryIds.size()) {
-            return Page.empty(pageable);
-        }
-
         Map<Long, DiaryResponse> cached = diaryCacheRepository.getAllByIds(diaryIds);
 
         List<Long> missingIds = diaryIds.stream()
