@@ -216,8 +216,7 @@ public class CommentService {
     }
 
     private void syncCommentIdsByDiary(Long diaryId, Long commentId, double score) {
-        if (commentIdRedisRepository.existsDiaryKey(diaryId)) {
-            commentIdRedisRepository.addByDiaryId(diaryId, commentId, score);
+        if(commentIdRedisRepository.addIfPresentByDiaryId(diaryId, commentId, score)) {
             return;
         }
 
@@ -226,8 +225,7 @@ public class CommentService {
     }
 
     private void syncCommentIdsByUser(Long userId, Long commentId, double score) {
-        if (commentIdRedisRepository.existsUserKey(userId)) {
-            commentIdRedisRepository.addByUserId(userId, commentId, score);
+        if (commentIdRedisRepository.addIfPresentByUserId(userId, commentId, score)) {
             return;
         }
 

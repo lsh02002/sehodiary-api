@@ -3,6 +3,7 @@ package com.shop.sehodiary_api.repository.diary;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -11,14 +12,29 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-@RequiredArgsConstructor
 public class DiaryIdRedisRepository {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final DefaultRedisScript<Long> addIfPresentScript;
 
     private static final String PUBLIC_IDS_KEY = "diary:ids:public";
     private static final String FRIENDS_IDS_KEY = "diary:ids:friends";
     private static final String USER_IDS_KEY_PREFIX = "diary:ids:user:";
+
+    public DiaryIdRedisRepository(RedisTemplate<String, Object> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+
+        this.addIfPresentScript = new DefaultRedisScript<>();
+        this.addIfPresentScript.setResultType(Long.class);
+        this.addIfPresentScript.setScriptText("""
+        if redis.call('EXISTS', KEYS[1]) == 1 then
+            redis.call('ZADD', KEYS[1], ARGV[1], ARGV[2])
+            return 1
+        else
+            return 0
+        end
+        """);
+    }
 
     public void addPublic(Long diaryId) {
         if (diaryId == null) {
@@ -210,5 +226,41 @@ public class DiaryIdRedisRepository {
     public long countUserIds(Long userId) {
         Long size = redisTemplate.opsForZSet().zCard(USER_IDS_KEY_PREFIX + userId);
         return size == null ? 0L : size;
+    }
+
+    public boolean addIfPresent(String key, Long value, double score) {
+        if (key == null || value == null) {
+            return false;
+        }
+
+        Long result = redisTemplate.execute(
+                addIfPresentScript,
+                Collections.singletonList(key),
+                String.valueOf(score),
+                String.valueOf(value)
+        );
+
+        return result != null && result == 1L;
+    }
+
+    public boolean addPublicIfPresent(Long diaryId) {
+        if (diaryId == null) {
+            return false;
+        }
+        return addIfPresent(PUBLIC_IDS_KEY, diaryId, diaryId.doubleValue());
+    }
+
+    public boolean addFriendsIfPresent(Long diaryId) {
+        if (diaryId == null) {
+            return false;
+        }
+        return addIfPresent(FRIENDS_IDS_KEY, diaryId, diaryId.doubleValue());
+    }
+
+    public boolean addUserIfPresent(Long userId, Long diaryId) {
+        if (userId == null || diaryId == null) {
+            return false;
+        }
+        return addIfPresent(getUserIdsKey(userId), diaryId, diaryId.doubleValue());
     }
 }

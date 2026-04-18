@@ -631,8 +631,7 @@ public class DiaryService {
     }
 
     private void syncDiaryIdsByPublic(Long diaryId) {
-        if (diaryIdRedisRepository.existsPublicKey()) {
-            diaryIdRedisRepository.addPublic(diaryId);
+        if (diaryIdRedisRepository.addPublicIfPresent(diaryId)) {
             return;
         }
 
@@ -641,8 +640,7 @@ public class DiaryService {
     }
 
     private void syncDiaryIdsByFriends(Long diaryId) {
-        if(diaryIdRedisRepository.existsFriendsKey()) {
-            diaryIdRedisRepository.addFriends(diaryId);
+        if(diaryIdRedisRepository.addFriendsIfPresent(diaryId)) {
             return;
         }
 
@@ -651,8 +649,7 @@ public class DiaryService {
     }
 
     private void syncDiaryIdsByUser(Long userId, Long diaryId) {
-        if (diaryIdRedisRepository.existsUserKey(userId)) {
-            diaryIdRedisRepository.addUser(userId, diaryId);
+        if(diaryIdRedisRepository.addUserIfPresent(userId, diaryId)) {
             return;
         }
 

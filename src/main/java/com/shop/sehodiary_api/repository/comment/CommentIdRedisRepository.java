@@ -2,6 +2,8 @@ package com.shop.sehodiary_api.repository.comment;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -18,12 +20,27 @@ public class CommentIdRedisRepository {
     private static final Duration TTL = Duration.ofDays(1);
 
     private final RedisTemplate<String, Long> redisTemplate;
+    private final DefaultRedisScript<Long> addIfPresentScript;
 
     public CommentIdRedisRepository(
             @Qualifier("longRedisTemplate")
             RedisTemplate<String, Long> redisTemplate
     ) {
         this.redisTemplate = redisTemplate;
+        this.addIfPresentScript = new DefaultRedisScript<>();
+        this.addIfPresentScript.setResultType(Long.class);
+        this.addIfPresentScript.setScriptText(
+                // key가 존재할 때만 ZADD
+                // 존재하지 않으면 0 반환
+                """
+                if redis.call('EXISTS', KEYS[1]) == 1 then
+                    redis.call('ZADD', KEYS[1], ARGV[1], ARGV[2])
+                    return 1
+                else
+                    return 0
+                end
+                """
+        );
     }
 
     /**
@@ -85,6 +102,10 @@ public class CommentIdRedisRepository {
 
         String key = generateUserKey(userId);
         redisTemplate.delete(key);
+
+        if (commentIds == null || commentIds.isEmpty()) {
+            return;
+        }
 
         for (int i = 0; i < commentIds.size(); i++) {
             Long commentId = commentIds.get(i);
@@ -182,8 +203,29 @@ public class CommentIdRedisRepository {
         return USER_ID_KEY + userId;
     }
 
-    public boolean existsDiaryKey(Long diaryId) { return redisTemplate.hasKey(DIARY_ID_KEY + diaryId); }
-    public boolean existsUserKey(Long userId) {
-        return redisTemplate.hasKey(USER_ID_KEY + userId);
+    public boolean addIfPresentByDiaryId(Long diaryId, Long commentId, double score) {
+        String key = generateDiaryKey(diaryId);
+
+        Long result = redisTemplate.execute(
+                addIfPresentScript,
+                Collections.singletonList(key),
+                String.valueOf(score),
+                String.valueOf(commentId)
+        );
+
+        return result != null && result == 1L;
+    }
+
+    public boolean addIfPresentByUserId(Long userId, Long commentId, double score) {
+        String key = generateUserKey(userId);
+
+        Long result = redisTemplate.execute(
+                addIfPresentScript,
+                Collections.singletonList(key),
+                String.valueOf(score),
+                String.valueOf(commentId)
+        );
+
+        return result != null && result == 1L;
     }
 }
