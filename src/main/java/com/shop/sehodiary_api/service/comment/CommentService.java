@@ -145,17 +145,8 @@ public class CommentService {
                 .toInstant()
                 .toEpochMilli();
 
-        commentIdRedisRepository.addByDiaryId(
-                savedComment.getDiary().getId(),
-                savedComment.getId(),
-                score
-        );
-
-        commentIdRedisRepository.addByUserId(
-                userId,
-                savedComment.getId(),
-                score
-        );
+        syncCommentIdsByDiary(diary.getId(), savedComment.getId(), score);
+        syncCommentIdsByUser(userId, savedComment.getId(), score);
 
         return commentResponse;
     }
@@ -222,5 +213,25 @@ public class CommentService {
         } catch (Exception e) {
             throw new ConflictException("글 삭제를 실패했습니다.", commentId);
         }
+    }
+
+    private void syncCommentIdsByDiary(Long diaryId, Long commentId, double score) {
+        if (commentIdRedisRepository.existsDiaryKey(diaryId)) {
+            commentIdRedisRepository.addByDiaryId(diaryId, commentId, score);
+            return;
+        }
+
+        List<Long> commentIds = commentRepository.findAllIdsByDiaryIdDesc(diaryId);
+        commentIdRedisRepository.saveAllByDiaryId(diaryId, commentIds);
+    }
+
+    private void syncCommentIdsByUser(Long userId, Long commentId, double score) {
+        if (commentIdRedisRepository.existsUserKey(userId)) {
+            commentIdRedisRepository.addByUserId(userId, commentId, score);
+            return;
+        }
+
+        List<Long> commentIds = commentRepository.findAllIdsByUserIdDesc(userId);
+        commentIdRedisRepository.saveAllByUserId(userId, commentIds);
     }
 }

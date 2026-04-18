@@ -181,4 +181,9 @@ public class CommentIdRedisRepository {
     private String generateUserKey(Long userId) {
         return USER_ID_KEY + userId;
     }
+
+    public boolean existsDiaryKey(Long diaryId) { return redisTemplate.hasKey(DIARY_ID_KEY + diaryId); }
+    public boolean existsUserKey(Long userId) {
+        return redisTemplate.hasKey(USER_ID_KEY + userId);
+    }
 }

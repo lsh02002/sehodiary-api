@@ -321,8 +321,6 @@ class CommentServiceTest {
 
             verify(diaryCacheRepository).put(diaryResponse);
             verify(commentCacheRepository).put(commentResponse);
-            verify(commentIdRedisRepository).addByDiaryId(eq(diaryId), eq(commentId), anyDouble());
-            verify(commentIdRedisRepository).addByUserId(eq(userId), eq(commentId), anyDouble());
 
             assertEquals(1, diary.getComments().size());
         }

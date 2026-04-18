@@ -37,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -434,7 +435,7 @@ public class DiaryService {
         diaryCacheRepository.put(response);
 
         if (diary.getVisibility() == Visibility.PUBLIC) {
-            diaryIdRedisRepository.addPublic(diary.getId());
+            syncDiaryIdsByPublic(diary.getId());
 
             webPushService.broadcast(
                     "새 글이 등록됐어요",
@@ -452,9 +453,9 @@ public class DiaryService {
             );
 
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
-            diaryIdRedisRepository.addFriends(diary.getId());
+            syncDiaryIdsByFriends(diary.getId());
         }
-        diaryIdRedisRepository.addUser(userId, diary.getId());
+        syncDiaryIdsByUser(userId, diary.getId());
 
         return response;
     }
@@ -551,9 +552,9 @@ public class DiaryService {
         diaryCacheRepository.put(response);
 
         if (diary.getVisibility() == Visibility.PUBLIC) {
-            diaryIdRedisRepository.addPublic(diary.getId());
+            syncDiaryIdsByPublic(diary.getId());
         } else if (diary.getVisibility() == Visibility.FRIENDS) {
-            diaryIdRedisRepository.addFriends(diary.getId());
+            syncDiaryIdsByFriends(diary.getId());
         }
 
         return response;
@@ -627,5 +628,35 @@ public class DiaryService {
         }
 
         return userDetails.getNickname();
+    }
+
+    private void syncDiaryIdsByPublic(Long diaryId) {
+        if (diaryIdRedisRepository.existsPublicKey()) {
+            diaryIdRedisRepository.addPublic(diaryId);
+            return;
+        }
+
+        List<Long> publicDiaryIds = diaryRepository.findAllPublicIds();
+        diaryIdRedisRepository.savePublicIds(publicDiaryIds);
+    }
+
+    private void syncDiaryIdsByFriends(Long diaryId) {
+        if(diaryIdRedisRepository.existsFriendsKey()) {
+            diaryIdRedisRepository.addFriends(diaryId);
+            return;
+        }
+
+        List<Long> friendsDiaryIds = diaryRepository.findAllFriendsIds();
+        diaryIdRedisRepository.saveFriends(friendsDiaryIds);
+    }
+
+    private void syncDiaryIdsByUser(Long userId, Long diaryId) {
+        if (diaryIdRedisRepository.existsUserKey(userId)) {
+            diaryIdRedisRepository.addUser(userId, diaryId);
+            return;
+        }
+
+        List<Long> userDiaryIds = diaryRepository.findIdsByUserId(userId);
+        diaryIdRedisRepository.saveUserIds(userId, userDiaryIds);
     }
 }

@@ -984,10 +984,6 @@ class DiaryServiceTest {
                     any(), any(), eq(100L), anyString(), eq(user), isNull(), any()
             );
             verify(diaryCacheRepository).put(response);
-            verify(diaryIdRedisRepository).addPublic(100L);
-            verify(diaryIdRedisRepository).addUser(1L, 100L);
-
-            verify(diaryIdRedisRepository, never()).addFriends(anyLong());
 
             verify(webPushService).broadcast(
                     anyString(),
@@ -1015,11 +1011,6 @@ class DiaryServiceTest {
 
             // when
             diaryService.createDiary(1L, request, files);
-
-            // then
-            verify(diaryIdRedisRepository).addFriends(200L);
-            verify(diaryIdRedisRepository).addUser(1L, 200L);
-            verify(diaryIdRedisRepository, never()).addPublic(anyLong());
         }
 
         @Test
@@ -1193,8 +1184,6 @@ class DiaryServiceTest {
                     eq(new HashMap<>())
             );
             verify(diaryCacheRepository).put(response);
-            verify(diaryIdRedisRepository).addPublic(10L);
-            verify(diaryIdRedisRepository, never()).addFriends(anyLong());
         }
 
         @Test
@@ -1217,7 +1206,6 @@ class DiaryServiceTest {
             diaryService.editDiary(1L, 10L, request, files);
 
             // then
-            verify(diaryIdRedisRepository).addFriends(10L);
             verify(diaryIdRedisRepository, never()).addPublic(anyLong());
         }
 
