@@ -105,6 +105,11 @@ class DiaryServiceTest {
         spyService = spy(diaryService);
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Nested
     @DisplayName("getDiariesByPublic()")
     class GetDiariesByPublicTest {
@@ -1303,68 +1308,92 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository, never()).addPublic(anyLong());
             verify(diaryIdRedisRepository, never()).addFriends(anyLong());
         }
+    }
 
-        @Nested
-        @DisplayName("예외 케이스")
-        class ExceptionTest {
+    @Nested
+    @DisplayName("예외 케이스")
+    class ExceptionTest {
 
-            @Test
-            @DisplayName("사용자가 없으면 NotFoundException")
-            void editDiary_fail_userNotFound() {
-                // given
-                given(userRepository.findById(1L)).willReturn(Optional.empty());
+        @BeforeEach
+        void setUp() {
+            user = User.builder()
+                    .id(1L)
+                    .build();
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.editDiary(1L, 10L, request, files))
-                        .isInstanceOf(NotFoundException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 사용자를 찾을 수 없습니다.");
+            diary = Diary.builder()
+                    .user(user)
+                    .title("기존 제목")
+                    .content("기존 내용")
+                    .date(LocalDate.now())
+                    .visibility(Visibility.PRIVATE)
+                    .weather("RAINY")
+                    .build();
 
-                verify(diaryRepository, never()).findByUserIdAndId(anyLong(), anyLong());
-                verify(diaryImageService, never()).uploadManyFiles(anyLong(), anyLong(), anyList());
-                verify(diaryRepository, never()).flush();
-            }
+            request = new DiaryRequest();
+            request.setTitle("오늘 일기");
+            request.setContent("정말 즐거운 하루였다.");
+            request.setDate(LocalDate.now().toString());
+            request.setVisibility("PUBLIC");
+            request.setWeather("SUNNY");
+            request.setEmoji("😊");
+        }
 
-            @Test
-            @DisplayName("해당 유저의 일기가 아니면 NotFoundException")
-            void editDiary_fail_diaryNotFound() {
-                // given
-                given(userRepository.findById(1L)).willReturn(Optional.of(user));
-                given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
-                given(diaryRepository.findByUserIdAndId(1L, 10L)).willReturn(Optional.empty());
+        @Test
+        @DisplayName("사용자가 없으면 NotFoundException")
+        void editDiary_fail_userNotFound() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.empty());
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.editDiary(1L, 10L, request, files))
-                        .isInstanceOf(NotFoundException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 사용자가 작성한 글이 아닙니다");
+            // when & then
+            assertThatThrownBy(() -> diaryService.editDiary(1L, 10L, request, files))
+                    .isInstanceOf(NotFoundException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 사용자를 찾을 수 없습니다.");
 
-                verify(diaryImageService, never()).uploadManyFiles(anyLong(), anyLong(), anyList());
-                verify(diaryEmotionService, never()).editDiaryEmotion(anyLong(), anyLong(), anyString());
-                verify(diaryRepository, never()).flush();
-            }
+            verify(diaryRepository, never()).findByUserIdAndId(anyLong(), anyLong());
+            verify(diaryImageService, never()).uploadManyFiles(anyLong(), anyLong(), anyList());
+            verify(diaryRepository, never()).flush();
+        }
 
-            @Test
-            @DisplayName("flush 후 재조회에서 없으면 NotFoundException")
-            void editDiary_fail_reloadedDiaryNotFound() {
-                // given
-                given(userRepository.findById(1L)).willReturn(Optional.of(user));
-                given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
-                given(diaryRepository.findByUserIdAndId(1L, 10L))
-                        .willReturn(Optional.of(diary))
-                        .willReturn(Optional.empty());
-                given(snapshotFunc.snapshot(any(Diary.class))).willReturn(new HashMap<>());
+        @Test
+        @DisplayName("해당 유저의 일기가 아니면 NotFoundException")
+        void editDiary_fail_diaryNotFound() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
+            given(diaryRepository.findByUserIdAndId(1L, 10L)).willReturn(Optional.empty());
 
-                // when & then
-                assertThatThrownBy(() -> diaryService.editDiary(1L, 10L, request, files))
-                        .isInstanceOf(NotFoundException.class)
-                        .extracting("detailMessage")
-                        .isEqualTo("해당 사용자가 작성한 글이 아닙니다");
+            // when & then
+            assertThatThrownBy(() -> diaryService.editDiary(1L, 10L, request, files))
+                    .isInstanceOf(NotFoundException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 사용자가 작성한 글이 아닙니다");
 
-                verify(diaryImageService).uploadManyFiles(1L, 10L, files);
-                verify(diaryRepository).flush();
-                verify(activityLogService, never()).log(any(), any(), anyLong(), anyString(), any(), any(), any());
-            }
+            verify(diaryImageService, never()).uploadManyFiles(anyLong(), anyLong(), anyList());
+            verify(diaryEmotionService, never()).editDiaryEmotion(anyLong(), anyLong(), anyString());
+            verify(diaryRepository, never()).flush();
+        }
+
+        @Test
+        @DisplayName("flush 후 재조회에서 없으면 NotFoundException")
+        void editDiary_fail_reloadedDiaryNotFound() {
+            // given
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+            given(diaryRepository.findById(10L)).willReturn(Optional.of(diary));
+            given(diaryRepository.findByUserIdAndId(1L, 10L))
+                    .willReturn(Optional.of(diary))
+                    .willReturn(Optional.empty());
+            given(snapshotFunc.snapshot(any(Diary.class))).willReturn(new HashMap<>());
+
+            // when & then
+            assertThatThrownBy(() -> diaryService.editDiary(1L, 10L, request, files))
+                    .isInstanceOf(NotFoundException.class)
+                    .extracting("detailMessage")
+                    .isEqualTo("해당 사용자가 작성한 글이 아닙니다");
+
+            verify(diaryImageService).uploadManyFiles(1L, 10L, files);
+            verify(diaryRepository).flush();
+            verify(activityLogService, never()).log(any(), any(), anyLong(), anyString(), any(), any(), any());
         }
     }
 
@@ -1428,11 +1457,6 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository).remove(diaryId);
             verify(diaryIdRedisRepository).removeFromUser(userId, diaryId);
         }
-    }
-
-    @Nested
-    @DisplayName("예외 케이스")
-    class ExceptionTest {
 
         @Test
         @DisplayName("사용자가 없으면 ConflictException 발생")
@@ -1558,11 +1582,6 @@ class DiaryServiceTest {
             verify(diaryIdRedisRepository, never()).remove(anyLong());
             verify(diaryIdRedisRepository, never()).removeFromUser(anyLong(), anyLong());
         }
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
     }
 
     @Nested
