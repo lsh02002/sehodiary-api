@@ -985,11 +985,11 @@ class DiaryServiceTest {
             );
             verify(diaryCacheRepository).put(response);
 
-            verify(webPushService).broadcast(
-                    anyString(),
-                    anyString(),
-                    anyString()
-            );
+//            verify(webPushService).broadcast(
+//                    anyString(),
+//                    anyString(),
+//                    anyString()
+//            );
             verify(eventPublisher).publishEvent(any(PostCreatedEvent.class));
         }
 

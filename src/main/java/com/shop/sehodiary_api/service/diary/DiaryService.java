@@ -433,11 +433,11 @@ public class DiaryService {
         if (diary.getVisibility() == Visibility.PUBLIC) {
             syncDiaryIdsByPublic(diary.getId());
 
-            webPushService.broadcast(
-                    "새 글이 등록됐어요",
-                    "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
-                    "/edit/" + diary.getId()
-            );
+//            webPushService.broadcast(
+//                    "새 글이 등록됐어요",
+//                    "'" + diary.getTitle() + "' 새 글이 올라왔습니다.",
+//                    "/edit/" + diary.getId()
+//            );
 
             eventPublisher.publishEvent(
                     new PostCreatedEvent(
