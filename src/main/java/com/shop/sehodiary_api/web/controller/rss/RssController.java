@@ -5,16 +5,18 @@ import com.rometools.rome.feed.rss.Description;
 import com.rometools.rome.feed.rss.Item;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.WireFeedOutput;
-import com.shop.sehodiary_api.service.rss.FeedService;
-import lombok.NoArgsConstructor;
+import com.shop.sehodiary_api.service.diary.DiaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -23,31 +25,33 @@ public class RssController {
     @Value("${rss.link-url}")
     private String rssLink;
 
-    private final FeedService feedService;
+    private final DiaryService diaryService;
 
     @GetMapping(value = "/rss.xml", produces = "application/rss+xml; charset=UTF-8")
     public ResponseEntity<String> rss() throws FeedException {
+
         Channel channel = new Channel("rss_2.0");
         channel.setTitle("세호 일기앱 RSS");
         channel.setLink(rssLink);
         channel.setDescription("세호 일기앱의 최신 글 목록");
         channel.setLanguage("ko");
 
-        List<Item> items = feedService.getItems().stream()
-                .map(feedItem -> {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        List<Item> items = diaryService.getDiariesByPublic(null, pageable)
+                .stream()
+                .map(diaryResponse -> {
                     Item item = new Item();
-                    item.setTitle(feedItem.title());
-                    item.setLink(feedItem.link());
+                            item.setTitle(diaryResponse.getTitle());
+                            item.setLink(rssLink + "/edit/" + diaryResponse.getId());
 
-                    Description desc = new Description();
-                    desc.setType("text/plain");
-                    desc.setValue(feedItem.description());
-                    item.setDescription(desc);
+                            Description desc = new Description();
+                            desc.setType("text/plain");
+                            desc.setValue(limit(diaryResponse.getContent()));
+                            item.setDescription(desc);
+                            item.setPubDate(Timestamp.valueOf(LocalDateTime.parse(diaryResponse.getCreatedAt())));
 
-                    item.setPubDate(
-                            Timestamp.valueOf(feedItem.publishedAt())
-                    );
-                    return item;
+                            return item;
                 })
                 .toList();
 
@@ -58,5 +62,15 @@ public class RssController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, "application/rss+xml; charset=UTF-8")
                 .body(xml);
+    }
+
+    private String limit(String content) {
+        if (content == null) return "";
+
+        int maxLength = 100;
+
+        return content.length() <= maxLength
+                ? content
+                : content.replaceAll("<[^>]*>", "").substring(0, maxLength) + "...";
     }
 }
