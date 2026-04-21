@@ -55,3 +55,6 @@ webpush:
 
 fcm:
   firebase-account: ${SERVICE_ACCOUNT_PATH}
+
+rss:
+  link-url: ${RSS_LINK_URL}
