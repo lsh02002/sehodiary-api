@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.SetOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -31,10 +32,10 @@ class DiaryIdRedisRepositoryTest {
     private static final Long USER_ID = 10L;
 
     @Mock
-    private RedisTemplate<String, Object> redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Mock
-    private ZSetOperations<String, Object> zSetOperations;
+    private ZSetOperations<String, String> zSetOperations;
 
     private DiaryIdRedisRepository diaryIdRedisRepository;
 
@@ -53,7 +54,7 @@ class DiaryIdRedisRepositoryTest {
             when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.addPublic(1L);
 
-            verify(zSetOperations).add(PUBLIC_IDS_KEY, 1L, 1.0);
+            verify(zSetOperations).add(PUBLIC_IDS_KEY, String.valueOf(1L), 1.0);
         }
 
         @Test
@@ -62,7 +63,7 @@ class DiaryIdRedisRepositoryTest {
             when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.addFriends(2L);
 
-            verify(zSetOperations).add(FRIENDS_IDS_KEY, 2L, 2.0);
+            verify(zSetOperations).add(FRIENDS_IDS_KEY, String.valueOf(2L), 2.0);
         }
 
         @Test
@@ -71,7 +72,7 @@ class DiaryIdRedisRepositoryTest {
             when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.addUser(10L, 3L);
 
-            verify(zSetOperations).add(USER_IDS_KEY_PREFIX + 10L, 3L, 3.0);
+            verify(zSetOperations).add(USER_IDS_KEY_PREFIX + 10L, String.valueOf(3L), 3.0);
         }
     }
 
@@ -85,7 +86,7 @@ class DiaryIdRedisRepositoryTest {
             when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removePublic(1L);
 
-            verify(zSetOperations).remove(PUBLIC_IDS_KEY, 1L);
+            verify(zSetOperations).remove(PUBLIC_IDS_KEY, "1");
         }
 
         @Test
@@ -94,7 +95,7 @@ class DiaryIdRedisRepositoryTest {
             when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removeFriends(2L);
 
-            verify(zSetOperations).remove(FRIENDS_IDS_KEY, 2L);
+            verify(zSetOperations).remove(FRIENDS_IDS_KEY, "2");
         }
 
         @Test
@@ -103,7 +104,7 @@ class DiaryIdRedisRepositoryTest {
             when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
             diaryIdRedisRepository.removeUser(10L, 3L);
 
-            verify(zSetOperations).remove(USER_IDS_KEY_PREFIX + 10L, 3L);
+            verify(zSetOperations).remove(USER_IDS_KEY_PREFIX + 10L, "3");
         }
 
         @Test
@@ -133,8 +134,8 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("findAllPublic()는 Long Set을 반환한다")
         void findAllPublic() {
-            Set<Object> members = new LinkedHashSet<>();
-            members.add(1L);
+            Set<String> members = new LinkedHashSet<>();
+            members.add("1");
             members.add("2");
 
             when(zSetOperations.reverseRange(PUBLIC_IDS_KEY, 0, -1)).thenReturn(members);
@@ -149,9 +150,9 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("findAllFriends()는 Long Set을 반환한다")
         void findAllFriends() {
-            Set<Object> members = new LinkedHashSet<>();
+            Set<String> members = new LinkedHashSet<>();
             members.add("3");
-            members.add(4L);
+            members.add("4");
 
             when(zSetOperations.reverseRange(FRIENDS_IDS_KEY, 0, -1)).thenReturn(members);
 
@@ -166,9 +167,9 @@ class DiaryIdRedisRepositoryTest {
         @DisplayName("findAllUser()는 사용자별 Long Set을 반환한다")
         void findAllUser() {
             Long userId = 100L;
-            Set<Object> members = new LinkedHashSet<>();
+            Set<String> members = new LinkedHashSet<>();
             members.add("10");
-            members.add(20L);
+            members.add("20");
 
             when(zSetOperations.reverseRange(USER_IDS_KEY_PREFIX + userId, 0, -1)).thenReturn(members);
 
@@ -345,7 +346,7 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("조회한 member들을 Long 리스트로 변환해 반환한다")
         void returnsConvertedLongList() {
-            Set<Object> members = new LinkedHashSet<>();
+            Set<String> members = new LinkedHashSet<>();
             members.add("300");
             members.add("200");
             members.add("100");
@@ -441,7 +442,7 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("조회한 member들을 Long 리스트로 변환해 반환한다")
         void returnsConvertedLongList() {
-            Set<Object> members = new LinkedHashSet<>();
+            Set<String> members = new LinkedHashSet<>();
             members.add("30");
             members.add("20");
             members.add("10");
@@ -537,7 +538,7 @@ class DiaryIdRedisRepositoryTest {
         @Test
         @DisplayName("조회한 member들을 Long 리스트로 변환해 반환한다")
         void returnsConvertedLongList() {
-            Set<Object> members = new LinkedHashSet<>();
+            Set<String> members = new LinkedHashSet<>();
             members.add("1000");
             members.add("999");
             members.add("998");

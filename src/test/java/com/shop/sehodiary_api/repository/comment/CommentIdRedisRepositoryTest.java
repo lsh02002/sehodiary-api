@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -25,10 +26,10 @@ import static org.mockito.Mockito.*;
 class CommentIdRedisRepositoryTest {
 
     @Mock
-    private RedisTemplate<String, Long> redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Mock
-    private ZSetOperations<String, Long> zSetOperations;
+    private ZSetOperations<String, String> zSetOperations;
 
     private CommentIdRedisRepository commentIdRedisRepository;
 
@@ -48,7 +49,7 @@ class CommentIdRedisRepositoryTest {
         commentIdRedisRepository.addByDiaryId(1L, 100L, 100.0);
 
         // then
-        verify(zSetOperations).add("comments:diary:1", 100L, 100.0);
+        verify(zSetOperations).add("comments:diary:1", "100", 100.0);
         verify(redisTemplate).expire("comments:diary:1", Duration.ofDays(1));
     }
 
@@ -183,7 +184,7 @@ class CommentIdRedisRepositoryTest {
         Long diaryId = 1L;
         String key = "comments:diary:" + diaryId;
 
-        Set<Long> ids = new LinkedHashSet<>(List.of(4L, 5L, 6L));
+        Set<String> ids = new LinkedHashSet<>(List.of("4", "5", "6"));
 
         when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         when(zSetOperations.range(key, 0, -1)).thenReturn(ids);
@@ -220,7 +221,7 @@ class CommentIdRedisRepositoryTest {
         long userId = 20L;
         String key = "comments:user:" + userId;
 
-        Set<Long> ids = new LinkedHashSet<>(List.of(4L, 5L, 6L));
+        Set<String> ids = new LinkedHashSet<>(List.of("4", "5", "6"));
 
         when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
         when(zSetOperations.range(key, 0, -1)).thenReturn(ids);

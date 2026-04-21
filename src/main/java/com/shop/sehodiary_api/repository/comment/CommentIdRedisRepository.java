@@ -7,10 +7,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Repository
 public class CommentIdRedisRepository {
@@ -19,12 +16,11 @@ public class CommentIdRedisRepository {
     private static final String USER_ID_KEY = "comments:user:";
     private static final Duration TTL = Duration.ofDays(1);
 
-    private final RedisTemplate<String, Long> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final DefaultRedisScript<Long> addIfPresentScript;
 
     public CommentIdRedisRepository(
-            @Qualifier("longRedisTemplate")
-            RedisTemplate<String, Long> redisTemplate
+            StringRedisTemplate redisTemplate
     ) {
         this.redisTemplate = redisTemplate;
         this.addIfPresentScript = new DefaultRedisScript<>();
@@ -53,7 +49,7 @@ public class CommentIdRedisRepository {
         }
 
         String key = generateDiaryKey(diaryId);
-        redisTemplate.opsForZSet().add(key, commentId, score);
+        redisTemplate.opsForZSet().add(key, String.valueOf(commentId), score);
         redisTemplate.expire(key, TTL);
     }
 
@@ -67,7 +63,7 @@ public class CommentIdRedisRepository {
         }
 
         String key = generateUserKey(userId);
-        redisTemplate.opsForZSet().add(key, commentId, score);
+        redisTemplate.opsForZSet().add(key, String.valueOf(commentId), score);
         redisTemplate.expire(key, TTL);
     }
 
@@ -86,7 +82,7 @@ public class CommentIdRedisRepository {
 
         for (int i = 0; i < commentIds.size(); i++) {
             Long commentId = commentIds.get(i);
-            redisTemplate.opsForZSet().add(key, commentId, i);
+            redisTemplate.opsForZSet().add(key, String.valueOf(commentId), i);
         }
 
         redisTemplate.expire(key, TTL);
@@ -109,7 +105,7 @@ public class CommentIdRedisRepository {
 
         for (int i = 0; i < commentIds.size(); i++) {
             Long commentId = commentIds.get(i);
-            redisTemplate.opsForZSet().add(key, commentId, i);
+            redisTemplate.opsForZSet().add(key, String.valueOf(commentId), i);
         }
 
         redisTemplate.expire(key, TTL);
@@ -123,8 +119,14 @@ public class CommentIdRedisRepository {
             return Collections.emptyList();
         }
 
-        Set<Long> ids = redisTemplate.opsForZSet().range(generateDiaryKey(diaryId), 0, -1);
-        return ids == null ? Collections.emptyList() : new ArrayList<>(ids);
+        Set<String> ids = redisTemplate.opsForZSet().range(generateDiaryKey(diaryId), 0, -1);
+
+        List<Long> result = new ArrayList<>(Objects.requireNonNull(ids).size());
+        for (String id : ids) {
+            result.add(Long.valueOf(id));
+        }
+
+        return result;
     }
 
     /**
@@ -135,8 +137,14 @@ public class CommentIdRedisRepository {
             return Collections.emptyList();
         }
 
-        Set<Long> ids = redisTemplate.opsForZSet().reverseRange(generateDiaryKey(diaryId), 0, -1);
-        return ids == null ? Collections.emptyList() : new ArrayList<>(ids);
+        Set<String> ids = redisTemplate.opsForZSet().reverseRange(generateDiaryKey(diaryId), 0, -1);
+
+        List<Long> result = new ArrayList<>(Objects.requireNonNull(ids).size());
+        for (String id : ids) {
+            result.add(Long.valueOf(id));
+        }
+
+        return result;
     }
 
     /**
@@ -147,8 +155,18 @@ public class CommentIdRedisRepository {
             return Collections.emptyList();
         }
 
-        Set<Long> ids = redisTemplate.opsForZSet().range(generateUserKey(userId), 0, -1);
-        return ids == null ? Collections.emptyList() : new ArrayList<>(ids);
+        Set<String> ids = redisTemplate.opsForZSet().range(generateUserKey(userId), 0, -1);
+
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> result = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            result.add(Long.valueOf(id));
+        }
+
+        return result;
     }
 
     /**
@@ -159,8 +177,16 @@ public class CommentIdRedisRepository {
             return Collections.emptyList();
         }
 
-        Set<Long> ids = redisTemplate.opsForZSet().reverseRange(generateUserKey(userId), 0, -1);
-        return ids == null ? Collections.emptyList() : new ArrayList<>(ids);
+        Set<String> ids = redisTemplate.opsForZSet().reverseRange(generateUserKey(userId), 0, -1);
+
+        List<Long> result = new ArrayList<>(Objects.requireNonNull(ids).size());
+        for (String id : ids) {
+            if (id != null) {
+                result.add(Long.valueOf(id));
+            }
+        }
+
+        return result;
     }
 
     public void removeByDiaryId(Long diaryId, Long commentId) {
@@ -168,7 +194,7 @@ public class CommentIdRedisRepository {
             return;
         }
 
-        redisTemplate.opsForZSet().remove(generateDiaryKey(diaryId), commentId);
+        redisTemplate.opsForZSet().remove(generateDiaryKey(diaryId), String.valueOf(commentId));
     }
 
     public void removeByUserId(Long userId, Long commentId) {
@@ -176,7 +202,7 @@ public class CommentIdRedisRepository {
             return;
         }
 
-        redisTemplate.opsForZSet().remove(generateUserKey(userId), commentId);
+        redisTemplate.opsForZSet().remove(generateUserKey(userId), String.valueOf(commentId));
     }
 
     public void deleteByDiaryId(Long diaryId) {
