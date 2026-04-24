@@ -1,7 +1,5 @@
 package com.shop.sehodiary_api.repository.comment;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
@@ -203,22 +201,6 @@ public class CommentIdRedisRepository {
         }
 
         redisTemplate.opsForZSet().remove(generateUserKey(userId), String.valueOf(commentId));
-    }
-
-    public void deleteByDiaryId(Long diaryId) {
-        if (diaryId == null) {
-            return;
-        }
-
-        redisTemplate.delete(generateDiaryKey(diaryId));
-    }
-
-    public void deleteByUserId(Long userId) {
-        if (userId == null) {
-            return;
-        }
-
-        redisTemplate.delete(generateUserKey(userId));
     }
 
     private String generateDiaryKey(Long diaryId) {

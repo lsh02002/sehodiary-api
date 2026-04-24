@@ -1,13 +1,10 @@
 package com.shop.sehodiary_api.web.mapper.user;
 
 import com.shop.sehodiary_api.config.s3.S3Address;
-import com.shop.sehodiary_api.repository.follow.FollowRepository;
 import com.shop.sehodiary_api.repository.user.User;
 import com.shop.sehodiary_api.web.dto.user.UserInfoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor

@@ -15,7 +15,6 @@ import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.service.exceptions.NotFoundException;
-import com.shop.sehodiary_api.web.dto.diaryemotion.DiaryEmotionResponse;
 import com.shop.sehodiary_api.web.mapper.diaryemotion.DiaryEmotionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

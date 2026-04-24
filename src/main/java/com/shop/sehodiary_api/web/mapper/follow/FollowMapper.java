@@ -1,9 +1,7 @@
 package com.shop.sehodiary_api.web.mapper.follow;
 
 import com.shop.sehodiary_api.config.s3.S3Address;
-import com.shop.sehodiary_api.repository.emotion.Emotion;
 import com.shop.sehodiary_api.repository.follow.Follow;
-import com.shop.sehodiary_api.web.dto.emotion.EmotionResponse;
 import com.shop.sehodiary_api.web.dto.follow.FollowUserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

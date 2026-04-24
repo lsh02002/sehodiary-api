@@ -5,16 +5,12 @@ import com.shop.sehodiary_api.repository.webpush.PushSubscription;
 import com.shop.sehodiary_api.repository.webpush.PushSubscriptionRepository;
 import com.shop.sehodiary_api.web.dto.webpush.PushSubscriptionRequest;
 import com.shop.sehodiary_api.web.dto.webpush.WebPushProperties;
-import com.sun.jdi.LongValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/push")

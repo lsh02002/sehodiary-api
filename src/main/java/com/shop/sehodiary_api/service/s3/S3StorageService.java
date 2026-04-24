@@ -118,10 +118,6 @@ public class S3StorageService {
         return (ct != null && !ct.isBlank()) ? ct : "application/octet-stream";
     }
 
-    private String buildS3Url(String key) {
-        return key;
-    }
-
     private String buildHashKey(String hash) {
         return "files/sha256/" + hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash;
     }

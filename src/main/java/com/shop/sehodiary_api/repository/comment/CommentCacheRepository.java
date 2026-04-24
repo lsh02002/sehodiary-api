@@ -99,7 +99,7 @@ public class CommentCacheRepository {
         Map<Long, CommentResponse> result = new HashMap<>();
 
         for (int i = 0; i < ids.size(); i++) {
-            if (values.get(i) != null) {
+            if (Objects.requireNonNull(values).get(i) != null) {
                 result.put(ids.get(i), values.get(i));
             }
         }

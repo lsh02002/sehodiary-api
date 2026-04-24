@@ -115,12 +115,6 @@ public class DiaryImageService {
                 .toList();
 
         if (files == null || files.isEmpty()) {
-//            List<DiaryImage> imagesToDelete = new ArrayList<>(diary.getDiaryImages());
-//
-//            for (DiaryImage image : imagesToDelete) {
-//                deleteFile(uploader, image); // 실제 파일 삭제만
-//                diary.removeDiaryImage(image); // 연관관계 제거
-//            }
             return responses;
         }
 
@@ -218,11 +212,5 @@ public class DiaryImageService {
                 throw new NotAcceptableException("실행 파일 업로드는 허용되지 않습니다.", null);
             }
         }
-    }
-
-    private String extractStoredFileName(String fileUrl) {
-        if (fileUrl == null) return null;
-        int idx = fileUrl.lastIndexOf('/');
-        return (idx >= 0 && idx + 1 < fileUrl.length()) ? fileUrl.substring(idx + 1) : fileUrl;
     }
 }

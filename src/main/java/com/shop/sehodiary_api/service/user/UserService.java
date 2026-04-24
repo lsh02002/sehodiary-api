@@ -1,6 +1,5 @@
 package com.shop.sehodiary_api.service.user;
 
-import com.shop.sehodiary_api.config.s3.S3Address;
 import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.config.redis.RedisUtil;
 import com.shop.sehodiary_api.config.security.JwtTokenProvider;
@@ -39,7 +38,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -58,7 +56,6 @@ public class UserService {
 
     private final ActivityLogService activityLogService;
     private final SnapshotFunc snapshotFunc;
-    private final S3Address s3Address;
 
     private final DiaryCacheRepository diaryCacheRepository;
     private final CommentCacheRepository commentCacheRepository;
