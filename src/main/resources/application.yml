@@ -25,6 +25,11 @@ spring:
         format_sql: true
     database: mysql
 
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 1MB
+
 server:
   port: 8120
   error:
@@ -34,6 +39,7 @@ server:
       enabled: true             # ?? ?? ??? ????? ??? ?? ??? ?? ??
   tomcat:
     use-relative-redirects: true
+    max-swallow-size: -1
   forward-headers-strategy: framework
 
 cloud:

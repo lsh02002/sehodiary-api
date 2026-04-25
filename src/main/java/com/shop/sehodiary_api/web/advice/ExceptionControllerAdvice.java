@@ -6,6 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+
+import java.util.Map;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice {
@@ -49,5 +53,11 @@ public class ExceptionControllerAdvice {
     @ResponseStatus(HttpStatus.UNAUTHORIZED) //비밀번호가 틀렸을때
     public ErrorResponse handleBadCredentialsException(CustomBadCredentialsException ex) {
         return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(),HttpStatus.UNAUTHORIZED.name(), ex.getDetailMessage(), ex.getRequest());
+    }
+
+    @ExceptionHandler({MaxUploadSizeExceededException.class, MultipartException.class})
+    public ResponseEntity<ErrorResponse> handleMultipartException(Exception ex) {
+        ErrorResponse errorResponse = new ErrorResponse(413,"PAYLOAD_TOO_LARGE","업로드 가능한 최대 용량(1MB)을 초과했습니다.",null);
+        return new ResponseEntity<>(errorResponse, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 }
