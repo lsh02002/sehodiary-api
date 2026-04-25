@@ -6,10 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import org.springframework.web.multipart.MultipartException;
-
-import java.util.Map;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice {
@@ -24,7 +20,7 @@ public class ExceptionControllerAdvice {
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN) //권한이 없을때
     public ResponseEntity<ErrorResponse> handleNotAccessDeniedException(AccessDeniedException ex) {
-        ErrorResponse errorRequestResponse = new ErrorResponse(403, "FORBIDDEN" ,  ex.getDetailMessage(), ex.getRequest());
+        ErrorResponse errorRequestResponse = new ErrorResponse(403, "FORBIDDEN", ex.getDetailMessage(), ex.getRequest());
         return new ResponseEntity<>(errorRequestResponse, HttpStatus.FORBIDDEN);
     }
 
@@ -52,12 +48,6 @@ public class ExceptionControllerAdvice {
     @ExceptionHandler(CustomBadCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED) //비밀번호가 틀렸을때
     public ErrorResponse handleBadCredentialsException(CustomBadCredentialsException ex) {
-        return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(),HttpStatus.UNAUTHORIZED.name(), ex.getDetailMessage(), ex.getRequest());
-    }
-
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMultipartException() {
-        ErrorResponse errorResponse = new ErrorResponse(413,"PAYLOAD_TOO_LARGE","업로드 가능한 최대 용량(1MB)을 초과했습니다.",null);
-        return new ResponseEntity<>(errorResponse, HttpStatus.PAYLOAD_TOO_LARGE);
+        return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.name(), ex.getDetailMessage(), ex.getRequest());
     }
 }
