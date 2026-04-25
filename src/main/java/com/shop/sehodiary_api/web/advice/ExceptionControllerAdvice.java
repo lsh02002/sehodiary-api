@@ -55,8 +55,8 @@ public class ExceptionControllerAdvice {
         return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(),HttpStatus.UNAUTHORIZED.name(), ex.getDetailMessage(), ex.getRequest());
     }
 
-    @ExceptionHandler({MaxUploadSizeExceededException.class, MultipartException.class})
-    public ResponseEntity<ErrorResponse> handleMultipartException(Exception ex) {
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException() {
         ErrorResponse errorResponse = new ErrorResponse(413,"PAYLOAD_TOO_LARGE","업로드 가능한 최대 용량(1MB)을 초과했습니다.",null);
         return new ResponseEntity<>(errorResponse, HttpStatus.PAYLOAD_TOO_LARGE);
     }
