@@ -127,10 +127,14 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public List<UserInfoResponse> getDiscoverUsers(Long userId) {
-        long followerCount = followRepository.countByFollowingId(userId);
-        long followingCount = followRepository.countByFollowerId(userId);
-
         return followRepository.findUnfollowedUsers(userId)
-                .stream().map(user->userMapper.toResponse(user, followerCount, followingCount)).toList();
+                .stream()
+                .map(user -> {
+                    long followerCount = followRepository.countByFollowingId(user.getId());
+                    long followingCount = followRepository.countByFollowerId(user.getId());
+
+                    return userMapper.toResponse(user, followerCount, followingCount);
+                })
+                .toList();
     }
 }
