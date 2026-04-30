@@ -60,6 +60,7 @@ public class S3StorageService {
         ObjectMetadata meta = new ObjectMetadata();
         meta.setContentType(safeContentType(file.getContentType()));
         meta.setContentLength(bytes.length);
+        meta.setCacheControl("public, max-age=31536000, immutable");
 
         try (ByteArrayInputStream in = new ByteArrayInputStream(bytes)) {
             s3.putObject(new PutObjectRequest(bucket, key, in, meta));
