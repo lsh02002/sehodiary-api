@@ -1,10 +1,10 @@
 package com.shop.sehodiary_api.service.user;
 
-import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.config.redis.RedisUtil;
 import com.shop.sehodiary_api.config.security.JwtTokenProvider;
 import com.shop.sehodiary_api.repository.activity.ActivityAction;
 import com.shop.sehodiary_api.repository.activity.ActivityEntityType;
+import com.shop.sehodiary_api.repository.activity.function.SnapshotFunc;
 import com.shop.sehodiary_api.repository.comment.CommentCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.user.User;
