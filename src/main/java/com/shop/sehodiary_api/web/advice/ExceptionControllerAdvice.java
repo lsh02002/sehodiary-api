@@ -50,4 +50,10 @@ public class ExceptionControllerAdvice {
     public ErrorResponse handleBadCredentialsException(CustomBadCredentialsException ex) {
         return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.name(), ex.getDetailMessage(), ex.getRequest());
     }
+
+    @ExceptionHandler(Exception.class) // fallback
+    public ResponseEntity<?> handle() {
+        ErrorResponse errorRequestResponse = new ErrorResponse(500, "INTERNAL SERVER ERROR", "INTERNAL SERVER ERROR", null);
+        return new ResponseEntity<>(errorRequestResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }
