@@ -109,7 +109,7 @@ public class UserController {
         return ResponseEntity.ok((UserResponse) accessTokenAndRefreshTokenAndResponse.get(2));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all-users-info")
     public ResponseEntity<Page<UserInfoResponse>> getAllUsersInfo(Pageable pageable) {
         return ResponseEntity.ok(userService.getAllUsersInfo(pageable));

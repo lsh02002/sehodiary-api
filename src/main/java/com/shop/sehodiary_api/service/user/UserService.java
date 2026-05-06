@@ -367,9 +367,14 @@ public class UserService {
         return Arrays.asList(jwtTokenProvider.createAccessToken(user.getEmail()), newRefreshToken, authResponse);
     }
 
-    public Page<UserInfoResponse> getAllUsersInfo(Pageable pageable){
+    public Page<UserInfoResponse> getAllUsersInfo(Pageable pageable) {
         return userRepository.findAll(pageable)
-                .map(user->userMapper.toResponse(user, (long) user.getFollowerList().size(), (long) user.getFollowingList().size()));
+                .map(user -> {
+                    long followerCount = user.getFollowerList() == null ? 0L : user.getFollowerList().size();
+                    long followingCount = user.getFollowingList() == null ? 0L : user.getFollowingList().size();
+
+                    return userMapper.toResponse(user, followerCount, followingCount);
+                });
     }
 
     private static String getClientIP(HttpServletRequest request) {

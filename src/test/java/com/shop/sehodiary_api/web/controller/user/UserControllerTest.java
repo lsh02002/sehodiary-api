@@ -1,10 +1,14 @@
 package com.shop.sehodiary_api.web.controller.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shop.sehodiary_api.config.s3.S3Address;
+import com.shop.sehodiary_api.config.security.JwtTokenProvider;
+import com.shop.sehodiary_api.config.security.SecurityConfig;
 import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
 import com.shop.sehodiary_api.service.exceptions.CustomBadCredentialsException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
+import com.shop.sehodiary_api.service.security.CustomUserDetailsService;
 import com.shop.sehodiary_api.service.user.UserService;
 import com.shop.sehodiary_api.web.dto.user.LoginRequest;
 import com.shop.sehodiary_api.web.dto.user.SignupRequest;
@@ -23,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -54,12 +59,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class UserControllerTest {
+
+    @MockitoBean
+    private S3Address s3Address;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -593,9 +608,12 @@ class UserControllerTest {
         @Test
         @WithMockUser(roles = "USER")
         void getAllUsersInfo_관리자가_아니면_403을_반환한다() throws Exception {
+            when(s3Address.siteAddress()).thenReturn("https://bucket.s3.amazonaws.com/");
+
             mockMvc.perform(get("/user/all-users-info")
                             .param("page", "0")
                             .param("size", "10"))
+                    .andDo(print())
                     .andExpect(status().isForbidden());
 
             verify(userService, never()).getAllUsersInfo(any(Pageable.class));

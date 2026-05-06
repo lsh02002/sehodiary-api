@@ -3,6 +3,7 @@ package com.shop.sehodiary_api.web.advice;
 import com.shop.sehodiary_api.service.exceptions.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -49,6 +50,12 @@ public class ExceptionControllerAdvice {
     @ResponseStatus(HttpStatus.UNAUTHORIZED) //비밀번호가 틀렸을때
     public ErrorResponse handleBadCredentialsException(CustomBadCredentialsException ex) {
         return new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.name(), ex.getDetailMessage(), ex.getRequest());
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException() {
+        ErrorResponse errorRequestResponse = new ErrorResponse(403, "FORBIDDEN", "접근 권한이 없습니다.", null);
+        return new ResponseEntity<>(errorRequestResponse, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(Exception.class) // fallback
