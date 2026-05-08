@@ -1,6 +1,8 @@
 package com.shop.sehodiary_api.web.advice;
 
 import com.shop.sehodiary_api.service.exceptions.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ExceptionControllerAdvice {
+    private static final Logger log =
+            LoggerFactory.getLogger(ExceptionControllerAdvice.class);
 
     @ExceptionHandler(BadRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST) // 요청 에러
@@ -59,7 +63,8 @@ public class ExceptionControllerAdvice {
     }
 
     @ExceptionHandler(Exception.class) // fallback
-    public ResponseEntity<?> handle() {
+    public ResponseEntity<?> handle(Exception e) {
+        log.error("Unhandled exception", e);
         ErrorResponse errorRequestResponse = new ErrorResponse(500, "INTERNAL SERVER ERROR", "INTERNAL SERVER ERROR", null);
         return new ResponseEntity<>(errorRequestResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
