@@ -5,11 +5,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.*;
 
 import java.time.Duration;
@@ -21,6 +25,22 @@ public class RedisConfig {
 
     @Value("${spring.data.redis.port}")
     public int port;
+
+    @Bean
+    @Primary
+    public JedisConnectionFactory jedisConnectionFactory() {
+        RedisStandaloneConfiguration config =
+                new RedisStandaloneConfiguration("localhost", 6379);
+
+        return new JedisConnectionFactory(config);
+    }
+
+    @Bean
+    public StringRedisTemplate stringRedisTemplate(
+            JedisConnectionFactory jedisConnectionFactory
+    ) {
+        return new StringRedisTemplate(jedisConnectionFactory);
+    }
 
     @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {

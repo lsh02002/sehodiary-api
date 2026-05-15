@@ -1,4 +1,4 @@
-package com.shop.sehodiary_api.repository.user.refreshToken;
+package com.shop.sehodiary_api.config.redis.refreshToken;
 
 import org.springframework.data.repository.CrudRepository;
 

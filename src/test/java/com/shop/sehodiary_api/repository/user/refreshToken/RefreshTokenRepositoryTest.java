@@ -1,5 +1,7 @@
 package com.shop.sehodiary_api.repository.user.refreshToken;
 
+import com.shop.sehodiary_api.config.redis.refreshToken.RefreshToken;
+import com.shop.sehodiary_api.config.redis.refreshToken.RefreshTokenRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
