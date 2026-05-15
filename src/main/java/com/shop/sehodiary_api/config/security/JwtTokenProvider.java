@@ -1,8 +1,8 @@
 package com.shop.sehodiary_api.config.security;
 
 import com.shop.sehodiary_api.config.redis.RedisUtil;
-import com.shop.sehodiary_api.config.redis.refreshToken.RefreshToken;
-import com.shop.sehodiary_api.config.redis.refreshToken.RefreshTokenRepository;
+import com.shop.sehodiary_api.repository.user.refreshToken.RefreshToken;
+import com.shop.sehodiary_api.repository.user.refreshToken.RefreshTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
