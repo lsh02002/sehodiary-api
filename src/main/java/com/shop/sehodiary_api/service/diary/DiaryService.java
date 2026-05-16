@@ -16,6 +16,7 @@ import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
+import com.shop.sehodiary_api.service.diarysearch.DiarySearchIndexer;
 import com.shop.sehodiary_api.service.exceptions.AccessDeniedException;
 import com.shop.sehodiary_api.service.exceptions.ConflictException;
 import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
@@ -63,7 +64,7 @@ public class DiaryService {
     private final WebPushService webPushService;
     private final ApplicationEventPublisher eventPublisher;
 
-//    private final DiarySearchIndexer diarySearchIndexer;
+    private final DiarySearchIndexer diarySearchIndexer;
 
     @Transactional(readOnly = true)
     public Page<DiaryResponse> getDiariesByPublic(Long userId, Pageable pageable) {
@@ -433,7 +434,7 @@ public class DiaryService {
 
         diaryCacheRepository.put(response);
 
-//        diarySearchIndexer.index(diary);
+        diarySearchIndexer.index(diary);
 
         if (diary.getVisibility() == Visibility.PUBLIC) {
             syncDiaryIdsByPublic(diary.getId());
@@ -534,8 +535,6 @@ public class DiaryService {
 
         diaryRepository.flush();
 
-//        diarySearchIndexer.index(diary);
-
         Diary reloadedDiary = diaryRepository.findByUserIdAndId(userId, diaryId)
                 .orElseThrow(() -> new NotFoundException("해당 사용자가 작성한 글이 아닙니다", diaryId));
 
@@ -554,7 +553,7 @@ public class DiaryService {
 
         diaryCacheRepository.put(response);
 
-//        diarySearchIndexer.index(diary);
+        diarySearchIndexer.index(diary);
 
         if (diary.getVisibility() == Visibility.PUBLIC) {
             syncDiaryIdsByPublic(diary.getId());
@@ -588,7 +587,7 @@ public class DiaryService {
             diaryIdRedisRepository.remove(diaryId);
             diaryIdRedisRepository.removeFromUser(userId, diaryId);
 
-//            diarySearchIndexer.index(diary);
+            diarySearchIndexer.delete(diary.getId());
 
         } catch (RuntimeException e) {
             throw new ConflictException("해당 글을 삭제할 수 없습니다", diaryId);

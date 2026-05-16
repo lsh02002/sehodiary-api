@@ -1,11 +1,15 @@
 package com.shop.sehodiary_api.repository.user.refreshToken;
 
+import com.shop.sehodiary_api.config.redis.RedisTestRepositoryConfig;
+import com.shop.sehodiary_api.config.redis.refreshToken.RefreshToken;
+import com.shop.sehodiary_api.config.redis.refreshToken.RefreshTokenRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.redis.DataRedisTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
@@ -14,7 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataRedisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ActiveProfiles("test")
+@ActiveProfiles("redis-test")
+@Import(RedisTestRepositoryConfig.class)
 class RefreshTokenRepositoryTest {
 
     @Autowired

@@ -53,6 +53,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
 
+    implementation 'com.redis.om:redis-om-spring:1.1.0'
+    annotationProcessor 'com.redis.om:redis-om-spring:1.0.4'
+
+    implementation 'redis.clients:jedis'
+
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
 
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'

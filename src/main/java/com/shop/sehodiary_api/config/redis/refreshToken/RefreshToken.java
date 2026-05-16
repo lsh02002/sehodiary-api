@@ -1,4 +1,4 @@
-package com.shop.sehodiary_api.repository.user.refreshToken;
+package com.shop.sehodiary_api.config.redis.refreshToken;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;

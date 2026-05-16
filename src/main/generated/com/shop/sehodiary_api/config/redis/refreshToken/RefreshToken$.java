@@ -12,15 +12,15 @@ import java.lang.reflect.Field;
 public final class RefreshToken$ {
   public static Field email;
 
-  public static Field refreshToken;
-
   public static Field authId;
+
+  public static Field refreshToken;
 
   public static NonIndexedTextField<RefreshToken, String> EMAIL;
 
-  public static NonIndexedTextField<RefreshToken, String> REFRESH_TOKEN;
-
   public static TextTagField<RefreshToken, String> AUTH_ID;
+
+  public static NonIndexedTextField<RefreshToken, String> REFRESH_TOKEN;
 
   public static MetamodelField<RefreshToken, String> _KEY;
 
@@ -29,11 +29,11 @@ public final class RefreshToken$ {
   static {
     try {
       email = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(RefreshToken.class, "email");
-      refreshToken = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(RefreshToken.class, "refreshToken");
       authId = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(RefreshToken.class, "authId");
+      refreshToken = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(RefreshToken.class, "refreshToken");
       EMAIL = new NonIndexedTextField<RefreshToken, String>(new SearchFieldAccessor("email", "$.email", email),false);
-      REFRESH_TOKEN = new NonIndexedTextField<RefreshToken, String>(new SearchFieldAccessor("refreshToken", "$.refreshToken", refreshToken),false);
       AUTH_ID = new TextTagField<RefreshToken, String>(new SearchFieldAccessor("authId", "$.authId", authId),true);
+      REFRESH_TOKEN = new NonIndexedTextField<RefreshToken, String>(new SearchFieldAccessor("refreshToken", "$.refreshToken", refreshToken),false);
       _KEY = new MetamodelField<RefreshToken, String>("__key", String.class, true);
       _THIS = new MetamodelField<RefreshToken, RefreshToken>("__this", RefreshToken.class, true);
     } catch(NoSuchFieldException | SecurityException e) {
