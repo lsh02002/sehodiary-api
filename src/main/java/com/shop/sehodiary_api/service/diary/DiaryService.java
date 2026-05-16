@@ -589,7 +589,7 @@ public class DiaryService {
             diaryIdRedisRepository.remove(diaryId);
             diaryIdRedisRepository.removeFromUser(userId, diaryId);
 
-            diarySearchIndexer.index(diary);
+            diarySearchIndexer.delete(diary.getId());
 
         } catch (RuntimeException e) {
             throw new ConflictException("해당 글을 삭제할 수 없습니다", diaryId);

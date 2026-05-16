@@ -12,33 +12,33 @@ import java.lang.String;
 import java.lang.reflect.Field;
 
 public final class DiarySearchDocument$ {
-  public static Field userId;
-
-  public static Field visibility;
+  public static Field id;
 
   public static Field content;
 
-  public static Field createdAt;
-
-  public static Field id;
-
   public static Field diaryId;
+
+  public static Field visibility;
+
+  public static Field userId;
 
   public static Field title;
 
-  public static NumericField<DiarySearchDocument, Long> USER_ID;
-
-  public static TextTagField<DiarySearchDocument, String> VISIBILITY;
-
-  public static TextField<DiarySearchDocument, String> CONTENT;
-
-  public static NumericField<DiarySearchDocument, Long> CREATED_AT;
+  public static Field createdAt;
 
   public static TextTagField<DiarySearchDocument, String> ID;
 
+  public static TextField<DiarySearchDocument, String> CONTENT;
+
   public static NumericField<DiarySearchDocument, Long> DIARY_ID;
 
+  public static TextTagField<DiarySearchDocument, String> VISIBILITY;
+
+  public static NumericField<DiarySearchDocument, Long> USER_ID;
+
   public static TextField<DiarySearchDocument, String> TITLE;
+
+  public static NumericField<DiarySearchDocument, Long> CREATED_AT;
 
   public static MetamodelField<DiarySearchDocument, String> _KEY;
 
@@ -46,20 +46,20 @@ public final class DiarySearchDocument$ {
 
   static {
     try {
-      userId = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "userId");
-      visibility = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "visibility");
-      content = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "content");
-      createdAt = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "createdAt");
       id = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "id");
+      content = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "content");
       diaryId = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "diaryId");
+      visibility = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "visibility");
+      userId = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "userId");
       title = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "title");
-      USER_ID = new NumericField<DiarySearchDocument, Long>(new SearchFieldAccessor("userId", "$.userId", userId),true);
-      VISIBILITY = new TextTagField<DiarySearchDocument, String>(new SearchFieldAccessor("visibility", "$.visibility", visibility),true);
-      CONTENT = new TextField<DiarySearchDocument, String>(new SearchFieldAccessor("content", "$.content", content),true);
-      CREATED_AT = new NumericField<DiarySearchDocument, Long>(new SearchFieldAccessor("createdAt", "$.createdAt", createdAt),true);
+      createdAt = com.redis.om.spring.util.ObjectUtils.getDeclaredFieldTransitively(DiarySearchDocument.class, "createdAt");
       ID = new TextTagField<DiarySearchDocument, String>(new SearchFieldAccessor("id", "$.id", id),true);
+      CONTENT = new TextField<DiarySearchDocument, String>(new SearchFieldAccessor("content", "$.content", content),true);
       DIARY_ID = new NumericField<DiarySearchDocument, Long>(new SearchFieldAccessor("diaryId", "$.diaryId", diaryId),true);
+      VISIBILITY = new TextTagField<DiarySearchDocument, String>(new SearchFieldAccessor("visibility", "$.visibility", visibility),true);
+      USER_ID = new NumericField<DiarySearchDocument, Long>(new SearchFieldAccessor("userId", "$.userId", userId),true);
       TITLE = new TextField<DiarySearchDocument, String>(new SearchFieldAccessor("title", "$.title", title),true);
+      CREATED_AT = new NumericField<DiarySearchDocument, Long>(new SearchFieldAccessor("createdAt", "$.createdAt", createdAt),true);
       _KEY = new MetamodelField<DiarySearchDocument, String>("__key", String.class, true);
       _THIS = new MetamodelField<DiarySearchDocument, DiarySearchDocument>("__this", DiarySearchDocument.class, true);
     } catch(NoSuchFieldException | SecurityException e) {

@@ -9,15 +9,6 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import java.util.TimeZone;
 
 @SpringBootApplication
-@EnableRedisRepositories(
-        basePackages = "com.shop.sehodiary_api.config.redis.refreshToken"
-)
-@EnableJpaRepositories(
-        basePackages = "com.shop.sehodiary_api.repository"
-)
-@EntityScan(
-        basePackages = "com.shop.sehodiary_api.repository"
-)
 public class SehoDiaryApiApplication {
 
     public static void main(String[] args)
