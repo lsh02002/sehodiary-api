@@ -13,6 +13,7 @@ import com.shop.sehodiary_api.service.diary.DiaryService;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiarySearchService {
@@ -154,42 +156,50 @@ public class DiarySearchService {
         boolean isOwner = Objects.equals(userId, targetUserId);
         boolean isFriend = diaryService.isFriend(userId, targetUserId);
 
-        Page<DiarySearchDocument> docPage;
+        Set<String> allowedVisibilities;
 
         if (isOwner) {
-            docPage = diarySearchRepository
-                    .findByUserIdAndTitleContainingOrUserIdAndContentContaining(
-                            targetUserId,
-                            keyword,
-                            targetUserId,
-                            keyword,
-                            pageable
-                    );
+            allowedVisibilities = Set.of(
+                    Visibility.PRIVATE.name(),
+                    Visibility.PUBLIC.name(),
+                    Visibility.FRIENDS.name()
+            );
         } else if (isFriend) {
-            docPage = diarySearchRepository
-                    .findByUserIdAndVisibilityInAndTitleContainingOrUserIdAndVisibilityInAndContentContaining(
-                            targetUserId,
-                            List.of(Visibility.PUBLIC.name(), Visibility.FRIENDS.name()),
-                            keyword,
-                            targetUserId,
-                            List.of(Visibility.PUBLIC.name(), Visibility.FRIENDS.name()),
-                            keyword,
-                            pageable
-                    );
+            allowedVisibilities = Set.of(
+                    Visibility.PUBLIC.name(),
+                    Visibility.FRIENDS.name()
+            );
         } else {
-            docPage = diarySearchRepository
-                    .findByUserIdAndVisibilityAndTitleContainingOrUserIdAndVisibilityAndContentContaining(
-                            targetUserId,
-                            Visibility.PUBLIC.name(),
-                            keyword,
-                            targetUserId,
-                            Visibility.PUBLIC.name(),
-                            keyword,
-                            pageable
-                    );
+            allowedVisibilities = Set.of(
+                    Visibility.PUBLIC.name()
+            );
         }
 
-        List<Long> diaryIds = docPage.getContent().stream()
+        List<DiarySearchDocument> docPage = entityStream
+                .of(DiarySearchDocument.class)
+                .filter(DiarySearchDocument$.USER_ID.eq(targetUserId))
+                .filter(
+                        DiarySearchDocument$.TITLE.containing(keyword)
+                                .or(DiarySearchDocument$.CONTENT.containing(keyword))
+                )
+                .collect(Collectors.toList())
+                .stream()
+                .filter(doc -> allowedVisibilities.contains(doc.getVisibility()))
+                .sorted(
+                        Comparator.comparing(DiarySearchDocument::getCreatedAt).reversed()
+                                .thenComparing(
+                                        Comparator.comparing(DiarySearchDocument::getDiaryId).reversed()
+                                )
+                )
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .toList();
+
+        List<Long> diaryIds = docPage.stream()
+                .filter(doc ->
+                        Objects.equals(doc.getUserId(), targetUserId)
+                                && allowedVisibilities.contains(doc.getVisibility())
+                )
                 .map(DiarySearchDocument::getDiaryId)
                 .toList();
 
@@ -224,7 +234,7 @@ public class DiarySearchService {
 
         applyLiked(userId, result);
 
-        return new PageImpl<>(result, pageable, docPage.getTotalElements());
+        return new PageImpl<>(result, pageable, docPage.size());
     }
 
     private void applyLiked(Long userId, List<DiaryResponse> result) {
@@ -243,5 +253,21 @@ public class DiarySearchService {
         result.forEach(response ->
                 response.setIsLiked(likedDiaryIds.contains(response.getId()))
         );
+    }
+
+    private String makeNgrams(String text) {
+        if (text == null) return "";
+
+        String normalized = text.replaceAll("\\s+", "");
+
+        List<String> grams = new ArrayList<>();
+
+        for (int i = 0; i < normalized.length(); i++) {
+            for (int j = i + 1; j <= normalized.length(); j++) {
+                grams.add(normalized.substring(i, j));
+            }
+        }
+
+        return String.join(" ", grams);
     }
 }
