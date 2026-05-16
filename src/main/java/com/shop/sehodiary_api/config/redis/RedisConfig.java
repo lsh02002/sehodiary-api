@@ -27,22 +27,6 @@ public class RedisConfig {
     public int port;
 
     @Bean
-    @Primary
-    public JedisConnectionFactory jedisConnectionFactory() {
-        RedisStandaloneConfiguration config =
-                new RedisStandaloneConfiguration("localhost", 6379);
-
-        return new JedisConnectionFactory(config);
-    }
-
-    @Bean
-    public StringRedisTemplate stringRedisTemplate(
-            JedisConnectionFactory jedisConnectionFactory
-    ) {
-        return new StringRedisTemplate(jedisConnectionFactory);
-    }
-
-    @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
         return new LettuceConnectionFactory(host, port);
     }

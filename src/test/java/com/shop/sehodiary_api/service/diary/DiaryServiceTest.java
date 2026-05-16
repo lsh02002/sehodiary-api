@@ -15,7 +15,6 @@ import com.shop.sehodiary_api.repository.user.userDetails.CustomUserDetails;
 import com.shop.sehodiary_api.service.activelog.ActivityLogService;
 import com.shop.sehodiary_api.service.diaryemotion.DiaryEmotionService;
 import com.shop.sehodiary_api.service.diaryimage.DiaryImageService;
-import com.shop.sehodiary_api.service.diarysearch.DiarySearchIndexer;
 import com.shop.sehodiary_api.service.exceptions.*;
 import com.shop.sehodiary_api.service.webpush.WebPushService;
 import com.shop.sehodiary_api.web.dto.diary.DiaryRequest;
@@ -54,8 +53,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 class DiaryServiceTest {
-    @Mock
-    private DiarySearchIndexer diarySearchIndexer;
 
     @InjectMocks
     private DiaryService diaryService;
@@ -1448,7 +1445,6 @@ class DiaryServiceTest {
             verify(diaryCacheRepository).delete(diaryId);
             verify(diaryIdRedisRepository).remove(diaryId);
             verify(diaryIdRedisRepository).removeFromUser(userId, diaryId);
-            verify(diarySearchIndexer).delete(diaryId);
         }
 
         @Test
