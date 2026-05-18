@@ -10,6 +10,7 @@ import com.shop.sehodiary_api.repository.diary.DiaryCacheRepository;
 import com.shop.sehodiary_api.repository.diary.DiaryRepository;
 import com.shop.sehodiary_api.repository.like.LikeRepository;
 import com.shop.sehodiary_api.service.diary.DiaryService;
+import com.shop.sehodiary_api.service.exceptions.NotAcceptableException;
 import com.shop.sehodiary_api.web.dto.diary.DiaryResponse;
 import com.shop.sehodiary_api.web.mapper.diary.DiaryMapper;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,11 @@ public class DiarySearchService {
             Pageable pageable
     ) {
         if (keyword != null && !keyword.isBlank()) {
+
+            if (keyword.trim().length() < 2) {
+                throw new NotAcceptableException("검색어는 2글자 이상 입력해주세요.", null);
+            }
+
             return searchPublicDiaries(userId, keyword, pageable);
         }
 
@@ -59,6 +65,11 @@ public class DiarySearchService {
             Pageable pageable
     ) {
         if (keyword != null && !keyword.trim().isBlank()) {
+
+            if (keyword.trim().length() < 2) {
+                throw new NotAcceptableException("검색어는 2글자 이상 입력해주세요.", null);
+            }
+
             return searchDiariesPublicAndFriendsByUser(
                     userId,
                     targetUserId,
